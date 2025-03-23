@@ -1,8 +1,8 @@
-import google.generativeai as genai
+import google.generativeai as gemini
 from ..core.config import settings
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash")
+gemini.configure(api_key=settings.GEMINI_API_KEY)
+model = gemini.GenerativeModel("gemini-2.0-flash")
 
 
 def genai():
