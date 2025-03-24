@@ -1,8 +1,10 @@
 fastapi
 uvicorn
-python-dotenv
-google-generativeai
-supabase
-langchain
-sentence-transformers
 pydantic
+supabase
+google-generativeai
+psycopg2-binary
+llama-index
+llama-index-embeddings-huggingface
+python-dotenv
+tqdm
