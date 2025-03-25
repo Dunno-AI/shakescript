@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from ...models.schemas import StoryCreate, StoryResponse, ErrorResponse
+from ...models.schemas import StoryCreate, StoryResponse, ErrorResponse, EpisodeResponse
 from app.services.story_service import StoryService
 from app.api.dependencies import get_story_service
-from typing import Annotated, Union, Dict, Any
+from typing import Annotated, Union, Dict, Any, List
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
@@ -56,7 +56,6 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
         summary=story_info.get("summary"),
     )
 
-
 @router.post("/{story_id}/summary", response_model=Union[Dict[str, Any], ErrorResponse])
 def update_story_summary(
     story_id: int, service: Annotated[StoryService, Depends(get_story_service)]
@@ -68,3 +67,5 @@ def update_story_summary(
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
     return result
+
+

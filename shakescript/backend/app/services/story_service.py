@@ -12,16 +12,16 @@ class StoryService:
 
     async def create_story(self, prompt: str, num_episodes: int) -> Dict[str, Any]:
         full_prompt = f"{prompt} number of episodes = {num_episodes}"
-        result = self.extract_and_store_metadata(full_prompt)
+        result = self.extract_and_store_metadata(full_prompt, num_episodes)
         if "error" in result:
             return result
         return {"story_id": result["story_id"], "title": result["title"]}
 
-    def extract_and_store_metadata(self, user_prompt: str) -> Dict[str, Any]:
+    def extract_and_store_metadata(self, user_prompt: str , num_episodes: int) -> Dict[str, Any]:
         metadata = self.ai_service.extract_metadata(user_prompt)
         if "error" in metadata:
             return metadata
-        story_id = self.db_service.store_story_metadata(metadata)
+        story_id = self.db_service.store_story_metadata(metadata, num_episodes)
         return {"story_id": story_id, "title": metadata.get("Title", "Untitled Story")}
 
     def get_story_info(self, story_id: int) -> Dict[str, Any]:
