@@ -3,7 +3,6 @@ from app.core.config import settings
 from typing import Dict
 import json
 
-
 class DBService:
     def __init__(self):
         self.supabase: Client = create_client(
@@ -51,7 +50,7 @@ class DBService:
                 "Relationship": (
                     json.loads(char["relationship"]) if char["relationship"] else {}
                 ),
-                "is_active": char["is_active"],
+                "role_active": char["is_active"],
             }
             for char in characters_result.data
         }
@@ -116,24 +115,19 @@ class DBService:
             raise Exception("Failed to insert story metadata into Supabase")
         return story_id
 
-    def store_episode(
-        self, story_id: int, episode_data: Dict, current_episode: int
-    ) -> int:
+    def store_episode(self, story_id: int, episode_data: Dict, current_episode: int) -> int:
         """Store an episode and update story metadata."""
-        # Step 1: Insert or update the episode using upsert
         episode_result = (
             self.supabase.table("episodes")
             .upsert(
                 {
                     "story_id": story_id,
                     "episode_number": current_episode,
-                    "title": episode_data.get(
-                        "episode_title", f"Episode {current_episode}"
-                    ),
+                    "title": episode_data.get("episode_title", f"Episode {current_episode}"),
                     "content": episode_data.get("episode_content", ""),
                     "summary": episode_data.get("episode_summary", ""),
                 },
-                on_conflict="story_id,episode_number",  # ✅ Use actual column names
+                on_conflict="story_id,episode_number",
             )
             .execute()
         )
@@ -143,22 +137,32 @@ class DBService:
 
         episode_id = episode_result.data[0]["id"]
 
-        # Step 2: Update Characters (if any)
+        # Handle character_data
         character_data = episode_data.get("characters_featured", {})
+        if isinstance(character_data, str):
+            try:
+                character_data = json.loads(character_data)
+            except json.JSONDecodeError:
+                character_data = {}
+
+        if not isinstance(character_data, dict):
+            character_data = {}
+
         for char_name, char in character_data.items():
+            if not isinstance(char, dict):
+                continue
             self.supabase.table("characters").upsert(
                 {
                     "story_id": story_id,
-                    "name": char["Name"],
-                    "role": char["Role"],
-                    "description": char["Description"],
-                    "relationship": json.dumps(char["Relationship"]),
-                    "is_active": char["role_active"],
+                    "name": char.get("Name", char_name),
+                    "role": char.get("Role", "supporting"),
+                    "description": char.get("Description", ""),
+                    "relationship": json.dumps(char.get("Relationship", {})),
+                    "is_active": char.get("role_active", True),
                 },
-                 on_conflict="story_id,name"
+                on_conflict="story_id,name",
             ).execute()
 
-        # Step 3: Update story's current episode
         self.supabase.table("stories").update(
             {
                 "current_episode": current_episode + 1,

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     VECTOR_DIMENSION: int = 384
     CHUNK_SIZE: int = 500

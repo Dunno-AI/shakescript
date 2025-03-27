@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 from app.services.ai_service import AIService
 from app.services.db_service import DBService
 from app.services.embedding_service import EmbeddingService
+import json
 
 
 class StoryService:
@@ -17,7 +18,9 @@ class StoryService:
             return result
         return {"story_id": result["story_id"], "title": result["title"]}
 
-    def extract_and_store_metadata(self, user_prompt: str , num_episodes: int) -> Dict[str, Any]:
+    def extract_and_store_metadata(
+        self, user_prompt: str, num_episodes: int
+    ) -> Dict[str, Any]:
         metadata = self.ai_service.extract_metadata(user_prompt)
         if "error" in metadata:
             return metadata
@@ -57,16 +60,7 @@ class StoryService:
                 (ep["episode_number"], ep["content"], ep["summary"])
                 for ep in episodes_result.data
             ]
-        character_data = (
-            self.db_service.supabase.table("characters")
-            .select("*")
-            .eq("story_id", story_id)
-            .execute()
-        )
-        char_text = "\n\n".join(
-            f"Name: {char['name']} Role: {char['role']} Description: {char['description']}"
-            for char in character_data.data
-        )
+        char_text = json.dumps(story_data["characters"])  # Pass initial character data
         return self.ai_service.generate_episode_helper(
             num_episodes=num_episodes,
             metadata=story_metadata,
@@ -86,6 +80,7 @@ class StoryService:
         episode_data = self.generate_episode(story_id, current_episode, num_episodes)
         if "error" in episode_data:
             return episode_data
+
         episode_id = self.db_service.store_episode(
             story_id, episode_data, current_episode
         )
@@ -94,14 +89,13 @@ class StoryService:
             episode_id,
             current_episode,
             episode_data["episode_content"],
-            list(episode_data.get("characters_featured", {}).keys()),
+            [],  # No characters stored here
         )
         return {
             "episode_id": episode_id,
             "episode_number": current_episode,
             "episode_title": episode_data["episode_title"],
             "episode_content": episode_data["episode_content"],
-            "episode_summary": episode_data["episode_summary"],
         }
 
     def generate_multiple_episodes(
@@ -121,14 +115,13 @@ class StoryService:
             return story_data
         episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
         instruction = f"""
-        Create a comprehensive summary of the story "{story_data['title']}" based on these episode summaries:
+        Create a 150-200 word audio teaser summary for "{story_data['title']}"based on these episode summaries:
         {episode_summaries}
-        Your summary should:
-        1. Capture the main storyline and character development
-        2. Highlight key events that have occurred
-        3. Be concise but complete (150-200 words)
-        4. Not include any commentary or meta-information
-        Return ONLY the summary text, no additional comments or explanations.
+        - Use short, vivid sentences (10-15 words) for TTS clarity.
+        - Highlight key moments with dramatic phrasing (e.g., 'A howl echoed').
+        - End with a hook to entice listeners (e.g., 'What’s next?').
+        - Avoid complex terms or ambiguity for smooth narration.
+        Return ONLY the summary text.
         """
         summary = self.ai_service.model.generate_content(instruction).text.strip()
         self.db_service.supabase.table("stories").update({"summary": summary}).eq(

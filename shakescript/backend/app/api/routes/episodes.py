@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from ...models.schemas import StoryCreate, StoryResponse, ErrorResponse, EpisodeResponse
+from ...models.schemas import (
+    EpisodeCreateResponse,
+    StoryCreate,
+    StoryResponse,
+    ErrorResponse,
+    EpisodeResponse,
+)
 from app.services.story_service import StoryService
 from app.api.dependencies import get_story_service
 from typing import Annotated, Union, Dict, Any, List
@@ -11,7 +17,9 @@ router = APIRouter(prefix="/episodes", tags=["episodes"])
 
 @router.post(
     "/{story_id}/generate",
-    response_model=Union[EpisodeResponse, List[EpisodeResponse], ErrorResponse],
+    response_model=Union[
+        EpisodeCreateResponse, List[EpisodeCreateResponse], ErrorResponse
+    ],
 )
 def generate_episode(
     story_id: int,
@@ -40,15 +48,10 @@ def generate_episode(
                 status_code=HTTP_400_BAD_REQUEST, detail=results[-1]["error"]
             )
         return [
-            EpisodeResponse(
-                episode_id=result["episode_id"],
+            EpisodeCreateResponse(
                 episode_number=result["episode_number"],
                 episode_title=result["episode_title"],
                 episode_content=result["episode_content"],
-                episode_summary=result["episode_summary"],
-                characters_featured=result.get("characters_featured", {}),
-                key_events=result.get("Key Events", []),
-                settings=result.get("Settings", []),
             )
             for result in results
         ]
@@ -58,13 +61,9 @@ def generate_episode(
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=result["error"]
             )
-        return EpisodeResponse(
-            episode_id=result["episode_id"],
+        return EpisodeCreateResponse(
             episode_number=result["episode_number"],
             episode_title=result["episode_title"],
             episode_content=result["episode_content"],
-            episode_summary=result["episode_summary"],
-            characters_featured=result.get("characters_featured", {}),
-            key_events=result.get("Key Events", []),
-            settings=result.get("Settings", []),
         )
+

@@ -27,5 +27,11 @@ class EpisodeResponse(BaseModel):
     key_events: List[str]
     settings: List[Dict[str, str]]
 
+
+class EpisodeCreateResponse(BaseModel):
+    episode_number: int
+    episode_title: str
+    episode_content: str
+
 class ErrorResponse(BaseModel):
     error: str

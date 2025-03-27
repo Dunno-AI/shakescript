@@ -63,7 +63,7 @@ class EmbeddingService:
 
         chunks_result = self.db_service.supabase.rpc(
             "match_chunks",
-            {"story_id": story_id, "query_embedding": query_embedding_str, "k": k},
+            {"story_id_param": story_id, "query_embedding": query_embedding_str, "k": k},
         ).execute()
 
         if not chunks_result.data or len(chunks_result.data) == 0:
