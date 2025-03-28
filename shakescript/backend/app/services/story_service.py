@@ -122,6 +122,7 @@ class StoryService:
         if "error" in story_data:
             return story_data
         episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
+        print("episode_summaries", episode_summaries)
         instruction = f"""
         Create a 150-200 word audio teaser summary for "{story_data['title']}"based on these episode summaries:
         {episode_summaries}

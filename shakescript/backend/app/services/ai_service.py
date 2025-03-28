@@ -119,41 +119,40 @@ class AIService:
         story_id: int,
         prev_episodes: List = None,
     ) -> Dict:
-        """Generate episode with chunks, summaries, and minimal character snapshot."""
-        settings = metadata.get("Settings", [])
+        """Generate a structured and well-curated episode with clear progression from intro to conclusion."""
+
+        # Extract settings with proper formatting
         settings_data = (
             "\n".join(
                 f"Place: {s.get('Place', 'Unknown')}, Description: {s.get('Description', 'No description')}"
-                for s in settings
+                for s in metadata.get("Settings", [])
                 if isinstance(s, dict)
             )
             or "No settings provided."
         )
 
-        # Last 2 summaries
+        # Fetch last 3 episode summaries for continuity
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep_num} SUMMARY: {summary}"
-                for ep_num, _, summary in prev_episodes
+                f"EPISODE {ep_num} SUMMARY: {summary}\nEPISODE {ep_num} CONTENT: {content}"
+                for ep_num, content, summary in prev_episodes[-3:]  # Last 3 episodes
             )
             if prev_episodes
             else ""
         )
 
-        # Top 3 relevant chunks
-        query_text = (
-            prev_episodes_text if prev_episodes_text else char_text
-        )  # Use summaries or char_text as query
-        chunks = self.embedding_service.retrieve_relevant_chunks(
-            story_id, query_text, k=3
-        )
+        # Retrieve top 3 relevant chunks
         chunks_text = (
-            "\n\n".join(f"RELEVANT CONTEXT: {chunk['content']}" for chunk in chunks)
-            if chunks
-            else ""
+            "\n\n".join(
+                f"RELEVANT CONTEXT: {chunk['content']}"
+                for chunk in self.embedding_service.retrieve_relevant_chunks(
+                    story_id, prev_episodes_text or char_text, k=3
+                )
+            )
+            or ""
         )
 
-        # Minimal character snapshot (name + one-line descriptor for active characters)
+        # Extract active characters with descriptions
         characters = json.loads(char_text) if char_text else {}
         char_snapshot = (
             "\n".join(
@@ -161,71 +160,107 @@ class AIService:
                 for char in characters.values()
                 if char.get("role_active", True)
             )
-            if characters
-            else "No active characters yet."
+            or "No active characters yet."
         )
 
-        # Dynamic phase assignment
-        intro_threshold = max(1, int(num_episodes * 0.1))
-        build_up_threshold = max(1, int(num_episodes * 0.4))
-        climax_threshold = max(1, int(num_episodes * 0.8))
-        falling_action_threshold = max(1, int(num_episodes * 0.9))
-        resolution_threshold = num_episodes
-
+        # **Simplified Phase Selection Logic** (Removed unnecessary thresholds)
         if num_episodes == 1:
             phase = "ONE-SHOT STORY: Merge all phases into a single episode."
-        elif episode_number == num_episodes:  # ✅ Force conclusion in the last episode
-            phase = "FINAL RESOLUTION: Wrap up all loose ends and conclude the story."
-        elif num_episodes == 2:
-            phase = (
-                "INTRODUCTION & BUILDING ACTION"
-                if episode_number == 1
-                else "CLIMAX & RESOLUTION"
-            )
-        elif num_episodes == 3:
-            if episode_number == 1:
-                phase = "INTRODUCTION"
-            elif episode_number == 2:
-                phase = "BUILDING ACTION & CLIMAX"
-            else:
-                phase = "FINAL RESOLUTION: Bring the story to a satisfying end."
+        elif episode_number == num_episodes:  # ✅ FINAL EPISODE - FORCED CLOSURE
+            phase = """
+            FINAL RESOLUTION:
+            - This is the **LAST episode**. ALL conflicts MUST be resolved.
+            - Ensure that **all character arcs conclude definitively** (success, failure, sacrifice, or transformation).
+            - **No cliffhangers. No unresolved mysteries.**
+            - The **main antagonist must be defeated, neutralized, or fully resolved**.
+            - Any prophecy, curse, or mystery **must be answered fully**.
+            - The ending should feel **final** (happy, tragic, or bittersweet), with a lasting impact.
+            """
+        elif episode_number == num_episodes - 1:
+            phase = "FALLING ACTION: Wrapping up loose threads, preparing for final resolution."
+        elif episode_number == 1:
+            phase = "INTRODUCTION: Establish setting, introduce main characters, and present initial conflict."
+        elif episode_number <= num_episodes * 0.4:
+            phase = "BUILDING ACTION: Develop subplots, introduce obstacles, and raise stakes."
+        elif episode_number <= num_episodes * 0.8:
+            phase = "CLIMAX: Key confrontations occur, major events shift the direction of the story."
         else:
-            if episode_number <= intro_threshold:
-                phase = "INTRODUCTION"
-            elif episode_number <= build_up_threshold:
-                phase = "BUILDING ACTION"
-            elif episode_number <= climax_threshold:
-                phase = "CLIMAX"
-            elif episode_number == num_episodes - 1:
-                phase = "FALLING ACTION: Preparing for the final conclusion."
-            elif episode_number == num_episodes:
-                phase = "FINAL RESOLUTION: Resolve the conflict and end the story."
-            else:
-                phase = "BUILDING ACTION"  # Fallback
+            phase = "BUILDING ACTION"  # Fallback
+
+        # ✅ **Professional & Efficient Prompt Structure**
 
         instruction = f"""
-        You are writing a story titled "{metadata.get('title', 'Untitled Story')}" for audio narration, set in "{settings_data}".
-        This is episode {episode_number} out of {num_episodes} (300-400 words).
-        
-        Guidelines for TTS compatibility:
-        - Use short, clear sentences (10-15 words) for easy listening.
-        - Make 60-70% of the text dialogue, with emotional cues (e.g., 'shouted angrily', 'whispered softly').
-        - Avoid complex phrases, homophones, or dense narration; keep it vivid yet simple.
-        - Add natural breaks (e.g., 'She paused.') for audio pacing.
-        - End with a cliffhanger or hook to engage listeners.
-        - Ensure consistency with previous episodes using the recap, context, and characters below.
-        
-        Current Phase: {phase}
-        Special Instructions: {metadata.get('special_instructions', '')}
-        Previous Episodes Recap: {prev_episodes_text}
-        Relevant Context (Chunks of previous episodes): {chunks_text}
-        Active Characters: {char_snapshot}
-        
-        Return ONLY valid JSON in this format:
+        You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
+
+        **📌 Episode {episode_number} of {num_episodes} (Target: 300-400 words).**  
+        Set in **"{settings_data}"**, this episode must maintain a gripping flow, with a clear beginning, middle, and end.
+
+        ---
+
+### **🚀 Storytelling Rules for a Stronger Narrative:**
+        1️⃣ **Deep Story Consistency & Character Growth:**  
+           - Maintain logical progression from previous episodes.  
+           - Ensure **consistent character arcs** (strengths, weaknesses, motivations).  
+           - Make **every action meaningful**—no filler dialogue or unnecessary exposition.  
+
+        2️⃣ **Stronger Narrative Phases for Engagement:**  
+           **Phase:** {phase}  
+           - **Introduction (Ep 1):** Establish the world, key characters, and initial mystery.  
+           - **Rising Action (Ep 2 - {int(num_episodes * 0.4)}):** Increase stakes through unexpected challenges.  
+           - **Climax (Ep {int(num_episodes * 0.5)} - {int(num_episodes * 0.8)}):** Major confrontations, twists, and revelations.  
+           - **Falling Action (Ep {num_episodes - 1}):** Start resolving subplots, prepare for the conclusion.  
+           - **Final Resolution (Ep {num_episodes}):** **All conflicts MUST be resolved** (no cliffhangers).  
+
+        3️⃣ **Enhance Immersion & Atmosphere:**  
+           - Use **vivid sensory details** to immerse the reader (sounds, textures, emotions).  
+           - Increase **psychological tension** through **character thoughts, shifting environments, and mind games.**  
+           - Every episode should **advance the overall mystery & deepen the stakes.**  
+
+        4️⃣ **Diverse Threats & Challenges:**  
+           Avoid repetitive encounters. Integrate:  
+           - **Physical Threats:** Shadows, monsters, environmental hazards.  
+           - **Psychological Horror:** Unreliable memories, illusions, betrayals.  
+           - **Emotional Conflict:** Character-driven tension, moral dilemmas, inner fears.  
+
+        ---
+
+### **📜 Your Task: Generate a Well-Paced Episode**
+        1. **Use prior episodes & context below to ensure coherence.**  
+        2. **Prioritize character-driven storytelling & emotional depth.**  
+        3. **Weave in foreshadowing for upcoming twists.**  
+
+        🔹 **Previous Episodes Recap:**  
+        {prev_episodes_text}  
+
+        🔹 **Relevant Context (Extracted from Past Episodes):**  
+        {chunks_text}  
+
+        🔹 **Active Characters & Their Current Motivations:**  
+        {char_snapshot}  
+
+        **📢 Output ONLY a valid JSON response in this format:**  
         {{
           "episode_title": "A Short, Pronounceable Title",
-          "episode_content": "Dialogue-heavy text with emotional cues and breaks"
+          "episode_content": "A well-structured, immersive episode with compelling storytelling."
         }}
         """
+        #gemini model
         response = self.model.generate_content(instruction)
-        return self._parse_episode_response(response.text, metadata)
+        raw_text = response.text
+        return self._parse_episode_response(raw_text, metadata)
+
+         # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
+        
+        # response = self.openai_client.chat.completions.create(
+            # model="gpt-4o",
+            # messages=[
+                # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives."},
+                # {"role": "user", "content": instruction}
+            # ],
+            # temperature=0.7,
+            # max_tokens=1000
+        # )
+
+        # raw_text = response.choices[0].message.content or ""
+        # return self._parse_episode_response(raw_text, metadata)
+
