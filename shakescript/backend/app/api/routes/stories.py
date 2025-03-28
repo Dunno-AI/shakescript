@@ -1,11 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from ...models.schemas import StoryCreate, StoryResponse, ErrorResponse, EpisodeResponse
+from ...models.schemas import StoryCreate, StoryListResponse, StoryResponse, ErrorResponse, EpisodeResponse
 from app.services.story_service import StoryService
 from app.api.dependencies import get_story_service
 from typing import Annotated, Union, Dict, Any, List
 
 router = APIRouter(prefix="/stories", tags=["stories"])
+
+
+@router.get("/all", response_model=Union[StoryListResponse, ErrorResponse])
+def get_all_stories(service: StoryService = Depends(get_story_service)):
+    """
+    Retrieve a list of all stories.
+    """
+    stories = service.get_all_stories()
+    return StoryListResponse(stories=stories)
 
 
 @router.post("/", response_model=Union[StoryResponse, ErrorResponse])
@@ -25,7 +34,6 @@ async def create_story(
         title=story_info["title"],
         setting=story_info["setting"],
         characters=story_info.get("characters", {}),
-        key_events=story_info["key_events"],
         special_instructions=story_info["special_instructions"],
         story_outline=story_info["story_outline"],
         current_episode=story_info["current_episode"],
@@ -48,7 +56,6 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
         title=story_info["title"],
         setting=story_info["setting"],
         characters=story_info.get("characters", {}),
-        key_events=story_info["key_events"],
         special_instructions=story_info["special_instructions"],
         story_outline=story_info["story_outline"],
         current_episode=story_info["current_episode"],
@@ -67,5 +74,6 @@ def update_story_summary(
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
     return result
+
 
 

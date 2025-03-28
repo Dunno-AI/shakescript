@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 from app.services.ai_service import AIService
 from app.services.db_service import DBService
 from app.services.embedding_service import EmbeddingService
+from app.models.schemas import StoryListItem
 import json
 
 
@@ -39,7 +40,6 @@ class StoryService:
         story_metadata = {
             "title": story_data["title"],
             "setting": story_data["setting"],
-            "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
             "current_episode": story_data["current_episode"],
@@ -69,6 +69,14 @@ class StoryService:
             story_id=story_id,
             prev_episodes=prev_episodes,
         )
+
+    def get_all_stories(self) -> List[StoryListItem]:
+        """Fetch all stories with only id and title."""
+        raw_stories = self.db_service.get_all_stories()
+        return [
+            StoryListItem(story_id=story["id"], title=story["title"])
+            for story in raw_stories
+        ]
 
     def generate_and_store_episode(
         self, story_id: int, num_episodes: int

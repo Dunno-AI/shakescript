@@ -1,6 +1,6 @@
 from supabase import create_client, Client
 from app.core.config import settings
-from typing import Dict
+from typing import Dict , List, Any
 import json
 
 class DBService:
@@ -8,6 +8,11 @@ class DBService:
         self.supabase: Client = create_client(
             settings.SUPABASE_URL, settings.SUPABASE_KEY
         )
+
+    def get_all_stories(self) -> List[Dict[str, Any]]:
+        """get list of all stories id and title only """
+        result = self.supabase.table("stories").select("id, title").execute()
+        return result.data if result.data else []
 
     def get_story_info(self, story_id: int) -> Dict:
         """Get information about a story, including characters."""
@@ -56,9 +61,7 @@ class DBService:
         }
 
         setting = json.loads(story_row["setting"]) if story_row["setting"] else []
-        key_events = (
-            json.loads(story_row["key_events"]) if story_row["key_events"] else []
-        )
+       
         story_outline = (
             json.loads(story_row["story_outline"]) if story_row["story_outline"] else {}
         )
@@ -68,7 +71,6 @@ class DBService:
             "title": story_row["title"],
             "setting": setting,
             "characters": characters,
-            "key_events": key_events,
             "special_instructions": story_row["special_instructions"],
             "story_outline": story_outline,
             "current_episode": story_row["current_episode"],
@@ -80,7 +82,6 @@ class DBService:
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
         """Store story metadata and return the story ID."""
         setting = json.dumps(metadata.get("Settings", []))
-        key_events = json.dumps(metadata.get("Key Events", []))
         story_outline = json.dumps(metadata.get("Story Outline", {}))
         special_instructions = metadata.get("Special Instructions", "")
         result = (
@@ -89,7 +90,6 @@ class DBService:
                 {
                     "title": metadata.get("Title", "Untitled Story"),
                     "setting": setting,
-                    "key_events": key_events,
                     "special_instructions": special_instructions,
                     "story_outline": story_outline,
                     "current_episode": 1,
@@ -167,7 +167,6 @@ class DBService:
             {
                 "current_episode": current_episode + 1,
                 "setting": json.dumps(episode_data.get("Settings", [])),
-                "key_events": json.dumps(episode_data.get("Key Events", [])),
             }
         ).eq("id", story_id).execute()
 

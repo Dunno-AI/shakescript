@@ -7,6 +7,7 @@ from typing import Dict, List
 import json
 import re
 
+
 class AIService:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -61,14 +62,14 @@ class AIService:
             episode_data = json.loads(response_text)
             return episode_data
         except json.JSONDecodeError:
-            json_pattern = r'```(?:json)?\s*\n(.*?)\n```'
+            json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
             matches = re.findall(json_pattern, response_text, re.DOTALL)
             if matches:
                 try:
                     episode_data = json.loads(matches[0])
                     return episode_data
                 except:
-                    cleaned_text = matches[0].replace("'", "\"")
+                    cleaned_text = matches[0].replace("'", '"')
                     try:
                         episode_data = json.loads(cleaned_text)
                         return episode_data
@@ -79,19 +80,29 @@ class AIService:
             match = re.search(json_pattern2, response_text)
             if match:
                 try:
-                    cleaned_json = match.group(0).replace("'", "\"")
+                    cleaned_json = match.group(0).replace("'", '"')
                     episode_data = json.loads(cleaned_json)
                     return episode_data
                 except:
                     pass
 
             title_match = re.search(r'"episode_title":\s*"([^"]+)"', response_text)
-            content_match = re.search(r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text)
+            content_match = re.search(
+                r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text
+            )
             summary_match = re.search(r'"episode_summary":\s*"([^"]+)"', response_text)
 
-            episode_title = title_match.group(1) if title_match else f"Episode {metadata.get('current_episode', 1)}"
+            episode_title = (
+                title_match.group(1)
+                if title_match
+                else f"Episode {metadata.get('current_episode', 1)}"
+            )
             episode_content = content_match.group(1) if content_match else response_text
-            episode_summary = summary_match.group(1) if summary_match else "Episode summary not available."
+            episode_summary = (
+                summary_match.group(1)
+                if summary_match
+                else "Episode summary not available."
+            )
 
             return {
                 "episode_title": episode_title,
@@ -113,7 +124,8 @@ class AIService:
         settings_data = (
             "\n".join(
                 f"Place: {s.get('Place', 'Unknown')}, Description: {s.get('Description', 'No description')}"
-                for s in settings if isinstance(s, dict)
+                for s in settings
+                if isinstance(s, dict)
             )
             or "No settings provided."
         )
@@ -129,13 +141,14 @@ class AIService:
         )
 
         # Top 3 relevant chunks
-        query_text = prev_episodes_text if prev_episodes_text else char_text  # Use summaries or char_text as query
-        chunks = self.embedding_service.retrieve_relevant_chunks(story_id, query_text, k=3)
+        query_text = (
+            prev_episodes_text if prev_episodes_text else char_text
+        )  # Use summaries or char_text as query
+        chunks = self.embedding_service.retrieve_relevant_chunks(
+            story_id, query_text, k=3
+        )
         chunks_text = (
-            "\n\n".join(
-                f"RELEVANT CONTEXT: {chunk['content']}"
-                for chunk in chunks
-            )
+            "\n\n".join(f"RELEVANT CONTEXT: {chunk['content']}" for chunk in chunks)
             if chunks
             else ""
         )
@@ -145,7 +158,8 @@ class AIService:
         char_snapshot = (
             "\n".join(
                 f"{char['Name']}: {char['Description'][:50]}{'...' if len(char['Description']) > 50 else ''}"
-                for char in characters.values() if char.get("role_active", True)
+                for char in characters.values()
+                if char.get("role_active", True)
             )
             if characters
             else "No active characters yet."
@@ -160,15 +174,21 @@ class AIService:
 
         if num_episodes == 1:
             phase = "ONE-SHOT STORY: Merge all phases into a single episode."
+        elif episode_number == num_episodes:  # ✅ Force conclusion in the last episode
+            phase = "FINAL RESOLUTION: Wrap up all loose ends and conclude the story."
         elif num_episodes == 2:
-            phase = "INTRODUCTION & BUILDING ACTION" if episode_number == 1 else "CLIMAX & RESOLUTION"
+            phase = (
+                "INTRODUCTION & BUILDING ACTION"
+                if episode_number == 1
+                else "CLIMAX & RESOLUTION"
+            )
         elif num_episodes == 3:
             if episode_number == 1:
                 phase = "INTRODUCTION"
             elif episode_number == 2:
                 phase = "BUILDING ACTION & CLIMAX"
             else:
-                phase = "RESOLUTION"
+                phase = "FINAL RESOLUTION: Bring the story to a satisfying end."
         else:
             if episode_number <= intro_threshold:
                 phase = "INTRODUCTION"
@@ -176,10 +196,12 @@ class AIService:
                 phase = "BUILDING ACTION"
             elif episode_number <= climax_threshold:
                 phase = "CLIMAX"
-            elif episode_number <= falling_action_threshold:
-                phase = "FALLING ACTION"
+            elif episode_number == num_episodes - 1:
+                phase = "FALLING ACTION: Preparing for the final conclusion."
+            elif episode_number == num_episodes:
+                phase = "FINAL RESOLUTION: Resolve the conflict and end the story."
             else:
-                phase = "RESOLUTION"
+                phase = "BUILDING ACTION"  # Fallback
 
         instruction = f"""
         You are writing a story titled "{metadata.get('title', 'Untitled Story')}" for audio narration, set in "{settings_data}".
