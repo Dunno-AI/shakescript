@@ -26,13 +26,14 @@ def get_all_stories(service: StoryService = Depends(get_story_service)):
 
 @router.post("/", response_model=Union[StoryResponse, ErrorResponse])
 async def create_story(
-#   story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
+    #   story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
     service: Annotated[StoryService, Depends(get_story_service)],
     prompt: str = Body(...),  # Accept raw prompt as a string
     num_episodes: int = Body(...),  # Accept num_episodes separately
+    hinglish: bool = Body(default=False),
 ):
     prompt = parse_user_prompt(prompt)
-    result = await service.create_story(prompt, num_episodes)
+    result = await service.create_story(prompt, num_episodes, hinglish)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
 

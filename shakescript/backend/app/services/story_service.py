@@ -12,17 +12,19 @@ class StoryService:
         self.db_service = DBService()
         self.embedding_service = EmbeddingService()
 
-    async def create_story(self, prompt: str, num_episodes: int) -> Dict[str, Any]:
+    async def create_story(
+        self, prompt: str, num_episodes: int, hinglish: bool = False
+    ) -> Dict[str, Any]:
         full_prompt = f"{prompt} number of episodes = {num_episodes}"
-        result = self.extract_and_store_metadata(full_prompt, num_episodes)
+        result = self.extract_and_store_metadata(full_prompt, num_episodes, hinglish)
         if "error" in result:
             return result
         return {"story_id": result["story_id"], "title": result["title"]}
 
     def extract_and_store_metadata(
-        self, user_prompt: str, num_episodes: int
+        self, user_prompt: str, num_episodes: int, hinglish: bool
     ) -> Dict[str, Any]:
-        metadata = self.ai_service.extract_metadata(user_prompt)
+        metadata = self.ai_service.extract_metadata(user_prompt, hinglish)
         if "error" in metadata:
             return metadata
         story_id = self.db_service.store_story_metadata(metadata, num_episodes)
@@ -32,7 +34,11 @@ class StoryService:
         return self.db_service.get_story_info(story_id)
 
     def generate_episode(
-        self, story_id: int, episode_number: int, num_episodes: int
+        self,
+        story_id: int,
+        episode_number: int,
+        num_episodes: int,
+        hinglish: bool = False,
     ) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
@@ -68,6 +74,7 @@ class StoryService:
             char_text=char_text,
             story_id=story_id,
             prev_episodes=prev_episodes,
+            hinglish=hinglish,
         )
 
     def get_all_stories(self) -> List[StoryListItem]:
@@ -79,13 +86,15 @@ class StoryService:
         ]
 
     def generate_and_store_episode(
-        self, story_id: int, num_episodes: int
+        self, story_id: int, num_episodes: int, hinglish: bool = False
     ) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return story_data
         current_episode = story_data["current_episode"]
-        episode_data = self.generate_episode(story_id, current_episode, num_episodes)
+        episode_data = self.generate_episode(
+            story_id, current_episode, num_episodes, hinglish
+        )
         if "error" in episode_data:
             return episode_data
 
@@ -107,11 +116,13 @@ class StoryService:
         }
 
     def generate_multiple_episodes(
-        self, story_id: int, num_episodes: int
+        self, story_id: int, num_episodes: int, hinglish: bool = False
     ) -> List[Dict[str, Any]]:
         episodes = []
         for _ in range(num_episodes):
-            episode_result = self.generate_and_store_episode(story_id, num_episodes)
+            episode_result = self.generate_and_store_episode(
+                story_id, num_episodes, hinglish
+            )
             if "error" in episode_result:
                 return episodes + [episode_result]
             episodes.append(episode_result)

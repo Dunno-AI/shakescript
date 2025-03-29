@@ -15,41 +15,65 @@ class AIService:
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.embedding_service = EmbeddingService()  # For retrieving chunks
 
-    def extract_metadata(self, user_prompt: str) -> Dict:
+    def extract_metadata(self, user_prompt: str, hinglish: bool = False) -> Dict:
         """Extract story metadata from user prompt using Gemini."""
 
-        #Preprocess the prompt to normalize 
+        # Preprocess the prompt to normalize
         cleaned_prompt = parse_user_prompt(user_prompt)
-        instruction = """
+
+        hinglish_instruction = ""
+        if hinglish:
+            hinglish_instruction = """
+        convert the prompt in hinglish and then create metadata in higlish like for example
+        metadata bhi hinglish me nikalna 
+        
+        Title:Suggest the story title in HINGLISH language , for example : 
+        Title : ek kala ghoda 
+        Characters: character ke naam bhi hinglish me likho
+        for example : Ram , mohan etc 
+        role : bhai , dost etc ..
+        settings : settings bhi hinglish me hi honi chahiye 
+        """
+
+        # Create metadata template to avoid nested expression error
+        metadata_template = {
+            "Title": "string",
+            "Settings": [
+                {"Place": "string", "Description": "string", "Pronunciation": "string"}
+            ],
+            "Characters": {
+                "Name": {
+                    "Name": "string",
+                    "Role": "string",
+                    "Description": "string",
+                    "Relationship": {"Character_Name": "Relation"},
+                    "Pronunciation": "string",
+                }
+            },
+            "Special Instructions": "string (include tone: e.g., suspenseful, cheerful)",
+            "Story Outline": {"Episode X-Y (Phase)": "Description"},
+        }
+
+        metadata_template_str = json.dumps(metadata_template, indent=2)
+
+        instruction = f"""
+        {hinglish_instruction}
+
     Extract structured metadata from the following story prompt and return it as valid JSON.
     - Title: Suggest a concise, pronounceable title (e.g., avoid silent letters or odd spellings).
     - Settings: Identify locations with brief, vivid descriptions and add phonetic pronunciation for each place.
     - Characters: List key entities with roles, descriptions, and phonetic pronunciation for names (e.g., 'Lee-lah' for Lila).
     - Special Instructions: Include a narration tone (e.g., suspenseful, calm) for audio delivery.
     Format EXACTLY as follows:
-    {
-      "Title": "string",
-      "Settings": [{"Place": "string", "Description": "string", "Pronunciation": "string"}],
-      "Characters": {
-        "Name": {
-          "Name": "string",
-          "Role": "string",
-          "Description": "string",
-          "Relationship": {"Character_Name": "Relation"},
-          "Pronunciation": "string"
-        }
-      },
-      "Special Instructions": "string (include tone: e.g., suspenseful, cheerful)",
-      "Story Outline": {"Episode X-Y (Phase)": "Description"}
-    }
+    {metadata_template_str}
     IMPORTANT: Use simple, pronounceable names and terms for TTS compatibility.
         """
         prompt = f"{instruction}\n\nUser Prompt: {cleaned_prompt}"
         response = self.model.generate_content(prompt)
         raw_text = response.text
 
-        if "```json" in raw_text or "```" in raw_text:
-            json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
+        if "``````" in raw_text:
+            json_pattern = r"``````"
             matches = re.findall(json_pattern, raw_text, re.DOTALL)
             if matches:
                 raw_text = matches[0]
@@ -65,7 +89,7 @@ class AIService:
             episode_data = json.loads(response_text)
             return episode_data
         except json.JSONDecodeError:
-            json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
+            json_pattern = r"``````"
             matches = re.findall(json_pattern, response_text, re.DOTALL)
             if matches:
                 try:
@@ -121,6 +145,7 @@ class AIService:
         char_text: str,
         story_id: int,
         prev_episodes: List = None,
+        hinglish: bool = False,
     ) -> Dict:
         """Generate a structured and well-curated episode with clear progression from intro to conclusion."""
 
@@ -190,12 +215,25 @@ class AIService:
         else:
             phase = "BUILDING ACTION"  # Fallback
 
-        # ✅ **Professional & Efficient Prompt Structure**
+        # Add hinglish instruction if needed
+        hinglish_instruction = ""
+        if hinglish:
+            hinglish_instruction = """
+        generate whole episode in hinglish and return output in same language for example
+        episode title: isko bhi hinglish me likhna jaise ( ek chalak lombdi)
+        episode content : pura episode hinglish me dena 
+        episode summary : ye bhi hinglish me hi generate krna 
 
+        dhyaan se krna ye sb shi shi 
+
+        niche ke saare rule bhi maan na...
+        """
+
+        # ✅ **Professional & Efficient Prompt Structure**
         instruction = f"""
         You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
 
-        **📌 Episode {episode_number} of {num_episodes} (Target: 300-400 words).**  
+        {hinglish_instruction}**📌 Episode {episode_number} of {num_episodes} (Target: 300-400 words).**  
         Set in **"{settings_data}"**, this episode must maintain a gripping flow, with a clear beginning, middle, and end.
 
         ---
@@ -245,12 +283,12 @@ class AIService:
         {{
           "episode_title": "A Short, Pronounceable Title",
           "episode_content": "A well-structured, immersive episode with compelling storytelling.",
-          "episode_summary": "A concise 50-70 word summary of the episode’s key events and outcomes.
+          "episode_summary": "A concise 50-70 word summary of the episode's key events and outcomes.
         }}
         """
-           # ╭──────────────╮
-           # │ gemini model │
-           # ╰──────────────╯
+        # ╭──────────────╮
+        # │ gemini model │
+        # ╰──────────────╯
         response = self.model.generate_content(instruction)
         raw_text = response.text
         return self._parse_episode_response(raw_text, metadata)

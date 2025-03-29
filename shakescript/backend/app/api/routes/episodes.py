@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from ...models.schemas import (
     EpisodeCreateResponse,
@@ -24,6 +24,7 @@ router = APIRouter(prefix="/episodes", tags=["episodes"])
 def generate_episode(
     story_id: int,
     service: Annotated[StoryService, Depends(get_story_service)],
+    hinglish: bool = Query(default=False, description="Generate in Hinglish if true"),
     all: bool = Query(
         default=False, description="Generate all remaining episodes if true"
     ),
@@ -42,7 +43,9 @@ def generate_episode(
         episodes_to_generate = num_episodes - current_episode + 1
         if episodes_to_generate <= 0:
             return []
-        results = service.generate_multiple_episodes(story_id, episodes_to_generate)
+        results = service.generate_multiple_episodes(
+            story_id, episodes_to_generate, hinglish
+        )
         if "error" in results[-1]:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=results[-1]["error"]
@@ -56,7 +59,7 @@ def generate_episode(
             for result in results
         ]
     else:
-        result = service.generate_and_store_episode(story_id, num_episodes)
+        result = service.generate_and_store_episode(story_id, num_episodes, hinglish)
         if "error" in result:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=result["error"]
@@ -66,4 +69,3 @@ def generate_episode(
             episode_title=result["episode_title"],
             episode_content=result["episode_content"],
         )
-
