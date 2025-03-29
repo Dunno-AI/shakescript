@@ -122,3 +122,8 @@ Shakescript follows a **hybrid AI approach**, using **GPT-4o for high-quality ep
 🔥 **Shakescript is pushing the boundaries of AI-generated narratives!** 🚀📖  
 
 ---
+## 📊 System Architecture & Workflow
+
+Below is the **Shakescript AI Storytelling Pipeline**:
+
+![Shakescript Flow Diagram](System_Pipeline.svg)
