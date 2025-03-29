@@ -1,7 +1,7 @@
 import google.generativeai as genai
 from openai import OpenAI
 from app.core.config import settings
-from app.utils import extract_json_manually
+from app.utils import extract_json_manually, parse_user_prompt
 from app.services.embedding_service import EmbeddingService  # For chunks
 from typing import Dict, List
 import json
@@ -17,6 +17,9 @@ class AIService:
 
     def extract_metadata(self, user_prompt: str) -> Dict:
         """Extract story metadata from user prompt using Gemini."""
+
+        #Preprocess the prompt to normalize 
+        cleaned_prompt = parse_user_prompt(user_prompt)
         instruction = """
     Extract structured metadata from the following story prompt and return it as valid JSON.
     - Title: Suggest a concise, pronounceable title (e.g., avoid silent letters or odd spellings).
@@ -41,7 +44,7 @@ class AIService:
     }
     IMPORTANT: Use simple, pronounceable names and terms for TTS compatibility.
         """
-        prompt = f"{instruction}\n\nUser Prompt: {user_prompt}"
+        prompt = f"{instruction}\n\nUser Prompt: {cleaned_prompt}"
         response = self.model.generate_content(prompt)
         raw_text = response.text
 
@@ -241,26 +244,28 @@ class AIService:
         **📢 Output ONLY a valid JSON response in this format:**  
         {{
           "episode_title": "A Short, Pronounceable Title",
-          "episode_content": "A well-structured, immersive episode with compelling storytelling."
+          "episode_content": "A well-structured, immersive episode with compelling storytelling.",
+          "episode_summary": "A concise 50-70 word summary of the episode’s key events and outcomes.
         }}
         """
-        #gemini model
+           # ╭──────────────╮
+           # │ gemini model │
+           # ╰──────────────╯
         response = self.model.generate_content(instruction)
         raw_text = response.text
         return self._parse_episode_response(raw_text, metadata)
 
-         # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
-        
+        # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
+
         # response = self.openai_client.chat.completions.create(
-            # model="gpt-4o",
-            # messages=[
-                # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives."},
-                # {"role": "user", "content": instruction}
-            # ],
-            # temperature=0.7,
-            # max_tokens=1000
+        # model="gpt-4o",
+        # messages=[
+        # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives."},
+        # {"role": "user", "content": instruction}
+        # ],
+        # temperature=0.7,
+        # max_tokens=1000
         # )
 
         # raw_text = response.choices[0].message.content or ""
         # return self._parse_episode_response(raw_text, metadata)
-

@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-from ...models.schemas import StoryCreate, StoryListResponse, StoryResponse, ErrorResponse, EpisodeResponse
+from ...models.schemas import (
+    StoryCreate,
+    StoryListResponse,
+    StoryResponse,
+    ErrorResponse,
+    EpisodeResponse,
+)
 from app.services.story_service import StoryService
 from app.api.dependencies import get_story_service
 from typing import Annotated, Union, Dict, Any, List
+from app.utils import parse_user_prompt
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
@@ -19,9 +26,13 @@ def get_all_stories(service: StoryService = Depends(get_story_service)):
 
 @router.post("/", response_model=Union[StoryResponse, ErrorResponse])
 async def create_story(
-    story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
+#   story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
+    service: Annotated[StoryService, Depends(get_story_service)],
+    prompt: str = Body(...),  # Accept raw prompt as a string
+    num_episodes: int = Body(...),  # Accept num_episodes separately
 ):
-    result = await service.create_story(story.prompt, story.num_episodes)
+    prompt = parse_user_prompt(prompt)
+    result = await service.create_story(prompt, num_episodes)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
 
@@ -63,6 +74,7 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
         summary=story_info.get("summary"),
     )
 
+
 @router.post("/{story_id}/summary", response_model=Union[Dict[str, Any], ErrorResponse])
 def update_story_summary(
     story_id: int, service: Annotated[StoryService, Depends(get_story_service)]
@@ -74,6 +86,3 @@ def update_story_summary(
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
     return result
-
-
-

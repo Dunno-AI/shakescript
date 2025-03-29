@@ -179,3 +179,30 @@ def extract_episode_json_manually(text: str) -> Dict:
 
     return episode_data
 
+
+def parse_user_prompt(raw_prompt: str) -> str:
+    """
+    Cleans a user-submitted prompt by removing Markdown, excessive symbols, and normalizing formatting.
+
+    Args:
+        raw_prompt (str): User input.
+    Returns:
+        str: Cleaned text suitable for AI processing.
+    """
+    raw_prompt = raw_prompt.strip()
+
+    # Remove Markdown headers (e.g., "### Title")
+    raw_prompt = re.sub(r"#+\s*", "", raw_prompt)
+
+    # Remove Markdown bold (**bold**) and italics (_italics_)
+    raw_prompt = re.sub(r"\*\*(.*?)\*\*", r"\1", raw_prompt)  # Bold
+    raw_prompt = re.sub(r"_(.*?)_", r"\1", raw_prompt)  # Italics
+
+    # Replace Markdown bullet points (🔹, -, *, etc.) with simple line breaks
+    raw_prompt = re.sub(r"🔹\s*", "- ", raw_prompt)
+    raw_prompt = re.sub(r"[-*]\s*", "- ", raw_prompt)
+
+    # Normalize multiple spaces and newlines
+    raw_prompt = re.sub(r"\s*\n\s*", "\n", raw_prompt).strip()
+
+    return raw_prompt
