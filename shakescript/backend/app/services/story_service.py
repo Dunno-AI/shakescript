@@ -46,6 +46,7 @@ class StoryService:
         story_metadata = {
             "title": story_data["title"],
             "setting": story_data["setting"],
+            "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
             "current_episode": story_data["current_episode"],
@@ -66,7 +67,7 @@ class StoryService:
                 (ep["episode_number"], ep["content"], ep["summary"])
                 for ep in episodes_result.data
             ]
-        char_text = json.dumps(story_data["characters"])  # Pass initial character data
+        char_text = json.dumps(story_data["characters"])
         return self.ai_service.generate_episode_helper(
             num_episodes=num_episodes,
             metadata=story_metadata,
@@ -78,7 +79,6 @@ class StoryService:
         )
 
     def get_all_stories(self) -> List[StoryListItem]:
-        """Fetch all stories with only id and title."""
         raw_stories = self.db_service.get_all_stories()
         return [
             StoryListItem(story_id=story["id"], title=story["title"])
@@ -95,18 +95,24 @@ class StoryService:
         episode_data = self.generate_episode(
             story_id, current_episode, num_episodes, hinglish
         )
+        # print("episode_data......\n", episode_data)
         if "error" in episode_data:
             return episode_data
+
+        # Merge characters
+        existing_chars = story_data["characters"]
+        for char_name, new_char in episode_data.get("characters_featured", {}).items():
+            if char_name in existing_chars:
+                existing_chars[char_name].update(new_char)
+            else:
+                existing_chars[char_name] = new_char
+        episode_data["characters_featured"] = existing_chars
 
         episode_id = self.db_service.store_episode(
             story_id, episode_data, current_episode
         )
         self.embedding_service._process_and_store_chunks(
-            story_id,
-            episode_id,
-            current_episode,
-            episode_data["episode_content"],
-            [],  # No characters stored here
+            story_id, episode_id, current_episode, episode_data["episode_content"], []
         )
         return {
             "episode_id": episode_id,
@@ -133,9 +139,8 @@ class StoryService:
         if "error" in story_data:
             return story_data
         episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
-        print("episode_summaries", episode_summaries)
         instruction = f"""
-        Create a 150-200 word audio teaser summary for "{story_data['title']}"based on these episode summaries:
+        Create a 150-200 word audio teaser summary for "{story_data['title']}" based on these episode summaries:
         {episode_summaries}
         - Use short, vivid sentences (10-15 words) for TTS clarity.
         - Highlight key moments with dramatic phrasing (e.g., 'A howl echoed').
