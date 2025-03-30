@@ -55,7 +55,7 @@ class StoryService:
         if episode_number > 1:
             episodes_result = (
                 self.db_service.supabase.table("episodes")
-                .select("episode_number, content, summary")
+                .select("episode_number, content, summary,title")
                 .eq("story_id", story_id)
                 .gte("episode_number", max(1, episode_number - 2))
                 .lt("episode_number", episode_number)
@@ -64,7 +64,7 @@ class StoryService:
                 .execute()
             )
             prev_episodes = [
-                (ep["episode_number"], ep["content"], ep["summary"])
+                (ep["episode_number"], ep["content"], ep["summary"],ep["title"])
                 for ep in episodes_result.data
             ]
         char_text = json.dumps(story_data["characters"])

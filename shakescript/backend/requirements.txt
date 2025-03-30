@@ -8,3 +8,5 @@ llama-index
 llama-index-embeddings-huggingface
 python-dotenv
 tqdm
+openai
+pydantic-settings

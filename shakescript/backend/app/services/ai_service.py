@@ -33,7 +33,7 @@ class AIService:
         metadata_template = {
             "Title": "string",
             "Settings": [
-                {"Place": "string", "Description": "string", "Pronunciation": "string"}
+                {"Place Name": "The Place's Description", "Pronunciation": "string"}
             ],
             "Characters": {
                 "Name": {
@@ -56,6 +56,7 @@ class AIService:
         - Characters: List key entities with roles, descriptions, and phonetic pronunciation for names (e.g., 'Lee-lah' for Lila).
         - Special Instructions: Include a narration tone (e.g., suspenseful, calm) for audio delivery.
         Format EXACTLY as follows:
+        - Settings: Use the format "Place Name": "Description" for each location like ("greenwood":"a dense forest" ).
         {metadata_template_str}
         IMPORTANT: Use simple, pronounceable names and terms for TTS compatibility.
         """
@@ -132,17 +133,19 @@ class AIService:
         hinglish: bool = False,
     ) -> Dict:
         """Generate a structured and well-curated episode with clear progression from intro to conclusion."""
+
         settings_data = (
             "\n".join(
-                f"Place: {s.get('Place', 'Unknown')}, Description: {s.get('Description', 'No description')}"
-                for s in metadata.get("Settings", [])
+                f"{place}: {description}"
+                for place, description in metadata.get("Settings", {}).items()
             )
             or "No settings provided."
         )
+
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep_num} SUMMARY: {summary}\nEPISODE {ep_num} CONTENT: {content}"
-                for ep_num, content, summary in prev_episodes[-3:]
+                f"EPISODE {ep_num} SUMMARY: {summary}\nEPISODE {ep_num} CONTENT: {content}\nTITLE:{title}"
+                for ep_num, content, summary, title in prev_episodes[-3:]
             )
             if prev_episodes
             else ""
@@ -213,6 +216,18 @@ class AIService:
         {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).  
         Set in "{settings_data}", this episode must maintain a gripping flow, with a clear beginning, middle, and end.
         ---
+        SPECIAL INSTRUCTIONS FOR EPISODE INTRODUCTION:
+        - For Episode 1: Create a gradual, immersive introduction that:
+           Opens with vivid sensory details of the setting before introducing characters
+           Establishes the normal world and atmosphere before revealing conflicts
+           Introduces the protagonist through small, meaningful actions that reveal personality
+           Uses environmental details to subtly hint at the larger world and its rules
+           Builds curiosity by raising questions rather than providing immediate answers
+           Avoids rushing into action - allow the reader to settle into the world first
+
+        - For Continuing Episodes: Begin with a brief moment of reflection or calm before advancing the plot
+           Briefly establish the current location/situation before continuing the previous episode's events
+           Create a sensory-rich transition that orients the reader before accelerating the actio
         Storytelling Rules for a Stronger Narrative:
         1. Deep Story Consistency & Character Growth:  
            - Maintain logical progression from previous episodes.  
@@ -234,12 +249,20 @@ class AIService:
            - Physical Threats: Shadows, monsters, environmental hazards.  
            - Psychological Horror: Unreliable memories, illusions, betrayals.  
            - Emotional Conflict: Character-driven tension, moral dilemmas, inner fears.  
+        5. TTS-Friendly Structure for Narration:
+           - Short, clear sentences for smooth speech synthesis.  
+           - Proper punctuation for natural pauses and emphasis.  
+           - Correct dialogue formatting with clear separation between speech and narration.  
+           - Avoid overly long paragraphs; break them for better readability and pacing.  
+           - Use ellipses (...) for suspense and dashes (—) for interruptions.  
+           - Describe tone and emotions explicitly (e.g., whispered, growled, choked out).  
         ---
         Your Task: Generate a Well-Paced Episode
         1. Use prior episodes & context below to ensure coherence.  
         2. Prioritize character-driven storytelling & emotional depth.  
         3. Weave in foreshadowing for upcoming twists.  
         Previous Episodes Recap:  
+        -Title should not be same to previous ones.(it can be upto 4 5 words like murder of the blind lady)
         {prev_episodes_text}  
         Relevant Context (Extracted from Past Episodes):  
         {chunks_text}  
@@ -255,9 +278,27 @@ class AIService:
           "Key Events": ["Key event 1", "Key event 2"]
         }}
         """
+        # ╭──────────────╮
+        # │ gemini model │
+        # ╰──────────────╯
         response = self.model.generate_content(instruction)
         raw_text = response.text
         # print("raw text from ai service............\n", raw_text)
         response_data = self._parse_episode_response(raw_text, metadata)
         # print("response data from _parse_episode_response............\n", response_data)
         return response_data
+
+        # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
+
+        # response = self.openai_client.chat.completions.create(
+        # model="gpt-4o",
+        # messages=[
+        # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives."},
+        # {"role": "user", "content": instruction}
+        # ],
+        # temperature=0.7,
+        # max_tokens=1000
+        # )
+
+        # raw_text = response.choices.message.content or ""
+        # return self._parse_episode_response(raw_text, metadata)

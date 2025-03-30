@@ -160,9 +160,7 @@ class DBService:
             or "[]"
         )
         new_key_events = episode_data.get("Key Events", [])
-        updated_key_events = list(
-            set(current_key_events + new_key_events)
-        ) 
+        updated_key_events = list(set(current_key_events + new_key_events))
         self.supabase.table("stories").update(
             {
                 "current_episode": current_episode + 1,
