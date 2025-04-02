@@ -31,26 +31,32 @@ class AIService:
             "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"},],
             "Characters": [
                 {
-                    "Name": "string",
-                    "Role": "string",
+                    "Name": "string (Give proper name not examples, only name)",
+                    "Role": "string (Protagonist/Antagonist(if any)/others(give roles according to the story))",
                     "Description": "string",
                     "Relationship": {"Character_Name": "Relation"},
-                    "Emotional_state": "string(initial state)",
+                    "Emotional_State": "string(initial state)",
                 },
             ],
             "Theme": "string",
-            "Story Outline": {"(Phase_name) Ep X - Y": "Description"},
+            "Story Outline": {"Ep X - Y (Phase_name-Exposition/ Inciting Incident/ Rising Action/ Dilemma/ Climax/ Denouement)": "Description"},
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
         {hinglish_instruction}
         Extract metadata from User Prompt for a {num_episodes}-episode story:
-        - Title: Suggest pronounceable title which expresses the feel and theme of the story.
+        - Title: Suggest a title which expresses the feel and theme of the story.
         - Settings: List locations with vivid descriptions (Eg- {"Cave: A deep dark cave where the team assembles"}).
         - Protagonist: Identify the main character with motivation and fears.
-        - Characters: Current Characters which you can think of in role- Protagonis/Antagonist(if any)/others(give roles according to the story).
+        - Characters: All the characters of the story.
         - Theme: Suggest a guiding theme (e.g., redemption).
-        - Story Outline: Map {num_episodes} episodes to a six-phase structure only, merge phases for short story(Exposition , Inciting Incident , Rising Action , Dilemma , Climax , Denouement).
+        - Story Outline: If the story is short you should merege phases there should be all the 6 phases.
+        
+        IMPORTANT POINTS-
+        - The story must have a clear beginning, middle, and satisfiable end.
+        - If the story is short maintain the pace and flow of the sotry.
+        - If the story is short you should shorten the middle phases to give space to the beginning and end.
+        - If the story is long each phase must be descriptive, engaging and thrilling on its own.
         Format as JSON:
         {json.dumps(metadata_template, indent=2)}
         User Prompt: {cleaned_prompt}
@@ -160,7 +166,7 @@ class AIService:
                 f"Description: {char.get('Description', 'No description available')}, "
                 f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
                 f"Active: {'Yes' if char.get('role_active', True) else 'No'}, "
-                f"Emotional State: {char.get('Emotional_state', 'Unknown')}"
+                f"Emotional State: {char.get('emotional_state', 'Unknown')}"
                 for char in characters
 
             )

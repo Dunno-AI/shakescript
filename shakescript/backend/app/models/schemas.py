@@ -10,7 +10,7 @@ class StoryCreate(BaseModel):
 class StoryResponse(BaseModel):
     story_id: int
     title: str
-    setting: List[Dict[str, str]]
+    setting: Dict[str, str]
     characters: Union[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]  
     special_instructions: str
     story_outline: Dict[str, str]
