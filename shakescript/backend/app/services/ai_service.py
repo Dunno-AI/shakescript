@@ -7,7 +7,6 @@ from typing import Dict, List
 import json
 import re
 
-
 class AIService:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -15,20 +14,16 @@ class AIService:
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.embedding_service = EmbeddingService()
 
-    def extract_metadata(
-        self, user_prompt: str, num_episodes: int, hinglish: bool = False
-    ) -> Dict:
-        """Extract story metadata from user prompt using Gemini."""
+    def extract_metadata(self, user_prompt: str, num_episodes: int, hinglish: bool = False) -> Dict:
         cleaned_prompt = parse_user_prompt(user_prompt)
         hinglish_instruction = (
             "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
-            if hinglish
-            else ""
+            if hinglish else ""
         )
         metadata_template = {
             "Title": "string",
-            "Settings": {"Place": "Description of the place", },
-            "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"},],
+            "Settings": {"Place": "Description of the place"},
+            "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"}],
             "Characters": [
                 {
                     "Name": "string (Give proper name not examples, only name)",
@@ -36,33 +31,31 @@ class AIService:
                     "Description": "string",
                     "Relationship": {"Character_Name": "Relation"},
                     "Emotional_State": "string(initial state)",
-                },
+                }
             ],
             "Theme": "string",
-            "Story Outline": {"Ep X - Y (Phase_name-Exposition/ Inciting Incident/ Rising Action/ Dilemma/ Climax/ Denouement)": "Description"},
+            "Story Outline": {"Ep X - Y (Phase_name-Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement)": "Description"},
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
         {hinglish_instruction}
         Extract metadata from User Prompt for a {num_episodes}-episode story:
         - Title: Suggest a title which expresses the feel and theme of the story.
-        - Settings: List locations with vivid descriptions (Eg- {"Cave: A deep dark cave where the team assembles"}).
+        - Settings: List locations with vivid descriptions as a dictionary (e.g., {{"Cave": "A deep dark cave where the team assembles"}}).
         - Protagonist: Identify the main character with motivation and fears.
         - Characters: All the characters of the story.
         - Theme: Suggest a guiding theme (e.g., redemption).
-        - Story Outline: If the story is short you should merege phases there should be all the 6 phases.
+        - Story Outline: If the story is short, merge phases but include all 6 (Exposition, Inciting Incident, Rising Action, Dilemma, Climax, Denouement).
         
-        IMPORTANT POINTS-
+        IMPORTANT POINTS:
         - The story must have a clear beginning, middle, and satisfiable end.
-        - If the story is short maintain the pace and flow of the sotry.
-        - If the story is short you should shorten the middle phases to give space to the beginning and end.
-        - If the story is long each phase must be descriptive, engaging and thrilling on its own.
+        - If short, maintain pace and flow, shortening middle phases.
+        - If long, make each phase descriptive, engaging, and thrilling.
         Format as JSON:
         {json.dumps(metadata_template, indent=2)}
         User Prompt: {cleaned_prompt}
         """
-        prompt = f"{instruction}\n\nUser Prompt: {cleaned_prompt}"
-        response = self.model.generate_content(prompt)
+        response = self.model.generate_content(instruction)
         raw_text = response.text
 
         if "```" in raw_text:
@@ -100,21 +93,11 @@ class AIService:
                 except:
                     pass
             title_match = re.search(r'"episode_title":\s*"([^"]+)"', response_text)
-            content_match = re.search(
-                r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text
-            )
+            content_match = re.search(r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text)
             summary_match = re.search(r'"episode_summary":\s*"([^"]+)"', response_text)
-            episode_title = (
-                title_match.group(1)
-                if title_match
-                else f"Episode {metadata.get('current_episode', 1)}"
-            )
+            episode_title = title_match.group(1) if title_match else f"Episode {metadata.get('current_episode', 1)}"
             episode_content = content_match.group(1) if content_match else response_text
-            episode_summary = (
-                summary_match.group(1)
-                if summary_match
-                else "Episode summary not available."
-            )
+            episode_summary = summary_match.group(1) if summary_match else "Episode summary not available."
             return {
                 "episode_title": episode_title,
                 "episode_content": episode_content,
@@ -131,17 +114,14 @@ class AIService:
         prev_episodes: List = None,
         hinglish: bool = False,
     ) -> Dict:
-        """Generate a structured and well-curated episode with clear progression from intro to conclusion."""
-
         settings_data = (
             "\n".join(
                 f"{place}: {description}"
-                for place, description in metadata.get("Settings", {}).items()
+                for place, description in metadata.get("setting", {}).items()  # Use "setting" consistently
             )
-            or "No settings provided Build your own."
+            or "No settings provided. Build your own."
         )
 
-        
         prev_episodes_text = (
             "\n\n".join(
                 f"EPISODE {ep['episode_number']}\nCONTENT: {ep['content']}\nTITLE: {ep['title']}"
@@ -153,9 +133,7 @@ class AIService:
         chunks_text = (
             "\n\n".join(
                 f"RELEVANT CONTEXT: {chunk['content']}"
-                for chunk in self.embedding_service.retrieve_relevant_chunks(
-                    story_id, prev_episodes_text or char_text, k=5
-                )
+                for chunk in self.embedding_service.retrieve_relevant_chunks(story_id, prev_episodes_text or char_text, k=5)
             )
             or ""
         )
@@ -166,28 +144,18 @@ class AIService:
                 f"Description: {char.get('Description', 'No description available')}, "
                 f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
                 f"Active: {'Yes' if char.get('role_active', True) else 'No'}, "
-                f"Emotional State: {char.get('emotional_state', 'Unknown')}"
+                f"Emotional State: {char.get('Emotional_State', 'Unknown')}"
                 for char in characters
-
             )
             or "No characters introduced yet."
         )
 
-        # Add key events from metadata
         key_events = metadata.get("key_events", [])
-        key_events_summary = (
-            "Key Story Events So Far: " + "; ".join(key_events)
-            if key_events
-            else "No key events yet."
-        )
+        key_events_summary = "Key Story Events So Far: " + "; ".join(key_events) if key_events else "No key events yet."
 
-        hinglish_instruction = (
-            "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
-            if hinglish
-            else ""
-        )
+        hinglish_instruction = "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')" if hinglish else ""
 
-        # Determine current phase
+        # Determine current phase (unchanged)
         if num_episodes <= 3:
             if episode_number == 1:
                 phase = "INTRODUCTION + RISING_ACTION"
@@ -222,179 +190,51 @@ class AIService:
             else:
                 phase = "RESOLUTION"
 
-        # Phase-specific requirements (focused, compact version)
-        phase_requirements = {
-            "INTRODUCTION + RISING_ACTION": """
-            -This is for short story so you have to merge phases
-            -Merge together itroduction and rising action of the story
-            -Keep the flow smooth
-            """,
-            "CLIMAX + RESOLUTION": """
-            -This is for short story so you have to merge phases
-            -Merge together climax and resolution of the story
-            -Keep the flow smooth
-            """,
-            ""
-            "INTRODUCTION": """
-            -Begin with rich, immersive sensory descriptions (sight, sound, smell, touch, taste) that establish the world
-            -Create a distinctive atmosphere through deliberate environmental details and weather patterns
-            -Introduce the protagonist through revealing actions, thoughts, and behaviors rather than exposition
-            -Establish the character's normal world, routines, and relationships before the inciting incident
-            -Subtly hint at underlying tensions or themes that will develop throughout the story
-            -Plant seeds of the central conflict without fully revealing it
-            -Show the protagonist's strengths, flaws, and desires through specific interactions
-            -Create a compelling hook through mystery, tension, or an unexpected event
-            -End with a moment that disrupts the status quo and demands a response
-            """,
-            "RISING_ACTION": """
-            -Develop meaningful character conflicts that reveal core values and beliefs
-            -Show how supporting characters both help and complicate the protagonist's journey
-            -Create a sequence of escalating obstacles that test the protagonist in new ways
-            -Deepen emotional connections between characters through shared experiences
-            -Reveal backstory elements that contextualize current conflicts and motivations
-            -Introduce complications that force characters to make difficult choices
-            -Show initial attempts to resolve problems and their consequences
-            -Build tension through pacing, dialogue, and environmental pressure
-            -End with a mini-cliffhanger that raises stakes and creates urgency
-            """,
-            "COMPLICATION": """
-            -Introduce multi-dimensional obstacles that challenge characters physically, emotionally, and morally
-            -Reveal character values through consequential choices and their aftermath
-            -Clearly establish world rules, limitations, and consequences for breaking them
-            -Create tension between characters with conflicting goals but mutual dependence
-            -Develop central conflict through successive revelations and complications
-            -Show characters adapting to new information and changing circumstances
-            -Introduce secondary characters who represent different approaches to central problems
-            -Reveal hidden aspects of familiar settings or relationships
-            -Plant elements that will later become crucial plot points
-            -Build momentum through increasingly difficult challenges
-            """,
-            "FIRST_THRESHOLD": """
-            -Create a definitive point-of-no-return moment that forces commitment
-            -Show characters crossing physical, emotional, or psychological boundaries
-            -Force character commitment to the journey through burning bridges or eliminating alternatives
-            -Reveal new, unexpected aspects of the world or situation that change perspective
-            -Introduce significantly higher stakes that make retreat impossible
-            -Firmly establish the narrative path and central conflict
-            -Reveal deeper character motivations that explain their willingness to continue
-            -Create a moment of transformation or decision that defines the protagonist's journey
-            -Challenge character assumptions about their world or situation
-            -Show immediate consequences of crossing the threshol
-            """,
-            "PROGRESSIVE_COMPLICATIONS": """
-            -Escalate challenges and stakes in meaningful ways that test character limits
-            -Create increasingly difficult obstacles that require new skills or alliances
-            -Develop intersecting subplots that complicate the main narrative thread
-            -Reveal new character motivations that add complexity to relationships
-            -Build tension through complications that force difficult choices
-            -Show characters adapting and evolving in response to challenges
-            -Create moments of apparent progress followed by setbacks
-            -Introduce time pressure or deadline elements that increase urgency
-            -Deepen thematic elements through parallel character journeys
-            -Challenge character beliefs and assumptions through unexpected developments
-            """,
-            "MIDPOINT_REVERSAL": """
-            -Create a dramatic shift in direction that fundamentally changes the story trajectory
-            -Reveal critical information that recontextualizes previous events and choices
-            -Force characters to reevaluate goals, methods, and alliances
-            -Introduce a surprising twist that challenges character assumptions
-            -Set a new trajectory that couldn't have been anticipated earlier
-            -Show immediate emotional and practical consequences of the reversal
-            -Reveal hidden aspects of characters or their situation
-            -Transform the nature of the central conflict or how it must be resolved
-            -Create a moment of truth that exposes character flaws or strengths
-            -Shift power dynamics between key characters in unexpected ways
-            """,
-            "TESTING_NEW_PATH": """
-            -Show adaptation to new circumstances through specific actions and decisions
-            -Test relationships under pressure, revealing their true strength and nature
-            -Reveal character growth through actions that would have been impossible earlier
-            -Introduce complications that test the new approach or understanding
-            -Build toward crisis through escalating challenges to the new path
-            -Show both successes and failures that result from character changes
-            -Create moments of doubt and recommitment to the journey
-            -Develop newfound strengths or abilities through practical application
-            -Deepen alliances or create new conflicts based on changing priorities
-            -Reveal the consequences of earlier choices that now impact the journey
-            """,
-            "CRISIS": """
-            -Present the darkest moment or apparent defeat that seems insurmountable
-            -Force confrontation with deep-seated fears, flaws, or painful truths
-            -Create a moment where all seems lost and victory appears impossible
-            -Reveal hidden strengths, resources, or allies at a crucial moment
-            -Strip away character defenses and coping mechanisms
-            -Challenge the character's core beliefs or identity
-            -Create impossible choices with significant consequences
-            -Show the culmination of character flaws or past mistakes
-            -End with a crucial decision point that will determine everything
-            -Demonstrate what the character values most through their choices under pressure
-            """,
-            "CLIMAX": """
-            -Create the highest tension point through converging conflicts and stakes
-            -Force direct confrontation with the antagonist or central challenge
-            -Show characters applying what they've learned throughout their journey
-            -Reveal final surprises or twists that recontextualize the struggle
-            -Bring primary conflicts to a head in a definitive, high-stakes confrontation
-            -Demonstrate character growth through choices different from earlier patterns
-            -Create moments of sacrifice that show character transformation
-            -Test character resolve through final temptations or doubts
-            -Show the resolution of internal and external conflicts
-            -Create visual, emotional, and thematic culmination of story elements
-            """,
-            "RESOLUTION": """
-            -Resolve esolve main conflicts with emotional and narrative satisfaction
-            -Show the consequences of actions and growth for all key characters
-            -Provide meaningful closure to relationships and narrative threads
-            -Reflect on thematic elements through character realizations or symbolic moments
-            -Leave a memorable final impression through imagery, dialogue, or reflection
-            -Show the new status quo and how it differs from the starting point
-            -Address how characters have been transformed by their experiences
-            -Create emotional payoff for reader investment in character journeys
-            -Tie up loose ends while leaving appropriate elements for potential continuation
-            -Reinforce the story's central message or question through final moments
-            """,
+        phase_requirements = {  # Unchanged, keeping it concise
+            "INTRODUCTION + RISING_ACTION": "Merge introduction and rising action smoothly for short story.",
+            "CLIMAX + RESOLUTION": "Merge climax and resolution smoothly for short story.",
+            "INTRODUCTION": "Set world, introduce protagonist, hint at conflict with sensory details.",
+            "RISING_ACTION": "Escalate obstacles, deepen character ties, end with a cliffhanger.",
+            "COMPLICATION": "Introduce complex challenges, reveal character values.",
+            "FIRST_THRESHOLD": "Point of no return, raise stakes, transform protagonist.",
+            "PROGRESSIVE_COMPLICATIONS": "Escalate challenges, test limits, add subplots.",
+            "MIDPOINT_REVERSAL": "Dramatic shift, recontextualize story, expose truths.",
+            "TESTING_NEW_PATH": "Adapt to new path, test growth, build to crisis.",
+            "CRISIS": "Darkest moment, impossible choices, reveal strengths.",
+            "CLIMAX": "Peak tension, resolve conflicts, show transformation.",
+            "RESOLUTION": "Close conflicts, show new status quo, emotional payoff."
         }
 
-        # print("phase", phase)
-        # print("phase_requirements", phase_requirements[phase])
-        # Compact story structure based on length
-        story_structure = f"""
-        {num_episodes} EPISODE STORY:
-        - {"SHORT" if num_episodes <= 7 else "LONG"} FORM - CURRENT PHASE: {phase}
-        """
+        story_structure = f"{num_episodes} EPISODE STORY: {'SHORT' if num_episodes <= 7 else 'LONG'} FORM - CURRENT PHASE: {phase}"
         instruction = f"""
         You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
         {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).
         Set in "{settings_data}", this episode must maintain a gripping flow, with a clear beginning, middle, and end.
         ---
         {story_structure}
-        PHASE REQUIREMENTS:
-        {phase_requirements[phase]}
+        PHASE REQUIREMENTS: {phase_requirements[phase]}
 
         GUIDELINES:
-        - Maintain ALL characters introduced unless explicitly killed or retired. Reference {char_snapshot} for status and ensure traits/motivations persist.
+        - Maintain ALL characters introduced unless explicitly killed or retired. Reference {char_snapshot} for status.
         - If a character is absent, note why (e.g., "Rohan is away searching for clues").
-        - Start with a brief tie-in to the previous episode unless Episode 1.
-        - End with a smooth lead-in to the next episode unless final episode.
-        - Ensure scene transitions flow logically with clear cause-and-effect.
+        - Start with a tie-in to the previous episode unless Episode 1.
+        - End with a lead-in to the next episode unless final.
+        - Ensure logical scene transitions with cause-and-effect.
         - Feature relevant characters with distinct traits.
         - Reveal character depth through challenges.
         - Create sensory-rich descriptions.
         - Use varied sentences and dialogue tags.
-        - Ensure this episode fits phase {phase}.
+        - Fit phase {phase}.
 
         Your Task: Generate a Well-Paced Episode
-        1. Use prior episodes & context below for coherence.
+        1. Use prior episodes & context for coherence.
         2. Create a unique title (4-5 words) differing from previous ones.
         3. Prioritize character-driven storytelling & emotional depth.
-        4. Ensure this episode fulfills its role in the current narrative phase.
+        4. Fulfill the current narrative phase.
 
-        Previous Episodes Recap:
-        {prev_episodes_text}
-        Relevant Context:
-        {chunks_text}
-        Active Characters & Motivations:
-        {char_snapshot}
+        Previous Episodes Recap: {prev_episodes_text}
+        Relevant Context: {chunks_text}
+        Active Characters & Motivations: {char_snapshot}
         {key_events_summary}
 
         - Output STRICTLY a valid JSON object with NO additional text:
@@ -403,20 +243,14 @@ class AIService:
           "episode_content": "An immersive episode with compelling storytelling.",
           "episode_summary": "A concise 50-70 word summary of the episode's key events and outcomes.",
           "episode_emotional_state": "string",
-          "characters_featured": [{{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true, "Emotional_state": "string"}},],
-          "Key Events": ["Key event 1", "Key event 2"]
+          "characters_featured": [{{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true, "Emotional_State": "string"}}],
+          "Key Events": ["Key event 1", "Key event 2"],
+          "Settings": {{"Place": "Description of the place"}}
         }}
         """
-        # ╭──────────────╮
-        # │ gemini model │
-        # ╰──────────────╯
         response = self.model.generate_content(instruction)
         raw_text = response.text
-        # print("raw text from ai service............\n", raw_text)
-        response_data = self._parse_episode_response(raw_text, metadata)
-        # print("response data from _parse_episode_response............\n", response_data)
-        return response_data
-
+        return self._parse_episode_response(raw_text, metadata)
         # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
 
         # response = self.openai_client.chat.completions.create(

@@ -5,7 +5,6 @@ from app.services.embedding_service import EmbeddingService
 from app.models.schemas import StoryListItem
 import json
 
-
 class StoryService:
     def __init__(self):
         self.ai_service = AIService()
@@ -34,7 +33,7 @@ class StoryService:
 
         story_metadata = {
             "title": story_data["title"],
-            "setting": story_data["setting"],
+            "setting": story_data["setting"],  # Dict[str, str]
             "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
@@ -53,10 +52,7 @@ class StoryService:
         )
 
     def get_all_stories(self) -> List[StoryListItem]:
-        return [
-            StoryListItem(story_id=story["id"], title=story["title"])
-            for story in self.db_service.get_all_stories()
-        ]
+        return [StoryListItem(story_id=story["id"], title=story["title"]) for story in self.db_service.get_all_stories()]
 
     def generate_and_store_episode(self, story_id: int, episode_number: int, num_episodes: int, hinglish: bool = False, prev_episodes=[]) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
@@ -116,7 +112,6 @@ class StoryService:
             })
 
         print("episodes from generate_multiple_episodes\n", episodes)
-
         return episodes
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:
@@ -137,5 +132,3 @@ class StoryService:
         summary = self.ai_service.model.generate_content(instruction).text.strip()
         self.db_service.supabase.table("stories").update({"summary": summary}).eq("id", story_id).execute()
         return {"story_id": story_id, "summary": summary}
-
-
