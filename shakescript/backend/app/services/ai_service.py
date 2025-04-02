@@ -40,9 +40,7 @@ class AIService:
                 }
             ],
             "Theme": "string",
-            "Story Outline": {
-                "Ep X - Y (Phase_name-Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement)": "Description"
-            },
+            "Story Outline": [{"Ep X-Y": "Description", "Phase_name": "Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement", },],
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
@@ -135,12 +133,12 @@ class AIService:
         settings_data = (
             "\n".join(
                 f"{place}: {description}"
-                for place, description in metadata.get(
-                    "setting", {}
-                ).items()  # Use "setting" consistently
+                for place, description in metadata.get("setting", {}).items()
             )
             or "No settings provided. Build your own."
         )
+
+        print(json.dumps(metadata, indent=2))
 
         prev_episodes_text = (
             "\n\n".join(
@@ -172,6 +170,24 @@ class AIService:
             or "No characters introduced yet."
         )
 
+        story_outline = metadata.get("story_outline", [])
+        episode_info = current_phase = ""
+        for arc in story_outline:
+            arc_key = list(arc.keys())
+            episode_range = arc_key[0].split(" ")[1].split("-")
+            
+            if len(episode_range) == 2:
+                start = int(episode_range[0])
+                end = int(episode_range[1])
+            else:
+                start = end = int(episode_range[0])
+                
+            if start <= episode_number <= end:
+                episode_info = arc[arc_key[0]]
+                current_phase = arc.get("Phase_name", "Unknown Phase")
+                break
+
+        
         key_events = metadata.get("key_events", [])
         key_events_summary = (
             "Key Story Events So Far: " + "; ".join(key_events)
@@ -185,67 +201,62 @@ class AIService:
             else ""
         )
 
-        # Determine current phase (unchanged)
-        if num_episodes <= 3:
-            if episode_number == 1:
-                phase = "INTRODUCTION + RISING_ACTION"
-            else:
-                phase = "CLIMAX + RESOLUTION"
-        elif num_episodes <= 7:
-            if episode_number == 1:
-                phase = "INTRODUCTION"
-            elif episode_number <= max(2, int(num_episodes * 0.6)):
-                phase = "RISING_ACTION"
-            elif episode_number <= max(4, int(num_episodes * 0.9)):
-                phase = "CLIMAX"
-            else:
-                phase = "RESOLUTION"
-        else:
-            if episode_number <= 2:
-                phase = "INTRODUCTION"
-            elif episode_number <= int(num_episodes * 0.2):
-                phase = "COMPLICATION"
-            elif episode_number <= int(num_episodes * 0.3):
-                phase = "FIRST_THRESHOLD"
-            elif episode_number <= int(num_episodes * 0.5):
-                phase = "PROGRESSIVE_COMPLICATIONS"
-            elif episode_number <= int(num_episodes * 0.55):
-                phase = "MIDPOINT_REVERSAL"
-            elif episode_number <= int(num_episodes * 0.7):
-                phase = "TESTING_NEW_PATH"
-            elif episode_number <= int(num_episodes * 0.8):
-                phase = "CRISIS"
-            elif episode_number <= int(num_episodes * 0.9):
-                phase = "CLIMAX"
-            else:
-                phase = "RESOLUTION"
-
-        phase_requirements = {  # Unchanged, keeping it concise
-            "INTRODUCTION + RISING_ACTION": "Merge introduction and rising action smoothly for short story.",
-            "CLIMAX + RESOLUTION": "Merge climax and resolution smoothly for short story.",
-            "INTRODUCTION": "Set world, introduce protagonist, hint at conflict with sensory details.",
-            "RISING_ACTION": "Escalate obstacles, deepen character ties, end with a cliffhanger.",
-            "COMPLICATION": "Introduce complex challenges, reveal character values.",
-            "FIRST_THRESHOLD": "Point of no return, raise stakes, transform protagonist.",
-            "PROGRESSIVE_COMPLICATIONS": "Escalate challenges, test limits, add subplots.",
-            "MIDPOINT_REVERSAL": "Dramatic shift, recontextualize story, expose truths.",
-            "TESTING_NEW_PATH": "Adapt to new path, test growth, build to crisis.",
-            "CRISIS": "Darkest moment, impossible choices, reveal strengths.",
-            "CLIMAX": "Peak tension, resolve conflicts, show transformation.",
-            "RESOLUTION": "Close conflicts, show new status quo, emotional payoff.",
+        story_phases = {
+            "Exposition": """
+            - Set the scene with vivid sensory details (sight, sound, smell) and atmosphere.  
+            - Introduce the protagonist via actions and thoughts, showing their normal world and backstory.  
+            - Highlight strengths, flaws, and routines through interactions.  
+            - Subtly hint at tensions or themes to come.
+            """,
+            "Inciting Incident": """
+            - Disrupt the status quo with a mysterious, tense, or unexpected event.  
+            - Hook with a moment demanding the protagonist’s response.  
+            - Plant seeds of the central conflict without full reveal.  
+            - Raise stakes to push the story forward.
+            """,
+            "Rising Action": """
+            - Escalate obstacles testing the protagonist’s values and skills.  
+            - Deepen character bonds or conflicts through shared challenges.  
+            - Reveal backstory and complications forcing tough choices.  
+            - Build tension with pacing and a mini-cliffhanger raising stakes.
+            """,
+            "Dilemma": """
+            - Present a multi-layered obstacle (emotional, moral, physical) with no easy solution.  
+            - Force a pivotal choice revealing the protagonist’s core beliefs.  
+            - Heighten stakes with conflicting goals and mutual reliance.  
+            - End with urgency pushing toward a critical decision.
+            """,
+            "Climax": """
+            - Peak tension as conflicts collide in a decisive confrontation.  
+            - Force the protagonist to face the central challenge or antagonist.  
+            - Reveal a final twist or surprise recontextualizing the struggle.  
+            - Show growth through bold choices and sacrifices, testing resolve.
+            """,
+            "Denouement": """
+            - Resolve conflicts with emotional and narrative closure.  
+            - Show consequences of the climax for characters and world.  
+            - Reflect growth and themes via dialogue, imagery, or realization.  
+            - Establish a new status quo, leaving a memorable final impression.
+            """
         }
 
-        story_structure = f"{num_episodes} EPISODE STORY: {'SHORT' if num_episodes <= 7 else 'LONG'} FORM - CURRENT PHASE: {phase}"
+        phase_description = ""
+        for phase in ["Exposition", "Inciting Incident", "Rising Action", "Dilemma", "Climax", "Denouement"]:
+            if phase in current_phase:
+                phase_description += story_phases[phase] + "\n"
+
         instruction = f"""
         You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
         {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).
-        Set in "{settings_data}", this episode must maintain a gripping flow, with a clear beginning, middle, and end.
+        Set in "{settings_data}", this episode must maintain a gripping flow.
         ---
-        {story_structure}
-        PHASE REQUIREMENTS: {phase_requirements[phase]}
+        CURRENT_PHASE: {current_phase}
+        Breif of things that should happen in this phase: {episode_info}
+        PHASE REQUIREMENTS: 
+        {phase_description}
 
         GUIDELINES:
-        - Maintain ALL characters introduced unless explicitly killed or retired. Reference {char_snapshot} for status.
+        - Maintain ALL characters introduced unless explicitly killed or retired.
         - If a character is absent, note why (e.g., "Rohan is away searching for clues").
         - Start with a tie-in to the previous episode unless Episode 1.
         - End with a lead-in to the next episode unless final.
@@ -254,7 +265,6 @@ class AIService:
         - Reveal character depth through challenges.
         - Create sensory-rich descriptions.
         - Use varied sentences and dialogue tags.
-        - Fit phase {phase}.
 
         Your Task: Generate a Well-Paced Episode
         1. Use prior episodes & context for coherence.
@@ -265,7 +275,7 @@ class AIService:
         Previous Episodes Recap: {prev_episodes_text}
         Relevant Context: {chunks_text}
         Active Characters & Motivations: {char_snapshot}
-        {key_events_summary}
+        Key Events So Far: {key_events_summary}
 
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
@@ -308,9 +318,9 @@ class AIService:
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
           "episode_summary": "A concise 50-70 word summary of the episode's key events and outcomes.",
-          "episode_emotional_state": "string",
+          "episode_emotional_state": "string (the emotional state shown in this episode)",
           "characters_featured": [{{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true, "Emotional_State": "string"}}],
-          "Key Events": ["Key event 1", "Key event 2"],
+          "Key Events": ["String (Key Events of this episode)"],
           "Settings": {{"Place": "Description of the place"}}
         }}
         """
@@ -345,18 +355,17 @@ class AIService:
         }
 
         return self._parse_episode_response(json.dumps(complete_episode), metadata)
-
         # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
 
         # response = self.openai_client.chat.completions.create(
         # model="gpt-4o",
         # messages=[
-        # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives."},
+        # {"role": "system", "content": "You are a professional storyteller creating structured, well-paced narratives, maintain consistency between episodes and phase transitions."},
         # {"role": "user", "content": instruction}
         # ],
         # temperature=0.7,
         # max_tokens=1000
         # )
-
-        # raw_text = response.choices.message.content or ""
+        #
+        # raw_text = response.choices[0].message.content or ""
         # return self._parse_episode_response(raw_text, metadata)

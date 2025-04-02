@@ -4,6 +4,7 @@ from app.services.db_service import DBService
 from app.services.embedding_service import EmbeddingService
 from app.models.schemas import StoryListItem
 import json
+import time
 
 class StoryService:
     def __init__(self):
@@ -59,14 +60,18 @@ class StoryService:
         if "error" in story_data:
             return story_data
 
+        episode_generation_time = time.time()
         episode_data = self.generate_episode(story_id, episode_number, num_episodes, hinglish, prev_episodes)
+        print(f"episode {episode_number} generated in: ", time.time() - episode_generation_time)
         if "error" in episode_data:
             return episode_data
 
+        episode_storing_time = time.time()
         episode_id = self.db_service.store_episode(story_id, episode_data, episode_number)
         self.embedding_service._process_and_store_chunks(
             story_id, episode_id, episode_number, episode_data["episode_content"], []
         )
+        print(f"episode {episode_number} stored and chunked in: ", time.time() - episode_storing_time)
 
         return {
             "episode_id": episode_id,
