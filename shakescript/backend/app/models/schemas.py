@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional , Union
 
 
 class StoryCreate(BaseModel):
@@ -11,7 +11,7 @@ class StoryResponse(BaseModel):
     story_id: int
     title: str
     setting: List[Dict[str, str]]
-    characters: Dict[str, Dict[str, Any]]
+    characters: Union[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]  
     special_instructions: str
     story_outline: Dict[str, str]
     current_episode: int

@@ -1,146 +1,119 @@
-Premise Formula:
-  
- ╭─────────────────────────────────────────────────────────╮
- │ In [Setting], [Main Character] must [Goal] while facing │
- │ Conflict], but [Obstacle] makes it harder.              │
- ╰─────────────────────────────────────────────────────────╯
-  
+Delti Unearth
+Episode 1: Whispers in the Archive
 
-Example 1 (Fantasy, Chosen Hero)
- ╭─────────────────────────────────────────────╮
- │                                             │
- │ User Input:                                 │
- │                                             │
- │ Genre: Fantasy                              │
- │                                             │
- │ Setting: A cursed kingdom                   │
- │                                             │
- │ Main Character: A young blacksmith          │
- │                                             │
- │ Goal: Break the kingdom’s curse             │
- │                                             │
- │ Conflict: The villain is hunting him        │
- │                                             │
- │ Theme: Crime, Investigation , Adventure etc │
- ╰─────────────────────────────────────────────╯
+The air in the university archive hung thick with the scent of aged paper and dust, illuminated by the anemic glow of a single desk lamp. Riya traced the embossed lettering of a leather-bound journal, its pages brittle under her fingertips. A persistent drip, drip, drip echoed from a leaky pipe somewhere in the cavernous room, a counterpoint to the frantic hammering of her own heart. She chewed on her thumbnail, a nervous habit she couldn't seem to shake.
 
+The journal detailed the experiences of Elias Thorne, one of the university's founding members, and his obsession with a local legend – the legend of Delti, a hidden city said to hold unimaginable power. According to Thorne, Delti wasn't just a myth; it was real, buried beneath the very ground they stood on. A shiver ran down Riya's spine.
 
-    After premise building the next step is plot/structure building
-    key pillars of a plot are:
+"Find anything interesting?" Arjun's voice startled her. He leaned against a towering shelf, arms crossed, his expression a mixture of amusement and skepticism. Priya stood beside him, concern etched on her face. "Riya, are you sure about this? Thorne sounds…unhinged."
 
- ╭───────────────────────────────────────────────────────────╮
- │ Exposition: Introduce world, characters, and the normal   │
- │ state of affairs.                                         │
- │                                                           │
- │ Inciting Incident: A disruptive event that starts the     │
- │ conflict.                                                 │
- │                                                           │
- │ Rising Action: The protagonist faces complications and    │
- │ escalates the tension.                                    │
- │                                                           │
- │ Dilemma: The protagonist must make a tough decision,      │
- │ setting the stage for the climax.                         │
- │                                                           │
- │ Climax: The protagonist makes a choice, leading to the    │
- │ most intense action.                                      │
- │                                                           │
- │ Denouement: The story resolves the central problem,       │
- │ leaving room for change or future challenges.             │
- │                                                           │
- ╰───────────────────────────────────────────────────────────╯
- 
- Character Development
- - protagonist character Development
-     ╭───────────────────────────────────────────────────────────╮
-     │ Core Traits: Establish the protagonist’s personality,     │
-     │ strengths, and weaknesses.                                │
-     │                                                           │
-     │ Goals & Motivation: Define what the protagonist wants     │
-     │ and why they want it.                                     │
-     │                                                           │
-     │ Flaws: Identify their flaws or internal conflicts.        │
-     │                                                           │
-     │ Internal Conflict: What psychological or emotional        │
-     │ struggle are they facing?                                 │
-     │                                                           │
-     │ External Conflict: What external obstacles must they      │
-     │ overcome to achieve their goal?                           │
-     │                                                           │
-     │ Relationships: How do their interactions with others      │
-     │ reveal aspects of their character?                        │
-     │                                                           │
-     │ Character Arc: Map out how the protagonist changes or     │
-     │ grows over the course of the story.                       │
-     │                                                           │
-     │ End State: Where does the protagonist end up emotionally  │
-     │ and psychologically?                                      │
-     ╰───────────────────────────────────────────────────────────╯
+"He was onto something," Riya insisted, flipping through a page filled with strange symbols. "Look at this map – it aligns perfectly with the layout of the old quad. And this inscription…" She squinted, deciphering the archaic script. "'Where knowledge sleeps, the path begins.'"
 
- - secondary character Development
-     ╭───────────────────────────────────────────────────────────╮
-     │ Evolving Secondary Characters:                            │
-     │                                                           │
-     │ Define their starting point, internal conflict, and goals.│
-     │                                                           │
-     │ Develop their arc, ensuring it ties into the              │
-     │ protagonist’s journey.                                    │
-     │                                                           │
-     │ Ensure their development is meaningful, influencing the   │
-     │ protagonist.                                              │
-     │                                                           │
-     │ Static Secondary Characters:                              │
-     │                                                           │
-     │ Clarify their role (support, antagonist, mentor).         │
-     │                                                           │
-     │ Keep their role consistent while providing meaningful     │
-     │ interactions with the protagonist.                        │
-     │                                                           │
-     │ Ensure they impact the story despite lacking personal     │
-     │ growth.                                                   │
-     │                                                           │
-     │ Introducing Characters Later:                             │
-     │                                                           │
-     │ Ensure their introduction has a clear purpose.            │
-     │                                                           │
-     │ Provide enough backstory to integrate them smoothly.      │
-     │                                                           │
-     │ Have them affect the protagonist’s arc and decisions.     │
-     │                                                           │
-     │ Removing Characters Midway:                               │
-     │                                                           │
-     │ Plan their exit with purpose, ensuring it serves the plot.│
-     │                                                           │
-     │ Ensure their departure influences the protagonist's       │
-     │ growth or decision-making.                                │
-     │                                                           │
-     │ Tie their exit to the overall theme of the story.         │
-     │                                                           │
-     ╰───────────────────────────────────────────────────────────╯
+Vikram, who had been quietly observing from across the room, scoffed. "More riddles? Typical." Despite his dismissive tone, he moved closer, his eyes gleaming with a familiar competitive spark.
 
-  scene building like each scene/episode would have three things 
-  1. goal of the scene
-  2. conflict of the scene
-  3. change / hooks ( how does story move forward)
+Suddenly, the lights flickered and died, plunging the archive into near darkness. A collective gasp filled the silence, punctuated by Priya's nervous whimper. Riya fumbled for her phone, its flashlight beam cutting through the gloom. In its weak light, she saw it: a newly carved symbol on the ancient stone floor, mirroring one from Thorne's journal, glowing faintly with an eerie luminescence. It hadn't been there before.
+Episode 2: Symbol's Glow, History's Echo
 
+The eerie green glow pulsed faintly from the etched symbol, casting long, dancing shadows across the faces of Riya, Arjun, Priya, and Vikram. The sudden darkness amplified the scent of aged paper and damp stone, making the archive feel like a forgotten tomb. Riya, phone clutched in her trembling hand, felt a surge of adrenaline mixed with trepidation. She chewed on her thumbnail, a nervous habit she couldn't shake.
 
-  CHANGES NEEDED TO BE DONE IN MODEL :
-  1. storage of emotions via chunks 
-  2.
+"What was that?" Priya whispered, her voice barely audible above the drip, drip, drip of the leaky pipe. Arjun, ever practical, pulled out his own phone and activated the flashlight. "Probably just an old circuit blowing," he said, though his tone lacked conviction. Vikram, however, was already kneeling beside the symbol, his fingers tracing its intricate lines. "This isn't just any symbol," he muttered. "It's… an archaic form of the Delti script. I've seen it referenced in texts on forgotten civilizations."
 
+Riya flipped through Thorne's journal, her heart pounding. She found a matching symbol scrawled in the margin of a page detailing the university's original foundation. "He said…'When the earth remembers, the path reveals itself.'" She looked up at the others, her eyes wide. "He meant this. This symbol… it's a map."
 
+They spent the next hour huddled around the symbol, comparing it to the map in Thorne's journal. Arjun, using his tech skills, overlaid the map onto a campus blueprint. A collective gasp filled the room as a line drawn from the symbol intersected directly with Professor Mehra's office in the oldest part of the campus. "Mehra?" Priya questioned, frowning. "What does he have to do with this?" Riya didn't answer but felt a knot of unease tighten in her stomach. She glanced at the others. A storm raged outside, the wind howling like a banshee. Then, a loud knock reverberated through the archive. Everyone froze.
 
-  for a single episode
-      1. idea of the story
-      2. characters of the story 
-      3. phase (current)
-      4. theme of the story
-      5. previous episodes (
-            1. content of prev 2 episodes
-            2. key events till now 
-            3. emotional chunks related to the episodes
-            4. prev ep phases
-            5. 
-      )
+A voice, muffled but familiar, called out, "Riya? It's Professor Mehra. Are you alright? I saw the lights go out."
+Episode 3: The Professor's Secret Office
 
+Riya's breath hitched as Professor Mehra's voice echoed through the heavy wooden door of the archive. Chewing on her thumbnail, a habit that intensified with stress, she exchanged a worried glance with Arjun. Priya's face was pale, and Vikram, surprisingly, looked just as unsettled.
 
-``
+"Just… hide the journal," Riya whispered, shoving Thorne's notes under a pile of dusty tomes. Arjun quickly extinguished his phone's flashlight. The green glow of the symbol pulsed faintly, almost mockingly.
+
+Riya cautiously opened the door, revealing Professor Mehra standing in the dimly lit hallway, a concerned expression on his face. Rain plastered his hair to his forehead. "Riya, are you alright? I heard the power go out. Dangerous to be down here alone."
+
+"We're fine, Professor," Riya said, forcing a smile. "Just studying late. The power outage was a bit startling, that's all."
+
+Mehra’s gaze flickered past her, taking in the other three students. His eyes lingered a moment longer on Vikram, who subtly straightened his posture. "Vikram, I didn't know you were interested in this archive. Keeping you from your own studies, Riya?" he asked, a subtle edge to his voice.
+
+"Just helping Riya with some research, Professor," Vikram replied smoothly. "A fascinating collection, truly."
+
+"Indeed," Mehra said, his tone unreadable. "Well, I should let you get back to it. Be careful. And please, don't hesitate to call campus security if anything seems amiss." He offered a curt nod and turned to leave, but paused in the doorway. "Oh, Riya," he added, turning back, a strange glint in his eyes, "perhaps you could visit my office tomorrow? I have something that might be of interest to your research."
+
+As soon as Mehra was gone, Riya closed the door and leaned against it, her heart pounding. "His office… the map. It's pointing to his office," she stated, her voice barely a whisper. "He knows something. He has to."
+
+Arjun, ever the pragmatist, spoke first, “Okay, so Mehra knows something. That invitation might be a trap, but it’s the only lead we’ve got. We go. Together.” Priya nodded in agreement, her fear momentarily overshadowed by a surge of determination. Vikram, however, remained silent, his gaze fixed on the glowing symbol on the floor. "He's hiding something, and he knows we're onto it," he finally said, his voice low and thoughtful. “He might be trying to manipulate us.” Riya nodded slowly. “Then tomorrow, we play his game.”
+Episode 4: Veiled Intentions, Hidden Agendas
+
+The morning sun cast long shadows across the campus as Riya, Arjun, Priya, and Vikram approached Professor Mehra's office. Riya chewed on her thumbnail, the nervous habit a constant reminder of the stakes. A knot of unease tightened in her stomach.
+
+The office door, crafted from dark, polished wood, loomed before them. Arjun, ever cautious, ran a diagnostic program on his phone, scanning the door for any electronic surveillance. \"Clean,\" he muttered, his brow furrowed. \"Too clean, almost.\"
+
+Priya, her usual optimism dampened by the growing tension, voiced her concerns. \"What if this is a trap? What if he knows we were in the archive?\"
+
+Riya took a deep breath. \"We have to find out what he's hiding. We go in prepared.\" She pushed open the door.
+
+The office was a haven of academic clutter – stacks of books teetered precariously on shelves, research papers overflowed from the desk, and the air hung heavy with the scent of old books and pipe tobacco. Professor Mehra sat behind his desk, a thin smile playing on his lips.
+
+\"Riya, so glad you could make it. And… you've brought company. Wonderful!\" He gestured to the antique chairs arranged before his desk.
+
+As they settled in, Mehra’s gaze swept over each of them. \"Now, Riya, you said you were researching the university's history? A noble pursuit. I believe I have something that might be of particular interest.\" He opened a small, ornate wooden box and produced a tarnished silver locket. “Belonged to Elias Thorne himself. It was entrusted to me by my predecessor, with instructions to give it to a worthy scholar. It seems that scholar is you.”
+
+Vikram leaned forward, a flicker of recognition in his eyes. “The Delti Locket… legend says it contains a key.”
+
+Mehra chuckled, a low, rumbling sound. \"Legends, Vikram, are just that. But perhaps… perhaps this one holds a grain of truth. Now Riya, what do you make of it?\" Mehra watched Riya intently, his eyes gleaming with an emotion none of them could decipher.
+
+Suddenly, Priya noticed a faint symbol etched into the side of the locket – a symbol identical to the one glowing in the archive. She gripped Riya's arm, her eyes wide with alarm. Riya met her gaze, a chilling realization dawning. This wasn't a gift. It was a test. And the stakes were higher than they could have imagined. Vikram's eyes narrowed at the locket.
+
+As Riya reached for the locket, Mehra leaned back in his chair, a knowing smile spreading across his face. “Be careful, Riya,” he said softly. “Some doors are best left unopened.” Outside, the wind picked up, rattling the windows of the old building. Mehra's phone rings, he looks at it in horror “I am so sorry, I have to take this.” He answers the phone, moving away from the group. \"What do you think happened at Thorne's lab?\" Asked Priya. Arjun shrugs with a concerned look, \"We will find out.\" ", "episode_summary": "Riya and the group visit Professor Mehra's office after his invitation. He presents Riya with Elias Thorne's locket, claiming it's a gift for a worthy scholar. Vikram recognizes it as the Delti Locket, rumored to contain a key. Priya notices a Delti symbol on the locket, and Mehra warns Riya about opening certain doors. Mehra gets a phone call and leaves, leaving the crew confused.", "episode_emotional_state": "Suspenseful and apprehensive, marked by rising stakes and growing uncertainty about Professor Mehra's true intentions.", "characters_featured": [ { "Name": "Professor Mehra", "Role": "Mentor", "Description": "An enigmatic history professor with a hidden connection to the college's past. He provides cryptic clues and guidance to the students, while harboring secrets of his own.", "Relationship": { "Riya Sharma": "Student, Protégé" }, "role_active": true, "Emotional_state": "Calculating and secretive" }, { "Name": "Riya Sharma", "Role": "Protagonist", "Description": "A bright and adventurous student with a passion for history and a knack for solving puzzles. She is determined, resourceful, and fiercely loyal to her friends.", "Relationship": { "Arjun Patel": "Close Friend" }, "role_active": true, "Emotional_state": "Cautious and determined" }, { "Name": "Arjun Patel", "Role": "Tech expert", "Description": "A tech-savvy student with a dry wit and a practical mind. He is skeptical but supportive of Riya's endeavors, providing her with technical assistance and a voice of reason.", "Relationship": { "Riya Sharma": "Close Friend" }, "role_active": true, "Emotional_state": "Wary and observant" }, { "Name": "Priya Nair", "Role": "Medical student, moral compass", "Description": "A compassionate and intelligent student with a strong sense of morality. She is concerned about the potential dangers of their quest and tries to keep them grounded.", "Relationship": { "Riya Sharma": "Best Friend" }, "role_active": true, "Emotional_state": "Anxious and concerned" }, { "Name": "Vikram Singh", "Role": "Rival, reluctant ally, history buff", "Description": "A competitive and ambitious student with a deep knowledge of history. He initially dismisses Riya's discovery but is eventually drawn into the mystery by his own intellectual curiosity.", "Relationship": { "Riya Sharma": "Rival" }, "role_active": true, "Emotional_state": "Intrigued and suspicious" } ], "Key Events": [ "The group visits Professor Mehra's office.", "Mehra presents Riya with Thorne's locket.", "Vikram identifies the locket and its legend.", "Priya notices a Delti symbol on the locket.", "Mehra warns Riya about opening certain doors.", "Mehra gets a phone call and leaves, leaving the crew confused.
+Episode 5: Locket's Echo, Mehra's Secret
+
+Professor Mehra's retreating footsteps faded into the hallway. Riya stared at the closed door, the tarnished silver locket heavy in her hand. "What was that about?" Priya asked, her voice barely a whisper, glancing from the locket to the now-empty doorway. The air in the office seemed to crackle with unspoken tension. Arjun, ever practical, crossed his arms. "That phone call… the look on his face. Something spooked him. Badly."
+
+Vikram, who had been unusually quiet, stepped closer to Riya. "Let me see the locket." He examined the Delti symbol etched on its side, his brow furrowed in concentration. "This isn't just a symbol, it's a mechanism. See these faint lines? They align with…" His fingers traced an intricate pattern. "…with the constellations from Thorne's era. It’s a lock, of sorts." Priya shuddered. "A lock to what?" Riya felt a surge of determination, chewing on her thumbnail. The risk was palpable, but the call to the unknown was now impossible to ignore. "We find out," she said, her voice firm. "Arjun, can you get a better look at this locket? See if you can figure out how it opens. Priya, check Mehra's desk – discreetly. See if you can find anything about Thorne's lab or anything that might explain that phone call. Vikram, your knowledge of history, focus on the constellation theory of the Delti key."
+
+As they worked, Riya wandered to the window, gazing out at the campus. The wind had died down, leaving an eerie calm in its wake. But the feeling of unease remained, a sense that they were being watched, manipulated, and hurtled headlong toward a confrontation they weren't prepared for. She felt a pang of doubt; was this new path dangerous? Had they traded the archive mystery for a game far more complicated? But looking back at her friends, at their focused faces, she knew that retreat was no longer an option. They were in this together, and they would unearth the truth, no matter the cost.
+
+Arjun cursed softly under his breath, "I can't make heads or tails of this without taking it apart, and that seems like a terrible idea." Priya, rifling through Mehra's files, jumped as a loud *thump* came from the hallway. They froze, every muscle tense. After a moment, Riya opened the door a crack. The hallway was empty, but a single, old-fashioned key lay on the floor just outside the office, glinting in the dim light.
+Episode 6: Secrets Unlocked, Paths Diverged
+
+Riya picked up the antique key, its cold metal a stark contrast to the pounding heat of her anxiety. "What do you think it unlocks?" Priya asked, her voice trembling slightly. Arjun peered at the key. "Looks old… probably not a standard lock. Maybe something in the office?" Vikram scoffed. "Or something Thorne hid away a century ago. The possibilities are endless, and equally useless without context."
+
+Riya ignored him, her focus solely on the key. It felt… right. Like a piece of the puzzle she hadn't realized was missing. "Arjun, can you scan this key? See if it matches any locks in Mehra's office, or anything on file related to Thorne?" As Arjun worked, Riya tried the key in the lock of a nearby filing cabinet. It didn't fit. Feeling increasingly despondent she tried again on Mehra's desk. Still no progress. "There's only one lock in the room left Riya," observed Priya, gesturing at the silver locket sitting in Riya's palm.
+
+The key, tarnished with age, slid into the locket's barely visible keyhole with an almost inaudible click. The Delti symbol glowed faintly, illuminating the small space with an eerie green light. The locket popped open, revealing not a miniature portrait or a hidden message, but a single, dried flower pressed between two pieces of parchment. The flower crumbled to dust as Riya picked it up. The parchment contained a set of coordinates alongside a simple illustration of the Delti symbol that glowed so brightly within the archive.
+
+"Coordinates," Vikram breathed, peering over Riya's shoulder. "But where do they lead?"
+
+Just then, Arjun's phone beeped. "I got a hit!" he exclaimed. "That key… it's not on any university records, but it matches the lock of an old storage unit off-campus. Registered to Elias Thorne."
+
+Riya looked at the coordinates, then at the information Arjun had uncovered. A decision had to be made. Should they follow the coordinates or the storage unit? The path forward had fractured, and their choices would determine what secrets Delti would reveal. "We split up," Riya declared, steel in her voice. "Me, Arjun and Priya will follow Thorne's old storage, Vikram you investigate the coordinates". Vikram scowled. "And why should I do that?" Riya met his gaze, unflinching. "Because you're the only one who can decipher them. And because, deep down, you want to know the truth just as much as we do."
+Episode 7: Delti's Shadow, Choice's Burden
+
+Riya watched as Vikram stormed off, muttering about 'wasting time' and 'chasing fairytales'. She knew his bluster masked a genuine fear, a fear of being wrong, of being proven less knowledgeable than he projected. Turning to Arjun and Priya, she forced a smile. "Ready to raid a storage unit?" she asked, though her voice lacked its usual confidence. The coordinates lingered in her mind, a nagging sense of unease whispering that they were ignoring a critical piece of the puzzle.
+
+The storage unit was located in a dilapidated part of town, the air thick with the stench of decay. The building itself looked like it was about to collapse. "Charming," Arjun deadpanned, fiddling with his lock-picking tools. Priya, her face pale, scanned their surroundings nervously. "Are you sure about this, Riya? This place feels…wrong." Riya, chewing on her thumbnail again, ignored the drip-drip-drip from a nearby rusted pipe. "We have to see what Thorne was hiding."
+
+Inside, the unit was crammed with dusty crates and forgotten relics. As Riya rummaged through a pile of papers, she noticed a hidden compartment beneath a false bottom. Inside, they found a tarnished mirror, and a note. 'The Delti Mirror, use to find what you seek, but be cautious, for what you seek, seeks you.' Looking into the mirror, Riya did not see herself, but rather saw the Delti symbol inside the archive. Then, the image shifted to Professor Mehra, standing over what looked like Thorne's tomb. The professor smirked, looking right at Riya. The image disappeared, as the floorboards beneath them creaked ominously. In that instance, the symbol from her vision appeared under their feet, glowing bright. This time, Priya collapsed to the floor, yelling out the name of Professor Mehra. Riya knew they had to head back to the university immediately, but she couldn't leave Priya. Riya now faced an impossible decision. Abandon her friend to the Delti symbol, or stay and risk the professor finding her, and whatever fate may befall her after.
+Episode 8: Delti's Grasp, Priya's Fall
+
+Riya’s heart hammered against her ribs as she knelt beside Priya, whose eyes were rolled back in her head, a thin line of drool escaping her lips. The Delti symbol pulsed beneath them, its green light intensifying. "Arjun, help me get her out of here!" Riya yelled, her voice cracking. Arjun, face pale with fear, scrambled to obey, grabbing Priya's arms. But as they tried to lift her, a wave of energy surged from the symbol, throwing them back against the storage unit walls.
+
+"We can't move her!" Arjun shouted over Priya's pained moans. "It's holding her!" Riya, her mind racing, remembered the vision in the mirror. Professor Mehra, smiling cruelly, standing over Thorne's tomb. A horrifying realization dawned on her. This wasn't just about Delti; it was about Mehra, about his twisted obsession, and Priya was now caught in the crossfire.
+
+Ignoring the searing pain in her shoulder, Riya scrambled towards the symbol. She had to break the connection, sever whatever hold it had on Priya. "Riya, no!" Arjun cried, but she ignored him. Drawing on every ounce of her will, she slammed her fist down on the glowing symbol, again and again, the force of each blow sending jolts of pain up her arm. The symbol flickered, dimmed, and finally, with a final surge of energy, went dark. Priya gasped, her eyes fluttering open. "Mehra…" she whispered, her voice weak. Arjun, relieved, helped Priya to her feet. Riya, however, felt a cold dread wash over her. The symbol was gone, but its influence, and Mehra's plan, were far from over. Back at the university, Vikram stood before Professor Mehra’s office. He placed his hand on the door, and pushed it open. Empty.
+Episode 9: Delti's Truth, Echoes Remain
+
+Priya gasped, pulling away from Arjun's supportive arm. Her face, still pale, was etched with fear. "He's gone," she rasped, referring to Professor Mehra. "He knew we were coming." Riya, cradling her throbbing arm, exchanged a worried glance with Arjun. Mehra's knowledge of their actions suggested a level of control that was deeply unsettling. "Vikram?" Riya asked, grabbing her phone. No answer. She tried again, the silence on the other end amplifying her anxiety. "He's not picking up."
+
+"We need to find him," Arjun stated, his usual skepticism replaced by grim determination. "If Mehra's involved, Vikram could be in danger." Priya, though weak, nodded in agreement. Their uneasy alliance with Vikram, forged in mutual curiosity and a shared thirst for answers, demanded their loyalty. They decided to head towards the coordinates where he was investigating, with a sinking feeling of dread. They exited the dilapidated storage unit and made their way towards where they think he is.
+
+Meanwhile, Vikram cautiously entered the university's catacombs, the coordinates leading him to a hidden entrance behind a crumbling statue. The air was heavy with the scent of damp earth and something else... something metallic. As he descended the narrow, winding stairs, he saw a faint light flickering below. He drew a shaky breath and quickened his pace. He saw Professor Mehra in the distance, who appeared to be doing something to one of the walls of the tomb. "Professor?" Vikram called out, confused. Mehra turned, a cold smile spreading across his face. "Ah, Vikram. I was wondering when you'd arrive. You've been so helpful, leading me to what I seek." Mehra raised his hand, revealing the Delti locket, now glowing with an eerie green light. "The power of Delti is almost mine. And you, my dear boy, will be its first witness."
+Episode 10: Catacombs' Choice, Delti's Claim
+
+The eerie green glow of the Delti locket illuminated Professor Mehra's face, casting grotesque shadows in the catacombs. "You were always too curious, Vikram," Mehra sneered, raising the locket higher. A pulse of energy emanated from it, striking Vikram in the chest. He cried out, collapsing against the damp stone wall.
+
+Meanwhile, above ground, Riya, Arjun, and Priya arrived at the university. The air hung heavy with a sense of foreboding. "Something's not right," Riya muttered, her hand instinctively going to her throbbing shoulder. Priya, still visibly shaken, clutched Arjun's arm for support. "We need to find Vikram, now," she urged.
+
+Arjun, using his tech skills, managed to pinpoint Vikram's last known location: beneath the university, in the old catacombs. Riya's heart leaped into her throat. That's where Thorne's tomb was, according to her visions. They found the hidden entrance behind the statue, just as Vikram had. The metallic scent was stronger here, acrid and unsettling.
+
+As they descended the winding stairs, Riya felt a growing sense of dread. The air grew colder, and the green glow emanating from below became more intense. They burst into the chamber to see Mehra standing over Vikram's prone form, the Delti locket pulsating in his hand. Mehra looked up, his eyes glinting with triumph. "Ah, Riya. You're just in time to witness history."

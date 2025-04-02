@@ -12,18 +12,12 @@ class StoryService:
         self.db_service = DBService()
         self.embedding_service = EmbeddingService()
 
-    async def create_story(
-        self, prompt: str, num_episodes: int, hinglish: bool = False
-    ) -> Dict[str, Any]:
+    async def create_story(self, prompt: str, num_episodes: int, hinglish: bool = False) -> Dict[str, Any]:
         full_prompt = f"{prompt} number of episodes = {num_episodes}"
         result = self.extract_and_store_metadata(full_prompt, num_episodes, hinglish)
-        if "error" in result:
-            return result
-        return {"story_id": result["story_id"], "title": result["title"]}
+        return result if "error" in result else {"story_id": result["story_id"], "title": result["title"]}
 
-    def extract_and_store_metadata(
-        self, user_prompt: str, num_episodes: int, hinglish: bool
-    ) -> Dict[str, Any]:
+    def extract_and_store_metadata(self, user_prompt: str, num_episodes: int, hinglish: bool) -> Dict[str, Any]:
         metadata = self.ai_service.extract_metadata(user_prompt, num_episodes, hinglish)
         if "error" in metadata:
             return metadata
@@ -33,40 +27,20 @@ class StoryService:
     def get_story_info(self, story_id: int) -> Dict[str, Any]:
         return self.db_service.get_story_info(story_id)
 
-    def generate_episode(
-        self,
-        story_id: int,
-        episode_number: int,
-        num_episodes: int,
-        hinglish: bool = False,
-    ) -> Dict[str, Any]:
+    def generate_episode(self, story_id: int, episode_number: int, num_episodes: int, hinglish: bool = False, prev_episodes=[]) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return story_data
+
         story_metadata = {
             "title": story_data["title"],
             "setting": story_data["setting"],
             "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
-            "current_episode": story_data["current_episode"],
+            "current_episode": episode_number,
         }
-        prev_episodes = []
-        if episode_number > 1:
-            episodes_result = (
-                self.db_service.supabase.table("episodes")
-                .select("episode_number, content, summary,title")
-                .eq("story_id", story_id)
-                .gte("episode_number", max(1, episode_number - 2))
-                .lt("episode_number", episode_number)
-                .order("episode_number", desc=True)
-                .limit(2)
-                .execute()
-            )
-            prev_episodes = [
-                (ep["episode_number"], ep["content"], ep["summary"],ep["title"])
-                for ep in episodes_result.data
-            ]
+        
         char_text = json.dumps(story_data["characters"])
         return self.ai_service.generate_episode_helper(
             num_episodes=num_episodes,
@@ -79,65 +53,77 @@ class StoryService:
         )
 
     def get_all_stories(self) -> List[StoryListItem]:
-        raw_stories = self.db_service.get_all_stories()
         return [
             StoryListItem(story_id=story["id"], title=story["title"])
-            for story in raw_stories
+            for story in self.db_service.get_all_stories()
         ]
 
-    def generate_and_store_episode(
-        self, story_id: int, num_episodes: int, hinglish: bool = False
-    ) -> Dict[str, Any]:
+    def generate_and_store_episode(self, story_id: int, episode_number: int, num_episodes: int, hinglish: bool = False, prev_episodes=[]) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return story_data
-        current_episode = story_data["current_episode"]
-        episode_data = self.generate_episode(
-            story_id, current_episode, num_episodes, hinglish
-        )
-        # print("episode_data......\n", episode_data)
+
+        episode_data = self.generate_episode(story_id, episode_number, num_episodes, hinglish, prev_episodes)
         if "error" in episode_data:
             return episode_data
 
-        # Merge characters
-        existing_chars = story_data["characters"]
-        for char_name, new_char in episode_data.get("characters_featured", {}).items():
-            if char_name in existing_chars:
-                existing_chars[char_name].update(new_char)
-            else:
-                existing_chars[char_name] = new_char
-        episode_data["characters_featured"] = existing_chars
-
-        episode_id = self.db_service.store_episode(
-            story_id, episode_data, current_episode
-        )
+        episode_id = self.db_service.store_episode(story_id, episode_data, episode_number)
         self.embedding_service._process_and_store_chunks(
-            story_id, episode_id, current_episode, episode_data["episode_content"], []
+            story_id, episode_id, episode_number, episode_data["episode_content"], []
         )
+
         return {
             "episode_id": episode_id,
-            "episode_number": current_episode,
+            "episode_number": episode_number,
             "episode_title": episode_data["episode_title"],
             "episode_content": episode_data["episode_content"],
+            "episode_summary": episode_data.get("episode_summary", ""),
+            "episode_emotional_state": episode_data.get("episode_emotional_state", "neutral"),
         }
 
-    def generate_multiple_episodes(
-        self, story_id: int, num_episodes: int, hinglish: bool = False
-    ) -> List[Dict[str, Any]]:
+    def generate_multiple_episodes(self, story_id: int, num_episodes: int, hinglish: bool = False) -> List[Dict[str, Any]]:
         episodes = []
-        for _ in range(num_episodes):
-            episode_result = self.generate_and_store_episode(
-                story_id, num_episodes, hinglish
-            )
+        story_data = self.get_story_info(story_id)
+        if "error" in story_data:
+            return [story_data]
+
+        current_episode = story_data["current_episode"]
+
+        for i in range(num_episodes):
+            episode_number = current_episode + i
+            prev_episodes = [
+                {
+                    "episode_number": ep["episode_number"],
+                    "content": ep["episode_content"],
+                    "summary": ep.get("episode_summary", ""),
+                    "title": ep["episode_title"],
+                    "emotional_state": ep.get("episode_emotional_state", "neutral"),
+                }
+                for ep in episodes[-2:]
+            ]
+
+            episode_result = self.generate_and_store_episode(story_id, episode_number, num_episodes, hinglish, prev_episodes)
             if "error" in episode_result:
                 return episodes + [episode_result]
-            episodes.append(episode_result)
+            
+            episodes.append({
+                "episode_id": episode_result["episode_id"],
+                "episode_number": episode_result["episode_number"],
+                "episode_title": episode_result["episode_title"],
+                "episode_content": episode_result["episode_content"],
+                "episode_summary": episode_result.get("episode_summary", ""),
+                "episode_emotional_state": episode_result.get("episode_emotional_state", "neutral"),
+            })
+
+        print("episodes from generate_multiple_episodes\n", episodes)
+
         return episodes
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return story_data
+
         episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
         instruction = f"""
         Create a 150-200 word audio teaser summary for "{story_data['title']}" based on these episode summaries:
@@ -149,7 +135,7 @@ class StoryService:
         Return ONLY the summary text.
         """
         summary = self.ai_service.model.generate_content(instruction).text.strip()
-        self.db_service.supabase.table("stories").update({"summary": summary}).eq(
-            "id", story_id
-        ).execute()
+        self.db_service.supabase.table("stories").update({"summary": summary}).eq("id", story_id).execute()
         return {"story_id": story_id, "summary": summary}
+
+

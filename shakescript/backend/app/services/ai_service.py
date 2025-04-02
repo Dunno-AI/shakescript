@@ -21,41 +21,39 @@ class AIService:
         """Extract story metadata from user prompt using Gemini."""
         cleaned_prompt = parse_user_prompt(user_prompt)
         hinglish_instruction = (
-            "Use pure Hinglish for all fields (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
+            "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
             if hinglish
             else ""
         )
         metadata_template = {
             "Title": "string",
-            "Protagonist": {"Name": "string", "Motivation": "string", "Flaw": "string"},
-            "Settings": [
-                {"Place": "string", "Description": "string", "Pronunciation": "string"}
-            ],
-            "Characters": {
-                "Name": {
+            "Settings": {"Place": "Description of the place", },
+            "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"},],
+            "Characters": [
+                {
                     "Name": "string",
                     "Role": "string",
                     "Description": "string",
                     "Relationship": {"Character_Name": "Relation"},
-                }
-            },
+                    "Emotional_state": "string(initial state)",
+                },
+            ],
             "Theme": "string",
             "Story Outline": {"(Phase_name) Ep X - Y": "Description"},
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
         {hinglish_instruction}
-        Extract metadata from this prompt for a {num_episodes}-episode story:
-        - Title: Suggest a concise, pronounceable title.
-        - Protagonist: Identify the main character with motivation and flaw.
-        - Settings: List locations with vivid descriptions .
-        - Characters: Include protagonist and others with roles, descriptions, relationships.
-        - Conflict: Define the central struggle.
+        Extract metadata from User Prompt for a {num_episodes}-episode story:
+        - Title: Suggest pronounceable title which expresses the feel and theme of the story.
+        - Settings: List locations with vivid descriptions (Eg- {"Cave: A deep dark cave where the team assembles"}).
+        - Protagonist: Identify the main character with motivation and fears.
+        - Characters: Current Characters which you can think of in role- Protagonis/Antagonist(if any)/others(give roles according to the story).
         - Theme: Suggest a guiding theme (e.g., redemption).
-        - Story Outline: Map {num_episodes} episodes to a six-phase structure (Exposition , Inciting Incident , Rising Action , Dilemma , Climax , Denouement).
+        - Story Outline: Map {num_episodes} episodes to a six-phase structure only, merge phases for short story(Exposition , Inciting Incident , Rising Action , Dilemma , Climax , Denouement).
         Format as JSON:
         {json.dumps(metadata_template, indent=2)}
-        Prompt: {cleaned_prompt}
+        User Prompt: {cleaned_prompt}
         """
         prompt = f"{instruction}\n\nUser Prompt: {cleaned_prompt}"
         response = self.model.generate_content(prompt)
@@ -134,17 +132,18 @@ class AIService:
                 f"{place}: {description}"
                 for place, description in metadata.get("Settings", {}).items()
             )
-            or "No settings provided."
+            or "No settings provided Build your own."
         )
 
+        
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep_num}\nCONTENT: {content}\nTITLE:{title}"
-                for ep_num, content, title in prev_episodes[-3:]
+                f"EPISODE {ep['episode_number']}\nCONTENT: {ep['content']}\nTITLE: {ep['title']}"
+                for ep in prev_episodes[-3:]
             )
-            if prev_episodes
-            else ""
+            or "First Episode"
         )
+
         chunks_text = (
             "\n\n".join(
                 f"RELEVANT CONTEXT: {chunk['content']}"
@@ -157,11 +156,12 @@ class AIService:
         characters = json.loads(char_text) if char_text else {}
         char_snapshot = (
             "\n".join(
-                f"{char['Name']}: Role: {char.get('Role', 'Unknown')}, "
+                f"Name: {char.get('Name')}, Role: {char.get('Role', 'Unknown')}, "
                 f"Description: {char.get('Description', 'No description available')}, "
                 f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
-                f"Active: {'Yes' if char.get('role_active', True) else 'No'}"
-                for char in characters.values()
+                f"Active: {'Yes' if char.get('role_active', True) else 'No'}, "
+                f"Emotional State: {char.get('Emotional_state', 'Unknown')}"
+                for char in characters
             )
             or "No characters introduced yet."
         )
@@ -174,15 +174,11 @@ class AIService:
             else "No key events yet."
         )
 
-        hinglish_instruction = ""
-        if hinglish:
-            hinglish_instruction = """
-             - Pura episode Hinglish mein likhna, koi bhi English word use nahi karna (e.g., 'how' ke bajaye 'kaise', 'use' ke bajaye 'istemal').
-             - Simple aur natural Hinglish bolchaal wali bhasha mein story banani hai, jaise log roz baat karte hain.
-             - Example: "Woh bhaag gaya jab usne sher ko dekha" (no 'he ran' ya 'when he saw').
-             - Title bhi Hinglish mein hi rakhna, jaise "Sher Ka Shikaar" ya "Chor Ki Chaal".
-             - Summary aur characters bhi pure Hinglish mein hone chahiye, koi English mix nahi.
-            """
+        hinglish_instruction = (
+            "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
+            if hinglish
+            else ""
+        )
 
         # Determine current phase
         if num_episodes <= 3:
@@ -352,7 +348,7 @@ class AIService:
             """,
         }
 
-        print("phase", phase)
+        # print("phase", phase)
         # print("phase_requirements", phase_requirements[phase])
         # Compact story structure based on length
         story_structure = f"""
@@ -396,10 +392,11 @@ class AIService:
 
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
-          "episode_title": "A Short, Pronounceable Title",
-          "episode_content": "A well-structured, immersive episode with compelling storytelling.",
+          "episode_title": "A descriptive, Pronounceable Title Representing the Episode",
+          "episode_content": "An immersive episode with compelling storytelling.",
           "episode_summary": "A concise 50-70 word summary of the episode's key events and outcomes.",
-          "characters_featured": {{"Name": {{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true}}}},
+          "episode_emotional_state": "string",
+          "characters_featured": [{{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true, "Emotional_state": "string"}},],
           "Key Events": ["Key event 1", "Key event 2"]
         }}
         """
