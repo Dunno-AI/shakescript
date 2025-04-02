@@ -33,7 +33,7 @@ class StoryService:
 
         story_metadata = {
             "title": story_data["title"],
-            "setting": story_data["setting"],  # Dict[str, str]
+            "setting": story_data["setting"],  
             "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
@@ -132,3 +132,6 @@ class StoryService:
         summary = self.ai_service.model.generate_content(instruction).text.strip()
         self.db_service.supabase.table("stories").update({"summary": summary}).eq("id", story_id).execute()
         return {"story_id": story_id, "summary": summary}
+
+
+   

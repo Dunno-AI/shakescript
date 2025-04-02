@@ -11,10 +11,11 @@ class StoryResponse(BaseModel):
     setting: Dict[str, str] 
     characters: Union[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]
     special_instructions: str
-    story_outline: Dict[str, str]
+    story_outline: List[Dict[str, str]]
     current_episode: int
     episodes: List[Dict[str, Any]]
     summary: Optional[str] = None
+    protagonist:List[Dict[str, str]]
 
 class EpisodeResponse(BaseModel):
     episode_id: int

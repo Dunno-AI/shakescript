@@ -7,6 +7,7 @@ from typing import Dict, List
 import json
 import re
 
+
 class AIService:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -14,16 +15,21 @@ class AIService:
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.embedding_service = EmbeddingService()
 
-    def extract_metadata(self, user_prompt: str, num_episodes: int, hinglish: bool = False) -> Dict:
+    def extract_metadata(
+        self, user_prompt: str, num_episodes: int, hinglish: bool = False
+    ) -> Dict:
         cleaned_prompt = parse_user_prompt(user_prompt)
         hinglish_instruction = (
             "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
-            if hinglish else ""
+            if hinglish
+            else ""
         )
         metadata_template = {
             "Title": "string",
             "Settings": {"Place": "Description of the place"},
-            "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"}],
+            "Protagonist": [
+                {"Name": "string", "Motivation": "string", "Fear": "string"}
+            ],
             "Characters": [
                 {
                     "Name": "string (Give proper name not examples, only name)",
@@ -34,7 +40,9 @@ class AIService:
                 }
             ],
             "Theme": "string",
-            "Story Outline": {"Ep X - Y (Phase_name-Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement)": "Description"},
+            "Story Outline": {
+                "Ep X - Y (Phase_name-Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement)": "Description"
+            },
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
@@ -93,11 +101,21 @@ class AIService:
                 except:
                     pass
             title_match = re.search(r'"episode_title":\s*"([^"]+)"', response_text)
-            content_match = re.search(r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text)
+            content_match = re.search(
+                r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text
+            )
             summary_match = re.search(r'"episode_summary":\s*"([^"]+)"', response_text)
-            episode_title = title_match.group(1) if title_match else f"Episode {metadata.get('current_episode', 1)}"
+            episode_title = (
+                title_match.group(1)
+                if title_match
+                else f"Episode {metadata.get('current_episode', 1)}"
+            )
             episode_content = content_match.group(1) if content_match else response_text
-            episode_summary = summary_match.group(1) if summary_match else "Episode summary not available."
+            episode_summary = (
+                summary_match.group(1)
+                if summary_match
+                else "Episode summary not available."
+            )
             return {
                 "episode_title": episode_title,
                 "episode_content": episode_content,
@@ -117,7 +135,9 @@ class AIService:
         settings_data = (
             "\n".join(
                 f"{place}: {description}"
-                for place, description in metadata.get("setting", {}).items()  # Use "setting" consistently
+                for place, description in metadata.get(
+                    "setting", {}
+                ).items()  # Use "setting" consistently
             )
             or "No settings provided. Build your own."
         )
@@ -133,7 +153,9 @@ class AIService:
         chunks_text = (
             "\n\n".join(
                 f"RELEVANT CONTEXT: {chunk['content']}"
-                for chunk in self.embedding_service.retrieve_relevant_chunks(story_id, prev_episodes_text or char_text, k=5)
+                for chunk in self.embedding_service.retrieve_relevant_chunks(
+                    story_id, prev_episodes_text or char_text, k=5
+                )
             )
             or ""
         )
@@ -151,9 +173,17 @@ class AIService:
         )
 
         key_events = metadata.get("key_events", [])
-        key_events_summary = "Key Story Events So Far: " + "; ".join(key_events) if key_events else "No key events yet."
+        key_events_summary = (
+            "Key Story Events So Far: " + "; ".join(key_events)
+            if key_events
+            else "No key events yet."
+        )
 
-        hinglish_instruction = "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')" if hinglish else ""
+        hinglish_instruction = (
+            "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
+            if hinglish
+            else ""
+        )
 
         # Determine current phase (unchanged)
         if num_episodes <= 3:
@@ -202,7 +232,7 @@ class AIService:
             "TESTING_NEW_PATH": "Adapt to new path, test growth, build to crisis.",
             "CRISIS": "Darkest moment, impossible choices, reveal strengths.",
             "CLIMAX": "Peak tension, resolve conflicts, show transformation.",
-            "RESOLUTION": "Close conflicts, show new status quo, emotional payoff."
+            "RESOLUTION": "Close conflicts, show new status quo, emotional payoff.",
         }
 
         story_structure = f"{num_episodes} EPISODE STORY: {'SHORT' if num_episodes <= 7 else 'LONG'} FORM - CURRENT PHASE: {phase}"
@@ -241,6 +271,42 @@ class AIService:
         {{
           "episode_title": "A descriptive, Pronounceable Title Representing the Episode",
           "episode_content": "An immersive episode with compelling storytelling.",
+        }}
+        """
+        
+        # First model call
+        first_response = self.model.generate_content(instruction)
+        first_raw_text = first_response.text
+        
+        # Clean up response text and handle JSON parsing errors
+        first_raw_text = first_raw_text.strip()
+        # Remove any leading/trailing text often added by LLMs
+        if first_raw_text.startswith("```json"):
+            first_raw_text = first_raw_text.split("```json", 1)[1]
+        if "```" in first_raw_text:
+            first_raw_text = first_raw_text.split("```", 1)[0]
+        
+        try:
+            title_content_data = json.loads(first_raw_text)
+        except json.JSONDecodeError as e:
+            # Fallback to avoid crashing
+            title_content_data = {
+                "episode_title": "Episode Title Placeholder",
+                "episode_content": "Episode content placeholder due to formatting error."
+            }
+        
+        episode_title = title_content_data.get("episode_title")
+        episode_content = title_content_data.get("episode_content")
+
+        # Second model call - Generate the rest using the title and content
+        details_instruction = f"""
+        Based on the following episode title and content, generate additional episode details:
+
+        Title: {episode_title}
+        Content: {episode_content}
+        
+        - Output STRICTLY a valid JSON object with NO additional text:
+        {{
           "episode_summary": "A concise 50-70 word summary of the episode's key events and outcomes.",
           "episode_emotional_state": "string",
           "characters_featured": [{{"Name": "string", "Role": "string", "Description": "string", "Relationship": {{"Character_Name": "Relation"}}, "role_active": true, "Emotional_State": "string"}}],
@@ -248,9 +314,38 @@ class AIService:
           "Settings": {{"Place": "Description of the place"}}
         }}
         """
-        response = self.model.generate_content(instruction)
-        raw_text = response.text
-        return self._parse_episode_response(raw_text, metadata)
+        
+        # Second model call
+        second_response = self.model.generate_content(details_instruction)
+        second_raw_text = second_response.text
+        
+        # Clean up second response and handle JSON parsing errors
+        second_raw_text = second_raw_text.strip()
+        if second_raw_text.startswith("```json"):
+            second_raw_text = second_raw_text.split("```json", 1)[1]
+        if "```" in second_raw_text:
+            second_raw_text = second_raw_text.split("```", 1)[0]
+        
+        try:
+            details_data = json.loads(second_raw_text)
+        except json.JSONDecodeError as e:
+            details_data = {
+                "episode_summary": "Summary placeholder due to formatting error.",
+                "episode_emotional_state": "neutral",
+                "characters_featured": [],
+                "Key Events": [],
+                "Settings": {}
+            }
+        
+        # Combine both responses into a complete episode object
+        complete_episode = {
+            "episode_title": episode_title,
+            "episode_content": episode_content,
+            **details_data
+        }
+
+        return self._parse_episode_response(json.dumps(complete_episode), metadata)
+
         # ✅ **Call OpenAI's GPT-4o API using self.openai_client**
 
         # response = self.openai_client.chat.completions.create(

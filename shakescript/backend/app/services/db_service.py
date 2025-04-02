@@ -17,6 +17,7 @@ class DBService:
             return {"error": "Story not found"}
         
         story_row = story_result.data[0]
+        print("story_row", story_row)
 
         episodes_result = (
             self.supabase.table("episodes")
@@ -55,31 +56,45 @@ class DBService:
         if not isinstance(setting, dict):
             setting = {}
 
+        
+        protagonist = json.loads(story_row["protagonist"] or "[]")
+        if not isinstance(protagonist, list):
+            protagonist = []
+
+        story_outline = json.loads(story_row["story_outline"] or "[]")
+        if not isinstance(story_outline, list):
+            story_outline = []
+
+        print("story_outline\n", story_outline)
+
+
         return {
             "id": story_row["id"],
             "title": story_row["title"],
-            "setting": setting,  # Dict[str, str]
+            "setting": setting,  
             "key_events": json.loads(story_row["key_events"] or "[]"),
             "special_instructions": story_row["special_instructions"],
-            "story_outline": json.loads(story_row["story_outline"] or "{}"),
+            "story_outline": story_outline,
             "current_episode": story_row["current_episode"],
             "episodes": episodes_list,
             "characters": characters,
             "summary": story_row.get("summary"),
             "num_episodes": story_row["num_episodes"],
+            "protagonist": protagonist
         }
 
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
-        # Store setting as Dict[str, str]
-        setting = json.dumps(metadata.get("Settings", {}))  # Already a dict from extract_metadata
+        setting = json.dumps(metadata.get("Settings", {})) 
         story_outline = json.dumps(metadata.get("Story Outline", {}))
         special_instructions = metadata.get("Special Instructions", "")
+        protagonist = json.dumps(metadata.get("Protagonist", []))
 
         result = (
             self.supabase.table("stories")
             .insert(
                 {
                     "title": metadata.get("Title", "Untitled Story"),
+                    "protagonist": protagonist,
                     "setting": setting,
                     "key_events": json.dumps([]),
                     "special_instructions": special_instructions,
