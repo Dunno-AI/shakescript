@@ -24,7 +24,7 @@ class StoryService:
     def extract_and_store_metadata(
         self, user_prompt: str, num_episodes: int, hinglish: bool
     ) -> Dict[str, Any]:
-        metadata = self.ai_service.extract_metadata(user_prompt, hinglish)
+        metadata = self.ai_service.extract_metadata(user_prompt, num_episodes, hinglish)
         if "error" in metadata:
             return metadata
         story_id = self.db_service.store_story_metadata(metadata, num_episodes)

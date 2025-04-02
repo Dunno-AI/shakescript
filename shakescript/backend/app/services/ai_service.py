@@ -15,25 +15,21 @@ class AIService:
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.embedding_service = EmbeddingService()
 
-    def extract_metadata(self, user_prompt: str, hinglish: bool = False) -> Dict:
+    def extract_metadata(
+        self, user_prompt: str, num_episodes: int, hinglish: bool = False
+    ) -> Dict:
         """Extract story metadata from user prompt using Gemini."""
         cleaned_prompt = parse_user_prompt(user_prompt)
-        hinglish_instruction = ""
-        if hinglish:
-            hinglish_instruction = """
-            convert the prompt in hinglish and then create metadata in higlish like for example
-            metadata bhi hinglish me nikalna 
-            Title: Suggest the story title in HINGLISH language , for example : 
-            Title : ek kala ghoda 
-            Characters: character ke naam bhi hinglish me likho
-            for example : Ram , mohan etc 
-            role : bhai , dost etc ..
-            settings : settings bhi hinglish me hi honi chahiye 
-            """
+        hinglish_instruction = (
+            "Use pure Hinglish for all fields (e.g., 'Arjun ka dar', not 'Arjun’s fear')"
+            if hinglish
+            else ""
+        )
         metadata_template = {
             "Title": "string",
+            "Protagonist": {"Name": "string", "Motivation": "string", "Flaw": "string"},
             "Settings": [
-                {"Place Name": "The Place's Description", "Pronunciation": "string"}
+                {"Place": "string", "Description": "string", "Pronunciation": "string"}
             ],
             "Characters": {
                 "Name": {
@@ -41,37 +37,36 @@ class AIService:
                     "Role": "string",
                     "Description": "string",
                     "Relationship": {"Character_Name": "Relation"},
-                    "Pronunciation": "string",
                 }
             },
-            "Special Instructions": "string (include tone: e.g., suspenseful, cheerful)",
-            "Story Outline": {"Episode X-Y (Phase)": "Description"},
+            "Theme": "string",
+            "Story Outline": {"(Phase_name) Ep X - Y": "Description"},
+            "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
-        metadata_template_str = json.dumps(metadata_template, indent=2)
         instruction = f"""
         {hinglish_instruction}
-        Extract structured metadata from the following story prompt and return it as valid JSON.
-        - Title: Suggest a concise, pronounceable title (e.g., avoid silent letters or odd spellings).
-        - Settings: Identify locations with brief, vivid descriptions and add phonetic pronunciation for each place.
-        - Characters: List key entities with roles, descriptions, and phonetic pronunciation for names (e.g., 'Lee-lah' for Lila).
-        - Special Instructions: Include a narration tone (e.g., suspenseful, calm) for audio delivery.
-        Format EXACTLY as follows:
-        - Settings: Use the format "Place Name": "Description" for each location like ("greenwood":"a dense forest" ).
-        {metadata_template_str}
-        IMPORTANT: Use simple, pronounceable names and terms for TTS compatibility.
+        Extract metadata from this prompt for a {num_episodes}-episode story:
+        - Title: Suggest a concise, pronounceable title.
+        - Protagonist: Identify the main character with motivation and flaw.
+        - Settings: List locations with vivid descriptions .
+        - Characters: Include protagonist and others with roles, descriptions, relationships.
+        - Conflict: Define the central struggle.
+        - Theme: Suggest a guiding theme (e.g., redemption).
+        - Story Outline: Map {num_episodes} episodes to a six-phase structure (Exposition , Inciting Incident , Rising Action , Dilemma , Climax , Denouement).
+        Format as JSON:
+        {json.dumps(metadata_template, indent=2)}
+        Prompt: {cleaned_prompt}
         """
         prompt = f"{instruction}\n\nUser Prompt: {cleaned_prompt}"
         response = self.model.generate_content(prompt)
         raw_text = response.text
+
         if "```" in raw_text:
             json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
             matches = re.findall(json_pattern, raw_text, re.DOTALL)
             if matches:
                 raw_text = matches[0]
-        try:
-            return json.loads(raw_text)
-        except json.JSONDecodeError:
-            return extract_json_manually(raw_text)
+        return json.loads(raw_text)
 
     def _parse_episode_response(self, response_text: str, metadata: Dict) -> Dict:
         try:
@@ -144,8 +139,8 @@ class AIService:
 
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep_num} SUMMARY: {summary}\nEPISODE {ep_num} CONTENT: {content}\nTITLE:{title}"
-                for ep_num, content, summary, title in prev_episodes[-3:]
+                f"EPISODE {ep_num}\nCONTENT: {content}\nTITLE:{title}"
+                for ep_num, content, title in prev_episodes[-3:]
             )
             if prev_episodes
             else ""
@@ -162,11 +157,13 @@ class AIService:
         characters = json.loads(char_text) if char_text else {}
         char_snapshot = (
             "\n".join(
-                f"{char['Name']}: {char['Description'][:50]}{'...' if len(char['Description']) > 50 else ''}"
+                f"{char['Name']}: Role: {char.get('Role', 'Unknown')}, "
+                f"Description: {char.get('Description', 'No description available')}, "
+                f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
+                f"Active: {'Yes' if char.get('role_active', True) else 'No'}"
                 for char in characters.values()
-                if char.get("role_active", True)
             )
-            or "No active characters yet."
+            or "No characters introduced yet."
         )
 
         # Add key events from metadata
@@ -180,12 +177,11 @@ class AIService:
         hinglish_instruction = ""
         if hinglish:
             hinglish_instruction = """
-            generate whole episode in hinglish and return output in same language for example
-            episode title: isko bhi hinglish me likhna jaise ( ek chalak lombdi)
-            episode content : pura episode hinglish me dena 
-            episode summary : ye bhi hinglish me hi generate krna 
-            dhyaan se krna ye sb shi shi 
-            niche ke saare rule bhi maan na...
+             - Pura episode Hinglish mein likhna, koi bhi English word use nahi karna (e.g., 'how' ke bajaye 'kaise', 'use' ke bajaye 'istemal').
+             - Simple aur natural Hinglish bolchaal wali bhasha mein story banani hai, jaise log roz baat karte hain.
+             - Example: "Woh bhaag gaya jab usne sher ko dekha" (no 'he ran' ya 'when he saw').
+             - Title bhi Hinglish mein hi rakhna, jaise "Sher Ka Shikaar" ya "Chor Ki Chaal".
+             - Summary aur characters bhi pure Hinglish mein hone chahiye, koi English mix nahi.
             """
 
         # Determine current phase
@@ -228,12 +224,12 @@ class AIService:
             "INTRODUCTION + RISING_ACTION": """
             -This is for short story so you have to merge phases
             -Merge together itroduction and rising action of the story
-            -Keep the flow smooth 
+            -Keep the flow smooth
             """,
             "CLIMAX + RESOLUTION": """
             -This is for short story so you have to merge phases
             -Merge together climax and resolution of the story
-            -Keep the flow smooth 
+            -Keep the flow smooth
             """,
             ""
             "INTRODUCTION": """
@@ -358,7 +354,6 @@ class AIService:
 
         print("phase", phase)
         # print("phase_requirements", phase_requirements[phase])
-
         # Compact story structure based on length
         story_structure = f"""
         {num_episodes} EPISODE STORY:
@@ -366,39 +361,40 @@ class AIService:
         """
         instruction = f"""
         You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
-        {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).  
+        {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).
         Set in "{settings_data}", this episode must maintain a gripping flow, with a clear beginning, middle, and end.
         ---
         {story_structure}
-    
         PHASE REQUIREMENTS:
         {phase_requirements[phase]}
-        
+
         GUIDELINES:
-        - Feature relevant characters with distinct traits
-        - Reveal character depth through challenges
-        - Create sensory-rich descriptions
-        - Use varied sentences and dialogue tags
-        - Ensure this episode fits phase {phase}
-        - Always ensure that the flow and transitions are smooth and engaging
+        - Maintain ALL characters introduced unless explicitly killed or retired. Reference {char_snapshot} for status and ensure traits/motivations persist.
+        - If a character is absent, note why (e.g., "Rohan is away searching for clues").
+        - Start with a brief tie-in to the previous episode unless Episode 1.
+        - End with a smooth lead-in to the next episode unless final episode.
+        - Ensure scene transitions flow logically with clear cause-and-effect.
+        - Feature relevant characters with distinct traits.
+        - Reveal character depth through challenges.
+        - Create sensory-rich descriptions.
+        - Use varied sentences and dialogue tags.
+        - Ensure this episode fits phase {phase}.
 
         Your Task: Generate a Well-Paced Episode
-        1. Use prior episodes & context below to ensure coherence.
-        2. Create a unique title (4-5 words) that differs from previous episodes
+        1. Use prior episodes & context below for coherence.
+        2. Create a unique title (4-5 words) differing from previous ones.
         3. Prioritize character-driven storytelling & emotional depth.
         4. Ensure this episode fulfills its role in the current narrative phase.
 
-        Previous Episodes Recap:  
-        -Title should not be same to previous ones.(it can be upto 4 5 words like murder of the blind lady).
-        -Episodes should align properly with the past episodes.
-        {prev_episodes_text}  
-        Relevant Context (Extracted from Past Episodes):  
-        {chunks_text}  
-        Active Characters & Their Current Motivations:  
-        {char_snapshot}  
+        Previous Episodes Recap:
+        {prev_episodes_text}
+        Relevant Context:
+        {chunks_text}
+        Active Characters & Motivations:
+        {char_snapshot}
         {key_events_summary}
-        Output ONLY a valid JSON response in this format:
-        Strictly follow this format so that the response can be parsed correctly:
+
+        - Output STRICTLY a valid JSON object with NO additional text:
         {{
           "episode_title": "A Short, Pronounceable Title",
           "episode_content": "A well-structured, immersive episode with compelling storytelling.",

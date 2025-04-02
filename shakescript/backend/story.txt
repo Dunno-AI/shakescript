@@ -1,101 +1,146 @@
-Ella's Nap
-Episode 1: Whispers in the Tall Grass
+Premise Formula:
+  
+ ╭─────────────────────────────────────────────────────────╮
+ │ In [Setting], [Main Character] must [Goal] while facing │
+ │ Conflict], but [Obstacle] makes it harder.              │
+ ╰─────────────────────────────────────────────────────────╯
+  
 
-The air hung thick and heavy, a humid blanket woven with the scent of wet earth and overripe mangoes. A chorus of cicadas buzzed relentlessly, a high-pitched drone that vibrated through Ella's enormous feet as she lumbered through the tall grass. Sunlight, fractured by the dense canopy above, dappled the ground in shifting patterns of light and shadow. She could taste the dust kicked up with each step, a gritty film coating her tongue. It was, undeniably, nap time.
+Example 1 (Fantasy, Chosen Hero)
+ ╭─────────────────────────────────────────────╮
+ │                                             │
+ │ User Input:                                 │
+ │                                             │
+ │ Genre: Fantasy                              │
+ │                                             │
+ │ Setting: A cursed kingdom                   │
+ │                                             │
+ │ Main Character: A young blacksmith          │
+ │                                             │
+ │ Goal: Break the kingdom’s curse             │
+ │                                             │
+ │ Conflict: The villain is hunting him        │
+ │                                             │
+ │ Theme: Crime, Investigation , Adventure etc │
+ ╰─────────────────────────────────────────────╯
 
-Ella sighed, a sound like the rustling of a small forest. She spotted her favorite spot: a patch of flattened grass beneath a sprawling baobab tree, its enormous trunk scarred with the markings of generations past. She lowered herself gingerly, the ground cool and damp against her thick hide.
 
-A tiny voice piped up nearby. "Ella! Ella, wait!" It was Pip, a busybody weaver bird, flitting frantically from branch to branch.
+    After premise building the next step is plot/structure building
+    key pillars of a plot are:
 
-Ella groaned inwardly. "What is it, Pip? Can't a girl get some sleep?"
+ ╭───────────────────────────────────────────────────────────╮
+ │ Exposition: Introduce world, characters, and the normal   │
+ │ state of affairs.                                         │
+ │                                                           │
+ │ Inciting Incident: A disruptive event that starts the     │
+ │ conflict.                                                 │
+ │                                                           │
+ │ Rising Action: The protagonist faces complications and    │
+ │ escalates the tension.                                    │
+ │                                                           │
+ │ Dilemma: The protagonist must make a tough decision,      │
+ │ setting the stage for the climax.                         │
+ │                                                           │
+ │ Climax: The protagonist makes a choice, leading to the    │
+ │ most intense action.                                      │
+ │                                                           │
+ │ Denouement: The story resolves the central problem,       │
+ │ leaving room for change or future challenges.             │
+ │                                                           │
+ ╰───────────────────────────────────────────────────────────╯
+ 
+ Character Development
+ - protagonist character Development
+     ╭───────────────────────────────────────────────────────────╮
+     │ Core Traits: Establish the protagonist’s personality,     │
+     │ strengths, and weaknesses.                                │
+     │                                                           │
+     │ Goals & Motivation: Define what the protagonist wants     │
+     │ and why they want it.                                     │
+     │                                                           │
+     │ Flaws: Identify their flaws or internal conflicts.        │
+     │                                                           │
+     │ Internal Conflict: What psychological or emotional        │
+     │ struggle are they facing?                                 │
+     │                                                           │
+     │ External Conflict: What external obstacles must they      │
+     │ overcome to achieve their goal?                           │
+     │                                                           │
+     │ Relationships: How do their interactions with others      │
+     │ reveal aspects of their character?                        │
+     │                                                           │
+     │ Character Arc: Map out how the protagonist changes or     │
+     │ grows over the course of the story.                       │
+     │                                                           │
+     │ End State: Where does the protagonist end up emotionally  │
+     │ and psychologically?                                      │
+     ╰───────────────────────────────────────────────────────────╯
 
-"The Elder Elephants," Pip chirped, hopping closer. "They're calling a meeting! Something about the Whispering Caves and… well, I couldn't quite hear everything, but it sounded important! You simply *must* attend!" Pip, as always, exaggerated.
+ - secondary character Development
+     ╭───────────────────────────────────────────────────────────╮
+     │ Evolving Secondary Characters:                            │
+     │                                                           │
+     │ Define their starting point, internal conflict, and goals.│
+     │                                                           │
+     │ Develop their arc, ensuring it ties into the              │
+     │ protagonist’s journey.                                    │
+     │                                                           │
+     │ Ensure their development is meaningful, influencing the   │
+     │ protagonist.                                              │
+     │                                                           │
+     │ Static Secondary Characters:                              │
+     │                                                           │
+     │ Clarify their role (support, antagonist, mentor).         │
+     │                                                           │
+     │ Keep their role consistent while providing meaningful     │
+     │ interactions with the protagonist.                        │
+     │                                                           │
+     │ Ensure they impact the story despite lacking personal     │
+     │ growth.                                                   │
+     │                                                           │
+     │ Introducing Characters Later:                             │
+     │                                                           │
+     │ Ensure their introduction has a clear purpose.            │
+     │                                                           │
+     │ Provide enough backstory to integrate them smoothly.      │
+     │                                                           │
+     │ Have them affect the protagonist’s arc and decisions.     │
+     │                                                           │
+     │ Removing Characters Midway:                               │
+     │                                                           │
+     │ Plan their exit with purpose, ensuring it serves the plot.│
+     │                                                           │
+     │ Ensure their departure influences the protagonist's       │
+     │ growth or decision-making.                                │
+     │                                                           │
+     │ Tie their exit to the overall theme of the story.         │
+     │                                                           │
+     ╰───────────────────────────────────────────────────────────╯
 
-Ella considered this. The Whispering Caves were rumored to be haunted, echoing with ancient secrets and forgotten dangers. The Elder Elephants only gathered when the matter was truly grave. But… nap time.
+  scene building like each scene/episode would have three things 
+  1. goal of the scene
+  2. conflict of the scene
+  3. change / hooks ( how does story move forward)
 
-"Tell them I'll be there… eventually," she mumbled, already closing her eyes. Pip squawked in frustration and zoomed off, leaving Ella to the symphony of the jungle and the lure of slumber. She drifted off, a sense of unease tickling the edge of her dreams. A low rumble, not from thunder, but from deep within the earth, woke her with a start.
-Episode 2: Echoes of the Deep Earth
 
-Ella bolted upright, dust puffing from her wrinkled hide. The rumble had stopped, leaving behind a ringing silence more unsettling than the cicada's drone. The air, thick moments ago, now felt strangely thin, almost brittle. A metallic tang, like lightning after a storm, stung her nostrils. She strained her ears, but heard nothing beyond the frantic thumping of her own heart. Sunlight still filtered through the baobab's leaves, painting shifting patterns on the ground, but the playful dance now seemed menacing.
+  CHANGES NEEDED TO BE DONE IN MODEL :
+  1. storage of emotions via chunks 
+  2.
 
-A chill, unusual for this time of day, prickled her skin. She rose slowly, her legs stiff from her interrupted nap. Pip was long gone, probably spreading the news – and embellishing it, no doubt. Ella glanced towards the Whispering Caves, a dark gash in the distant hills. They seemed closer somehow, more…present. Usually, the caves were just a part of the landscape, a distant rumour. Now, they felt like a silent, watchful presence.
 
-She tested the wind with her trunk, seeking a familiar scent – the sweet nectar of the acacia blossoms, the earthy musk of the watering hole. But only the metallic tang remained, growing stronger. A tremor, so faint she almost dismissed it, ran through the ground again. This time, it wasn't deep and muffled, but sharp and distinct, like a pebble dropped into a still pond. Ella knew, with a certainty that settled heavy in her gut, that the Elder Elephants' meeting was no mere formality. Whatever was happening at the Whispering Caves was drawing closer, and whether she wanted to or not, she was going to be caught in its path.
 
-She began to walk in the direction of the caves.
-Episode 3: Echoes of the Deep Earth
+  for a single episode
+      1. idea of the story
+      2. characters of the story 
+      3. phase (current)
+      4. theme of the story
+      5. previous episodes (
+            1. content of prev 2 episodes
+            2. key events till now 
+            3. emotional chunks related to the episodes
+            4. prev ep phases
+            5. 
+      )
 
-Ella trudged onward, the tall grass swishing against her legs like whispered warnings. Each step felt heavy, burdened not just by her own weight, but by the growing sense of dread. The metallic tang in the air intensified, coating her mouth with a coppery taste that made her stomach churn. She could feel the tremor, now a constant thrum beneath her feet, vibrating up through her bones. It felt like the earth itself was groaning, a deep, guttural sound that resonated with the unsettling silence of the jungle.
 
-The path to the Whispering Caves wasn't a path at all, really, just a slightly less overgrown swathe of land that generations of elephants had vaguely followed. Ella usually avoided this area, preferring the familiar routes closer to the river. Now, the river seemed a world away, a forgotten comfort in the face of this mounting unease.
-
-As she rounded a cluster of jagged rocks, she saw them: the Elder Elephants. They stood in a somber circle, their massive forms casting long, distorted shadows in the fading sunlight. Elder Jabari, his tusks stained yellow with age, stood at the center, his head bowed. A low, mournful trumpeting echoed from the group, a sound of profound sorrow that sent a shiver down Ella’s spine. She was still a distance away, but the sight of them, so clearly distressed, propelled her forward. The air crackled with an almost palpable tension. She knew then that whatever awaited them at the Whispering Caves was far worse than she could have imagined. This wasn’t just a meeting; it was a vigil. Retreat was no longer an option. She had to know what they knew, face whatever they faced.
-Episode 4: The Circle Tightens Around Caves
-
-Ella pushed through the last of the tangled undergrowth, emerging into the clearing where the Elder Elephants stood. The sight that greeted her stole her breath. The circle wasn't just somber; it was charged with a raw, crackling energy. Elder Jabari, usually a pillar of quiet strength, trembled visibly, his ancient tusks clicking together. His trunk was raised, testing the wind, a deep furrow etched between his eyes.
-
-"Ella," Jabari rumbled, his voice strained. "You shouldn't be here." His words weren't harsh, but the urgency in them was unmistakable. He barely glanced at her, his focus remained fixed on the Whispering Caves. The low trumpeting had ceased, replaced by an unnerving silence, broken only by the frantic chirping of unseen birds. The metallic tang was almost overpowering now, a bitter, acrid taste that clung to the back of her throat.
-
-Elder Zola, her eyes clouded with worry, stepped forward. "The earth… it speaks of a great disturbance. Something awakens deep below. Something old and hungry." Zola gestured with her trunk towards the Caves. "The tremors are not natural. They are… deliberate." Suddenly, the ground lurched violently, throwing Ella off balance. A collective gasp rose from the Elders. A fissure, thin as a hair, snaked across the ground, heading directly towards the Caves. Panic flared in Ella's chest, eclipsing even the dread. Jabari lowered his trunk to the ground to check the earth again. "The Caves are becoming unstable. We have to decide quickly," he said. "Do we confront it or try to seal the Caves, possibly trapping it forever?"
-Episode 5: Underground Currents, Rising Fear
-
-Jabari’s trunk swept in an arc, indicating the fissure that bisected their circle. "The choice is upon us," he boomed, his voice echoing with the weight of ages. "Seal the Caves, risking the unknown, or confront whatever lies within?" The other Elders shuffled their feet, the tremors having increased in intensity. Even Zola, usually resolute, seemed hesitant, her wrinkled face etched with uncertainty.
-
-Ella watched, her heart pounding. She understood the enormity of the decision. Sealing the Caves could trap something truly malevolent, something capable of triggering these devastating tremors. Confronting it…well, that was a plunge into the unknown, a gamble with potentially dire consequences. The metallic tang was now a sharp, biting presence, stinging her nostrils and making her eyes water.
-
-"What lies beneath?" Ella asked, her voice surprisingly steady despite her fear. All eyes turned to her, surprise evident in their weary gazes. Zola sighed. "Legends speak of a sleeper, a being of immense power, imprisoned long ago. A guardian, perhaps, or…something far worse." Another tremor rocked the ground, more violent than the last. The fissure widened, emitting a low, guttural growl that resonated deep within Ella’s chest. It wasn't just the earth groaning now; it was something alive, something awakening.
-
-Jabari looked at Ella, a flicker of something akin to hope in his eyes. "The decision… it falls to us all, young one. Time runs short." He turned back to the fissure. "The Caves choose to wake something now that is not good for our kind."
-Episode 6: Beneath the Trembling Earth
-
-Ella stood frozen, the ground still shuddering from the latest tremor. Jabari’s words hung heavy in the humid air: *The decision falls to us all.* Us all? Including her, a young elephant barely initiated into the ancient ways? A wave of dizziness washed over her, the metallic tang intensifying, now laced with the sharp scent of ozone.
-
-Zola shuffled closer to the fissure, her trunk extended, testing the air. "It stirs," she whispered, her voice barely audible above the drone of the cicadas. "Whatever sleeps… it responds to the disturbance. To *us.*" Her gaze met Ella’s, a flicker of something unreadable in their depths. "The legends speak of a binding, a pact broken long ago. This… this awakening threatens to unravel everything."
-
-Another, stronger tremor ripped through the clearing. The fissure widened further, revealing a glimpse into the abyss below – a swirling darkness punctuated by fleeting sparks of crimson light. A wave of heat blasted upwards, carrying with it a guttural roar that vibrated through Ella's bones. Fear threatened to paralyze her, but Jabari's steady presence anchored her. He lowered his trunk, offering a reassuring touch to her flank. "Do not succumb to fear, little one," he rumbled. "Fear clouds judgement. We must choose wisely."
-
-Ella straightened, taking a deep breath, the metallic tang scratching at her throat. She glanced at the frightened faces of the Elders, their usual stoicism crumbling under the weight of the impending crisis. They looked to her, to a young elephant, for… what? Inspiration? Guidance? She didn't know. But she knew one thing: running was no longer an option. “We have to understand what it wants,” she said, her voice trembling slightly but resolute. “Why is it waking *now*?” The fissure seemed to pulse in response, the crimson light intensifying, and the guttural growl echoed, louder and closer than before, creating a cacophony that threatened to tear everything apart. The cave has begun to speak. Jabari nodded slowly, his eyes never leaving the chasm. “Then we have no choice. We must descend.
-Episode 7: Echoes in the Dark Maw
-
-Ella hesitated at the edge of the fissure. The crimson glow pulsed rhythmically, like a malevolent heartbeat. The metallic tang had evolved into a coppery stench, thick and suffocating. Jabari stood beside her, his trunk resting lightly on her shoulder. "Ready, little one?" he rumbled, his voice a low vibration against her skin. She could feel the tremor in his own body, a subtle counterpoint to the earth's violent spasms.
-
-"As I'll ever be," Ella replied, trying to inject a confidence she didn’t feel into her voice. The other Elders waited behind them, their forms indistinct in the fading light. Zola’s whisper reached them, carried on the humid air, "The path will be treacherous. Trust your instincts." With a final, fortifying breath, Ella stepped forward, following Jabari into the darkness.
-
-The descent was treacherous. The fissure opened into a winding path, slick with moisture and littered with loose rocks. The heat intensified, baking the air and making it difficult to breathe. The crimson glow emanated from deeper within, painting the cave walls in grotesque shadows. They moved slowly, cautiously, the silence broken only by the echo of their footsteps and the occasional drip of water. A low, guttural growl reverberated around them, closer now, more insistent. It felt like the very rock was alive.
-
-Suddenly, a section of the wall crumbled, revealing a narrow passage. Jabari paused, sniffing the air. "A shortcut," he murmured. "But… I sense something…unsettled." He looked at Ella, his eyes gleaming in the crimson light. "The decision is yours. The main path is longer, but potentially safer." Ella closed her eyes, focusing on the tremor in the earth, the growl in the air, the coppery stench that burned in her nostrils. She remembered Jabari’s earlier words: *Fear clouds judgement.* She took a step towards the narrow passage. "The shortcut," she said, her voice firm. "If we're to understand this…sleeper…we need to be bold."
-Episode 8: Maw's Murmur, Fear's Echo
-
-The shortcut felt less like a path and more like the gullet of some colossal beast. The coppery stench intensified, coating Ella’s tongue with a metallic bitterness that made her gag. The crimson glow flickered erratically, casting grotesque shadows that danced on the damp walls. Jabari moved ahead, his trunk sweeping the ground, testing for weaknesses. The air grew thick, heavy, and hot, pressing down on Ella with suffocating force. She could feel the tremors more acutely here, violent shudders that threatened to collapse the tunnel around them.
-
-Suddenly, a cacophony erupted. Not the guttural growl they had heard before, but a high-pitched shriek that pierced her ears, followed by a chorus of whispers. They swirled around her, unintelligible yet menacing, clawing at her mind, feeding on her fear. *Weak… pathetic… surrender…* Ella squeezed her eyes shut, pressing her trunk against her ears. The whispers intensified, turning into a deafening roar.
-
-"Ella!" Jabari's voice, a grounding force, cut through the din. He was beside her, his trunk a solid presence against her trembling side. "Don't listen! It feeds on your fear!" He nudged her forward, deeper into the suffocating darkness. Each step was a battle against the mounting terror, a desperate attempt to maintain control. The crimson light pulsed brighter, revealing a vast chamber ahead. At its center, a colossal form lay dormant, radiating an aura of immense power. The whispers coalesced into a single, chilling voice that echoed through the chamber. "You dare trespass?"
-
-Ella stood frozen, the truth crashing down on her with the force of a collapsing mountain. The 'sleeper' wasn't just a being of immense power, it was drawing power from her fear. She was being tested, manipulated, and very likely, about to be destroyed. She knew, looking at the looming shadow, that if she shows fear, she would be consumed. It was time to confront her own weakness. It was time to be brave. Ella took a step forward into the light, leaving her fear behind. What would she do next?
-Episode 9: The Sleeper's Price: Resolve
-
-Ella straightened, her trunk held high, drawing a deep breath of the stale, coppery air. The colossal 'sleeper' loomed, a mountain of slumbering power. Its question hung in the air, heavy with expectation. "You dare trespass?"
-
-Ella locked her gaze onto the colossal being. "We came to understand," she declared, her voice surprisingly steady despite the tremor that ran through her. "To understand the disturbance that plagues our home."
-
-The sleeper stirred, a low rumble shaking the chamber. "Understanding comes at a price, little one. The price of fear. Of despair. Of surrender."
-
-Whispers slithered into Ella’s mind, attempting to reassert control. *Hopeless…give in…it's too powerful…* But this time, Ella was ready. She focused on Jabari, on Zola's wisdom, on the memory of her herd. She pictured the playful splashing of the young elephants in the watering hole, the comforting presence of her mother. These were the things she was fighting for.
-
-"I will not surrender to fear!" Ella exclaimed, the words echoing in the vast chamber. "My strength comes not from power, but from hope and love!"
-
-The Sleeper shifted, a flicker of surprise rippling across its face. "Hope? Love? Illusions for the weak." A wave of oppressive energy surged towards Ella and Jabari, threatening to crush them. Jabari moved in front of Ella, using his massive frame to shield her. He grunted with the strain, his legs trembling. "Run, little one!" he urged.
-
-Ella stood firm, defying his instructions. She realized then that they could not win with physical strength. The Sleeper fed on negativity. She closed her eyes, and remembered every bit of encouragement she had received. All the positivity flowing through her veins gave her an idea. Taking a deep breath, she did the unimaginable. Ella began to sing, projecting images of tranquility and hope, sending love directly to the source of the fear itself. A soft, lilting melody filled the chamber, pushing back against the oppressive darkness. To everyone's surprise, including Ella's, this was the beginning of the end of The Sleeper.
-Episode 10: Hope's Echo, Sleeper's Demise
-
-The soft melody poured from Ella, each note a beacon of hope against the oppressive darkness. The Sleeper recoiled, its immense form shuddering. Cracks spiderwebbed across its stony surface as the song of love and hope continued. The oppressive energy began to dissipate, replaced by a growing warmth. Jabari, though still strained, felt the weight lifting from his shoulders. The whispers that had plagued Ella's mind turned into whimpers, then faded away completely.
-
-"Impossible…" the Sleeper groaned, its voice losing its menacing edge. "Such… purity…" It thrashed weakly, trying to reassert control, but Ella’s song was a powerful force. The chamber seemed to brighten, the crimson glow replaced by a soft, golden light emanating from Ella herself. She sang of sun-drenched savannas, of playful calves, of the deep bonds of family and the promise of a future free from fear.
-
-With a final shudder, the Sleeper crumbled, its immense form collapsing into dust. The chamber fell silent. The golden light pulsed once more, then slowly faded. Ella lowered her trunk, her song complete. A wave of exhaustion washed over her, but beneath it was an undeniable sense of triumph. Jabari stepped forward, nuzzling her gently. "You did it, little one," he said, his voice thick with emotion. "You faced the Sleeper, and you won."
-
-The tremors ceased. The metallic tang in the air dissipated, replaced by the fresh scent of rain. They were about to leave when from where the Sleeper had stood, a small seed pod sat. As Ella approached she saw it was ready to plant. Ella looks to Jabari and he nods. She uses her trunk and digs a deep hole. She plants the seed pod and covers it again. "What is this, Ella?" Asked Jabari. "A symbol of hope, and proof that even from the darkest places, beautiful things can grow!" It was time to tell the herd the good news.
-
-Time passes. A new watering hole had been formed where Ella planted the seed. The trees grew strong and the elephants returned. They all knew that Ella's brave actions had saved them all. A new era had begun, all thanks to one brave little elephant, and her song.
+``

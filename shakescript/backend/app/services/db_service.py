@@ -89,19 +89,21 @@ class DBService:
         )
         story_id = result.data[0]["id"]
         characters = metadata.get("Characters", {})
-        for char_name, data in characters.items():
-            self.supabase.table("characters").insert(
-                {
-                    "story_id": story_id,
-                    "name": data["Name"],
-                    "role": data["Role"],
-                    "description": data["Description"],
-                    "relationship": json.dumps(data["Relationship"]),
-                    "is_active": True,
-                }
-            ).execute()
-        if not result.data:
-            raise Exception("Failed to insert story metadata into Supabase")
+        character_data_list = [
+            {
+                "story_id": story_id,
+                "name": data["Name"],
+                "role": data["Role"],
+                "description": data["Description"],
+                "relationship": json.dumps(data["Relationship"]),
+                "is_active": True,
+            }
+            for data in characters.values()
+        ]
+
+        if character_data_list:  # Ensure there's data to insert
+            self.supabase.table("characters").insert(character_data_list).execute()
+
         return story_id
 
     def store_episode(
