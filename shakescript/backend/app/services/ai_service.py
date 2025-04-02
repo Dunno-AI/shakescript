@@ -46,6 +46,7 @@ class AIService:
         {hinglish_instruction}
         Extract metadata from User Prompt for a {num_episodes}-episode story:
         - Title: Suggest pronounceable title which expresses the feel and theme of the story.
+<<<<<<< HEAD
         - Settings: List locations with vivid descriptions (Eg- {"Cave: A deep dark cave where the team assembles"}).
         - Protagonist: Identify the main character with motivation and fears.
         - Characters: Current Characters which you can think of in role- Protagonis/Antagonist(if any)/others(give roles according to the story).
@@ -161,7 +162,9 @@ class AIService:
                 f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
                 f"Active: {'Yes' if char.get('role_active', True) else 'No'}, "
                 f"Emotional State: {char.get('Emotional_state', 'Unknown')}"
+<<<<<<< HEAD
                 for char in characters
+
             )
             or "No characters introduced yet."
         )
