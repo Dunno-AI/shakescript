@@ -62,7 +62,7 @@ class StoryService:
 
         episode_generation_time = time.time()
         episode_data = self.generate_episode(story_id, episode_number, num_episodes, hinglish, prev_episodes)
-        print(f"episode {episode_number} generated in: ", time.time() - episode_generation_time)
+        # print(f"episode {episode_number} generated in: ", time.time() - episode_generation_time)
         if "error" in episode_data:
             return episode_data
 
@@ -71,7 +71,7 @@ class StoryService:
         self.embedding_service._process_and_store_chunks(
             story_id, episode_id, episode_number, episode_data["episode_content"], []
         )
-        print(f"episode {episode_number} stored and chunked in: ", time.time() - episode_storing_time)
+        # print(f"episode {episode_number} stored and chunked in: ", time.time() - episode_storing_time)
 
         return {
             "episode_id": episode_id,
@@ -116,7 +116,7 @@ class StoryService:
                 "episode_emotional_state": episode_result.get("episode_emotional_state", "neutral"),
             })
 
-        print("episodes from generate_multiple_episodes\n", episodes)
+        # print("episodes from generate_multiple_episodes\n", episodes)
         return episodes
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:

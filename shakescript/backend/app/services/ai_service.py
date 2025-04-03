@@ -40,7 +40,7 @@ class AIService:
                 }
             ],
             "Theme": "string",
-            "Story Outline": [{"Episode X-Y": "Description", "Phase_name": "Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement", },],
+            "Story Outline": [{"Ep X-Y": "Description", "Phase_name": "Exposition/Inciting Incident/Rising Action/Dilemma/Climax/Denouement", },],
             "Special Instructions": "string (include tone: e.g., suspenseful)",
         }
         instruction = f"""
@@ -49,14 +49,14 @@ class AIService:
         - Title: Suggest a title which expresses the feel and theme of the story.
         - Settings: List locations with vivid descriptions as a dictionary (e.g., {{"Cave": "A deep dark cave where the team assembles"}}).
         - Protagonist: Identify the main character with motivation and fears.
+        - Characters: All the characters of the story.
         - Theme: Suggest a guiding theme (e.g., redemption).
+        - Story Outline: If the story is short, merge phases but include all 6 (Exposition, Inciting Incident, Rising Action, Dilemma, Climax, Denouement).
         
         IMPORTANT POINTS:
         - The story must have a clear beginning, middle, and satisfiable end.
-        - If short, maintain pace and flow, merge middle phases.
+        - If short, maintain pace and flow, shortening middle phases.
         - If long, make each phase descriptive, engaging, and thrilling.
-        - It is important that the story must fit in the number of episodes specified in the user_prompt.
-        - Dont give same episode multiple times in the outline merge the phases instead.
         Format as JSON:
         {json.dumps(metadata_template, indent=2)}
         User Prompt: {cleaned_prompt}
@@ -138,6 +138,8 @@ class AIService:
             or "No settings provided. Build your own."
         )
 
+        print(json.dumps(metadata, indent=2))
+
         prev_episodes_text = (
             "\n\n".join(
                 f"EPISODE {ep['episode_number']}\nCONTENT: {ep['content']}\nTITLE: {ep['title']}"
@@ -170,7 +172,6 @@ class AIService:
 
         story_outline = metadata.get("story_outline", [])
         episode_info = current_phase = ""
-        start = end = 1
         for arc in story_outline:
             arc_key = list(arc.keys())
             episode_range = arc_key[0].split(" ")[1].split("-")
@@ -185,18 +186,8 @@ class AIService:
                 episode_info = arc[arc_key[0]]
                 current_phase = arc.get("Phase_name", "Unknown Phase")
                 break
-        
-        next_phase = {
-                "EXPOSITION": "INCITING INCIDENT",
-                "INCITING INCIDENT": "RISING ACTION", 
-                "RISING ACTION": "DILEMMA", 
-                "DILEMMA": "CLIMAX", 
-                "CLIMAX": "DENOUEMENT", 
-                "DENOUEMENT": "END"
-            }.get(current_phase, "UNKNOWN")
-        is_phase_start = episode_number == start
-        is_phase_end = episode_number == end
 
+        
         key_events = metadata.get("key_events", [])
         key_events_summary = (
             "Key Story Events So Far: " + "; ".join(key_events)
@@ -255,58 +246,51 @@ class AIService:
                 phase_description += story_phases[phase] + "\n"
 
         instruction = f"""
-        You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" (Not more than 450 words) designed for engaging narration.
-        {hinglish_instruction} 
-        Set in "{settings_data}"
+        You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" designed for engaging narration.
+        {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).
+        Set in "{settings_data}", this episode must maintain a gripping flow.
         ---
-        EPISODE POSITION: {episode_number}/{num_episodes} - {current_phase} PHASE
-        PHASE PROGRESSION: {"START of " + current_phase if is_phase_start else "MIDDLE of " + current_phase if not is_phase_end else "END of " + current_phase}
-        In this phase {end - episode_number + 1} episodes remain.
-
-        PHASE CONTEXT:
-        {episode_info}
-
-        PHASE REQUIREMENTS:
+        CURRENT_PHASE: {current_phase}
+        Breif of things that should happen in this phase: {episode_info}
+        PHASE REQUIREMENTS: 
         {phase_description}
 
-        NARRATIVE CONTINUITY:
-        {f"Connect smoothly to previous phase themes and create a clear transition into {current_phase} energy." if is_phase_start else ""}
-        {f"Begin transitioning toward {next_phase} while resolving key {current_phase} elements." if is_phase_end and current_phase != "DENOUEMENT" else ""}
-        {f"Provide meaningful closure to story arcs and character journeys." if current_phase == "DENOUEMENT" and is_phase_end else ""}
-        {f"Deepen and develop core {current_phase} themes and conflicts." if not is_phase_start and not is_phase_end else ""}
-
         GUIDELINES:
-        - If a character is absent, briefly explain why
-        - Begin with a clear connection to previous episode unless this is Episode 1
-        - Ensure logical scene transitions with clear cause-and-effect
-        - Create sensory-rich descriptions that immerse the reader
-        - Use varied sentence structures and natural dialogue
-        - Balance action, dialogue, and internal reflection
-        - Emphasize on character emotional journeys. 
-        - Ensure emotional progression reflects phase position. 
+        - Maintain ALL characters introduced unless explicitly killed or retired.
+        - If a character is absent, note why (e.g., "Rohan is away searching for clues").
+        - Start with a tie-in to the previous episode unless Episode 1.
+        - End with a lead-in to the next episode unless final.
+        - Ensure logical scene transitions with cause-and-effect.
+        - Feature relevant characters with distinct traits.
+        - Reveal character depth through challenges.
+        - Create sensory-rich descriptions.
+        - Use varied sentences and dialogue tags.
 
-        STORYTELLING FOCUS:
-        1. Use prior episodes & context for coherence
-        2. Create a unique title (4-5 words) that captures this episode's essence
+        Your Task: Generate a Well-Paced Episode
+        1. Use prior episodes & context for coherence.
+        2. Create a unique title (4-5 words) differing from previous ones.
+        3. Prioritize character-driven storytelling & emotional depth.
+        4. Fulfill the current narrative phase.
 
-        CONTEXT:
-        Previous Episodes: {prev_episodes_text}
+        Previous Episodes Recap: {prev_episodes_text}
         Relevant Context: {chunks_text}
-        Active Characters: {char_snapshot}
-        {key_events_summary}
+        Active Characters & Motivations: {char_snapshot}
+        Key Events So Far: {key_events_summary}
 
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
-          "episode_title": "A descriptive, Title Representing the Episode",
+          "episode_title": "A descriptive, Pronounceable Title Representing the Episode",
           "episode_content": "An immersive episode with compelling storytelling.",
         }}
         """
-        # - Previous episode emotional tone: {prev_episode_emotional_state if episode_number > 1 else "N/A"}
         
+        # First model call
         first_response = self.model.generate_content(instruction)
         first_raw_text = first_response.text
         
+        # Clean up response text and handle JSON parsing errors
         first_raw_text = first_raw_text.strip()
+        # Remove any leading/trailing text often added by LLMs
         if first_raw_text.startswith("```json"):
             first_raw_text = first_raw_text.split("```json", 1)[1]
         if "```" in first_raw_text:
@@ -315,6 +299,7 @@ class AIService:
         try:
             title_content_data = json.loads(first_raw_text)
         except json.JSONDecodeError as e:
+            # Fallback to avoid crashing
             title_content_data = {
                 "episode_title": "Episode Title Placeholder",
                 "episode_content": "Episode content placeholder due to formatting error."
@@ -323,17 +308,12 @@ class AIService:
         episode_title = title_content_data.get("episode_title")
         episode_content = title_content_data.get("episode_content")
 
+        # Second model call - Generate the rest using the title and content
         details_instruction = f"""
         Based on the following episode title and content, generate additional episode details:
 
         Title: {episode_title}
         Content: {episode_content}
-        Settings: {settings_data}
-        
-        - Settings: Any new place in this episode eg., {{"cave": "Place where team assembles"}}
-        - episode_emotional_state: The emotional tone of this episode (e.g., happy, sad, neutral)
-        - characters_featured: Add new character if any in this episode update previous char relations, emotions, descriptions.
-        - Key Events: Key events of this episode(2 to 4).
         
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
@@ -345,9 +325,11 @@ class AIService:
         }}
         """
         
+        # Second model call
         second_response = self.model.generate_content(details_instruction)
         second_raw_text = second_response.text
         
+        # Clean up second response and handle JSON parsing errors
         second_raw_text = second_raw_text.strip()
         if second_raw_text.startswith("```json"):
             second_raw_text = second_raw_text.split("```json", 1)[1]
@@ -365,6 +347,7 @@ class AIService:
                 "Settings": {}
             }
         
+        # Combine both responses into a complete episode object
         complete_episode = {
             "episode_title": episode_title,
             "episode_content": episode_content,

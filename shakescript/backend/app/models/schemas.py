@@ -30,6 +30,7 @@ class EpisodeCreateResponse(BaseModel):
     episode_number: int
     episode_title: str
     episode_content: str
+    episode_emotional_state: str = "neutral"
 
 class ErrorResponse(BaseModel):
     error: str
