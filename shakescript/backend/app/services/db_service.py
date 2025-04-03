@@ -17,7 +17,6 @@ class DBService:
             return {"error": "Story not found"}
         
         story_row = story_result.data[0]
-        print("story_row", story_row)
 
         episodes_result = (
             self.supabase.table("episodes")
@@ -64,9 +63,6 @@ class DBService:
         story_outline = json.loads(story_row["story_outline"] or "[]")
         if not isinstance(story_outline, list):
             story_outline = []
-
-        print("story_outline\n", story_outline)
-
 
         return {
             "id": story_row["id"],
@@ -190,6 +186,7 @@ class DBService:
 
         updated_key_events = list(set(current_key_events + new_key_events))
         updated_setting = {**current_setting, **new_setting}  # Merge settings, preserving Dict[str, str]
+        print(updated_setting)
 
         self.supabase.table("stories").update(
             {
