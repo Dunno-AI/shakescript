@@ -74,7 +74,7 @@ class DBService:
         if not isinstance(story_outline, list):
             story_outline = []
 
-        print("\n\nstory_outline..................\n", story_outline)
+        # print("\n\nstory_outline..................\n", story_outline)
 
         return {
             "id": story_row["id"],

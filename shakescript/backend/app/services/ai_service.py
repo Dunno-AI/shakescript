@@ -138,7 +138,7 @@ class AIService:
             or "No settings provided. Build your own."
         )
 
-        print(json.dumps(metadata, indent=2))
+        # print(json.dumps(metadata, indent=2))
 
         prev_episodes_text = (
             "\n\n".join(
@@ -256,6 +256,7 @@ class AIService:
         {phase_description}
 
         GUIDELINES:
+        - always introduce character with a intro hook/descrition so reader could connect who the character is in later part .
         - Maintain ALL characters introduced unless explicitly killed or retired.
         - If a character is absent, note why (e.g., "Rohan is away searching for clues").
         - Start with a tie-in to the previous episode unless Episode 1.
@@ -328,6 +329,8 @@ class AIService:
         # Second model call
         second_response = self.model.generate_content(details_instruction)
         second_raw_text = second_response.text
+
+        print(f"\n-------------second_raw_text-------------\n: {second_raw_text}\n")
         
         # Clean up second response and handle JSON parsing errors
         second_raw_text = second_raw_text.strip()
