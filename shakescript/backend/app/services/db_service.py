@@ -25,7 +25,7 @@ class DBService:
 
         episodes_result = (
             self.supabase.table("episodes")
-            .select("id, episode_number, title, content, summary, emotional_state")
+            .select("id, episode_number, title, content, summary, emotional_state , key_events")
             .eq("story_id", story_id)
             .order("episode_number")
             .execute()
@@ -39,6 +39,7 @@ class DBService:
                 "content": ep["content"],
                 "summary": ep["summary"],
                 "emotional_state": ep.get("emotional_state", "neutral"),
+                "key_events": json.loads(ep.get("key_events", "[]")),
             }
             for ep in episodes_result.data
         ]
@@ -141,6 +142,70 @@ class DBService:
 
         return story_id
 
+    def update_character_state(self, story_id: int, character_data: List[Dict]) -> None:
+        """
+        Update character state based on recent emotional changes and relationships
+        """
+        for char in character_data:
+            name = char.get("Name")
+            if not name:
+                continue
+
+            # Get current character data
+            current_char = (
+                self.supabase.table("characters")
+                .select("*")
+                .eq("story_id", story_id)
+                .eq("name", name)
+                .execute()
+            )
+
+            if not current_char.data:
+                continue
+
+            current_state = current_char.data[0]
+
+            # Update emotional state and relationships with memory
+            new_emotional = char.get(
+                "Emotional_State", current_state.get("emotional_state", "neutral")
+            )
+            new_relationships = char.get("Relationship", {})
+
+            # Remember important emotional shifts
+            if new_emotional != current_state.get("emotional_state"):
+                emotional_history = json.loads(
+                    current_state.get("emotional_history") or "[]"
+                )
+                emotional_history.append(
+                    {
+                        "from": current_state.get("emotional_state", "neutral"),
+                        "to": new_emotional,
+                        "episode": current_state.get("last_episode", 0) + 1,
+                    }
+                )
+                # Keep only significant changes
+                if len(emotional_history) > 5:
+                    emotional_history = emotional_history[-5:]
+            else:
+                emotional_history = json.loads(
+                    current_state.get("emotional_history") or "[]"
+                )
+
+            # Update character
+            self.supabase.table("characters").update(
+                {
+                    "emotional_state": new_emotional,
+                    "emotional_history": json.dumps(emotional_history),
+                    "relationship": json.dumps(
+                        {
+                            **json.loads(current_state.get("relationship") or "{}"),
+                            **new_relationships,
+                        }
+                    ),
+                    "last_episode": current_state.get("last_episode", 0) + 1,
+                }
+            ).eq("id", current_state.get("id")).execute()
+
     def store_episode(
         self, story_id: int, episode_data: Dict, current_episode: int
     ) -> int:
@@ -155,6 +220,7 @@ class DBService:
                     ),
                     "content": episode_data.get("episode_content", ""),
                     "summary": episode_data.get("episode_summary", ""),
+                    "key_events": json.dumps(episode_data.get("Key Events", [])),
                     "emotional_state": episode_data.get(
                         "episode_emotional_state", "neutral"
                     ),
@@ -163,40 +229,10 @@ class DBService:
             )
             .execute()
         )
-
-        if not episode_result.data:
-            raise Exception("Failed to upsert episode into Supabase")
-
         episode_id = episode_result.data[0]["id"]
 
         character_data = episode_data.get("characters_featured", [])
-
-        if isinstance(character_data, str):
-            try:
-                character_data = json.loads(character_data)
-            except json.JSONDecodeError:
-                character_data = []
-
-        if not isinstance(character_data, list):
-            character_data = []
-
-        character_data_list = [
-            {
-                "story_id": story_id,
-                "name": char.get("Name"),
-                "role": char.get("Role", "supporting"),
-                "description": char.get("Description", ""),
-                "relationship": json.dumps(char.get("Relationship", {})),
-                "emotional_state": char.get("Emotional_State", "neutral"),
-                "is_active": char.get("role_active", True),
-            }
-            for char in character_data
-        ]
-
-        if character_data_list:
-            self.supabase.table("characters").upsert(
-                character_data_list, on_conflict="story_id,name"
-            ).execute()
+        self.update_character_state(story_id, character_data)
 
         story_data = (
             self.supabase.table("stories")
@@ -211,24 +247,47 @@ class DBService:
         current_setting = (
             json.loads(story_data[0]["setting"] or "{}") if story_data else {}
         )
-        new_key_events = episode_data.get("Key Events", [])
-        new_setting = episode_data.get(
-            "Settings", {}
-        )  # Dict from generate_episode_helper
 
+        new_key_events = [
+            event["event"]
+            for event in episode_data.get("Key Events", [])
+            if event["tier"] in ["foundational", "character-defining"]
+        ]
         updated_key_events = list(set(current_key_events + new_key_events))
-
-        updated_setting = {
-            **current_setting,
-            **new_setting,
-        }  # Merge settings, preserving Dict[str, str]
+        updated_setting = {**current_setting, **episode_data.get("Settings", {})}
 
         self.supabase.table("stories").update(
             {
                 "current_episode": current_episode + 1,
-                "setting": json.dumps(updated_setting),  # Store as Dict[str, str]
+                "setting": json.dumps(updated_setting),
                 "key_events": json.dumps(updated_key_events),
             }
         ).eq("id", story_id).execute()
 
         return episode_id
+
+    def get_previous_episodes(
+        self, story_id: int, current_episode: int, limit: int = 3
+    ) -> List[Dict]:
+        """
+        Fetch the previous episodes for context.
+        """
+        result = (
+            self.supabase.table("episodes")
+            .select("episode_number, content,title, emotional_state, key_events")
+            .eq("story_id", story_id)
+            .lt("episode_number", current_episode)
+            .order("episode_number", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return [
+            {
+                "episode_number": ep["episode_number"],
+                "content": ep["episode_content"],
+                "title": ep["episode_title"],
+                "emotional_state": ep["emotional_state"],
+                "key_events": json.loads(ep["key_events"] or "[]"),
+            }
+            for ep in result.data or []
+        ]

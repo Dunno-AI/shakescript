@@ -59,7 +59,18 @@ def generate_episode(
             for result in results
         ]
     else:
-        result = service.generate_and_store_episode(story_id, num_episodes, hinglish)
+        # Generate the next episode based on current_episode
+        if current_episode > num_episodes:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail="All episodes have already been generated.",
+            )
+        prev_episodes = service.db_service.get_previous_episodes(
+            story_id, current_episode, limit=2
+        )  # Fetch last 2 for context
+        result = service.generate_and_store_episode(
+            story_id, current_episode, num_episodes, hinglish, prev_episodes
+        )
         if "error" in result:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=result["error"]
