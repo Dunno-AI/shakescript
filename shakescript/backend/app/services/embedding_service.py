@@ -17,11 +17,13 @@ class EmbeddingService:
         doc = Document(text=content)
         nodes = self.splitter.get_nodes_from_documents([doc])
         characters_json = json.dumps(characters)
+        chunk_data = []
         for chunk_number, node in enumerate(nodes):
             chunk_text = node.text
             embedding = self.embedding_model.get_text_embedding(chunk_text)
             embedding_str = "[" + ",".join(map(str, embedding)) + "]"
-            result = self.db_service.supabase.table("chunks").insert({
+            
+            chunk_data.append({
                 "story_id": story_id,
                 "episode_id": episode_id,
                 "episode_number": episode_number,
@@ -29,9 +31,14 @@ class EmbeddingService:
                 "content": chunk_text,
                 "characters": characters_json,
                 "embedding": embedding_str,
-            }).execute()
+            })
+        
+        try:
+            result = self.db_service.supabase.table("chunks").insert(chunk_data).execute()
             if not result.data:
-                print(f"Failed to store chunk {chunk_number} for episode {episode_id}")
+                print(f"Failed to store chunks for episode {episode_id}")
+        except Exception as e:
+            print(f"Error storing chunks for episode {episode_id}: {str(e)}")
 
     def retrieve_relevant_chunks(self, story_id: int, current_episode_info: str, k: int = 5) -> List[Dict]:
         query_embedding = self.embedding_model.get_text_embedding(current_episode_info)

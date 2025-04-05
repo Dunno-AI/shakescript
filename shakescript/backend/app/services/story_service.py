@@ -116,7 +116,6 @@ class StoryService:
                 "episode_emotional_state": episode_result.get("episode_emotional_state", "neutral"),
             })
 
-        print("episodes from generate_multiple_episodes\n", episodes)
         return episodes
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:

@@ -82,18 +82,15 @@ class DBService:
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
         setting = json.dumps(metadata.get("Settings", {})) 
         story_outline = json.dumps(metadata.get("Story Outline", {}))
-        special_instructions = metadata.get("Special Instructions", "")
-        protagonist = json.dumps(metadata.get("Protagonist", []))
+        # special_instructions = metadata.get("Special Instructions", "")
 
         result = (
             self.supabase.table("stories")
             .insert(
                 {
                     "title": metadata.get("Title", "Untitled Story"),
-                    "protagonist": protagonist,
                     "setting": setting,
                     "key_events": json.dumps([]),
-                    "special_instructions": special_instructions,
                     "story_outline": story_outline,
                     "current_episode": 1,
                     "num_episodes": num_episodes,
@@ -186,7 +183,6 @@ class DBService:
 
         updated_key_events = list(set(current_key_events + new_key_events))
         updated_setting = {**current_setting, **new_setting}  # Merge settings, preserving Dict[str, str]
-        print(updated_setting)
 
         self.supabase.table("stories").update(
             {
