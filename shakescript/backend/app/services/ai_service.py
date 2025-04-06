@@ -68,8 +68,13 @@ class AIService:
         """
         response = self.model.generate_content(instruction)
         raw_text = response.text
- 
+        if "" in raw_text:
+            json_pattern = r"(?:json)?\s*\n(.*?)\n```"
+            matches = re.findall(json_pattern, raw_text, re.DOTALL)
+            if matches:
+                raw_text = matches[0]
         return json.loads(raw_text)
+ 
 
     def _parse_episode_response(self, response_text: str, metadata: Dict) -> Dict:
         try:
@@ -166,7 +171,7 @@ class AIService:
         episode_number: int,
         char_text: str,
         story_id: int,
-        prev_episodes: List = None,
+        prev_episodes: List = [],
         hinglish: bool = False,
     ) -> Dict:
         settings_data = (

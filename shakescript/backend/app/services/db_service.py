@@ -34,7 +34,7 @@ class DBService:
                 "id": ep["id"],
                 "number": ep["episode_number"],
                 "title": ep["title"],
-                "content": ep["content"],
+                "content": ep["content"],  # Ensure full content is returned
                 "summary": ep["summary"],
                 "emotional_state": ep.get("emotional_state", "neutral"),
                 "key_events": json.loads(ep["key_events"] or "[]"),
@@ -233,7 +233,7 @@ class DBService:
         return [
             {
                 "episode_number": ep["episode_number"],
-                "content": ep["content"],
+                "content": ep["content"],  # Full content for display
                 "title": ep["title"],
                 "emotional_state": ep["emotional_state"],
                 "key_events": json.loads(ep["key_events"] or "[]"),
