@@ -32,10 +32,16 @@ def generate_episode(
         description="Refinement method: 'human' or 'ai'",
         regex="^(human|ai)$",
     ),
+    batch_size: int = Query(
+        default=None,
+        description="Custom batch size for generation (defaults to 2 or num_episodes if all=True)",
+        ge=1,
+    ),
 ):
     """
     Generate and store one or all remaining episodes for a story with optional refinement.
     - If `all=True`, generates all remaining episodes and applies refinement based on `method`.
+    - `batch_size` allows custom batching, overriding default behavior.
     - Returns a structured response with episode details or error.
     """
     story_data = service.get_story_info(story_id)
@@ -44,6 +50,7 @@ def generate_episode(
 
     num_episodes = story_data["num_episodes"]
     current_episode = story_data["current_episode"]
+    effective_batch_size = batch_size if batch_size else (num_episodes if all else 2)
 
     if all:
         episodes_to_generate = num_episodes - current_episode + 1
@@ -55,11 +62,11 @@ def generate_episode(
             }
         if method.lower() == "human":
             results = service.process_episode_batches_with_human_feedback(
-                story_id, episodes_to_generate, hinglish
+                story_id, episodes_to_generate, hinglish, effective_batch_size
             )
         else:  # ai
             results = service.process_episode_batches_with_ai_validation(
-                story_id, episodes_to_generate, hinglish
+                story_id, episodes_to_generate, hinglish, effective_batch_size
             )
         if "error" in results:
             raise HTTPException(
