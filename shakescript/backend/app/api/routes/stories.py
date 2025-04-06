@@ -52,6 +52,7 @@ async def create_story(
         episodes=story_info["episodes"],
         summary=story_info.get("summary"),
         protagonist=story_info["protagonist"],
+        timeline=story_info["timeline"],
     )
 
 
@@ -75,6 +76,7 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
         episodes=story_info["episodes"],
         summary=story_info.get("summary"),
         protagonist=story_info["protagonist"],
+        timeline=story_info["timeline"],
     )
 
 

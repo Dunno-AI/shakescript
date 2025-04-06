@@ -4,7 +4,6 @@ from app.services.db_service import DBService
 from app.services.embedding_service import EmbeddingService
 from app.models.schemas import StoryListItem
 import json
-import time
 
 
 class StoryService:
@@ -55,17 +54,16 @@ class StoryService:
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
             "current_episode": episode_number,
+            "timeline": story_data["timeline"],  # New
         }
-
-        char_text = json.dumps(story_data["characters"])
         return self.ai_service.generate_episode_helper(
-            num_episodes=num_episodes,
-            metadata=story_metadata,
-            episode_number=episode_number,
-            char_text=char_text,
-            story_id=story_id,
-            prev_episodes=prev_episodes,
-            hinglish=hinglish,
+            num_episodes,
+            story_metadata,
+            episode_number,
+            json.dumps(story_data["characters"]),
+            story_id,
+            prev_episodes,
+            hinglish,
         )
 
     def get_all_stories(self) -> List[StoryListItem]:
@@ -86,27 +84,17 @@ class StoryService:
         if "error" in story_data:
             return story_data
 
-        episode_generation_time = time.time()
         episode_data = self.generate_episode(
             story_id, episode_number, num_episodes, hinglish, prev_episodes
         )
         if "error" in episode_data:
             return episode_data
 
-        episode_storing_time = time.time()
         episode_id = self.db_service.store_episode(
             story_id, episode_data, episode_number
         )
-
-        # Extract characters featured in this episode
-        characters_featured = episode_data.get("characters_featured", [])
-
-        # Update character states with new information
-        self.db_service.update_character_state(story_id, characters_featured)
-
-        # Process and store chunks with character information
         character_names = [
-            char.get("Name", "") for char in characters_featured if char.get("Name")
+            char["Name"] for char in episode_data.get("characters_featured", [])
         ]
         self.embedding_service._process_and_store_chunks(
             story_id,
@@ -130,63 +118,36 @@ class StoryService:
     def generate_multiple_episodes(
         self, story_id: int, num_episodes: int, hinglish: bool = False
     ) -> List[Dict[str, Any]]:
-        episodes = []
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return [story_data]
 
+        episodes = []
         current_episode = story_data["current_episode"]
-
         for i in range(num_episodes):
             episode_number = current_episode + i
             prev_episodes = [
                 {
                     "episode_number": ep["episode_number"],
                     "content": ep["episode_content"],
-                    "summary": ep.get("episode_summary", ""),
                     "title": ep["episode_title"],
-                    "emotional_state": ep.get("episode_emotional_state", "neutral"),
                 }
                 for ep in episodes[-2:]
             ]
-
             episode_result = self.generate_and_store_episode(
                 story_id, episode_number, num_episodes, hinglish, prev_episodes
             )
             if "error" in episode_result:
                 return episodes + [episode_result]
-
-            episodes.append(
-                {
-                    "episode_id": episode_result["episode_id"],
-                    "episode_number": episode_result["episode_number"],
-                    "episode_title": episode_result["episode_title"],
-                    "episode_content": episode_result["episode_content"],
-                    "episode_summary": episode_result.get("episode_summary", ""),
-                    "episode_emotional_state": episode_result.get(
-                        "episode_emotional_state", "neutral"
-                    ),
-                }
-            )
-
-        # print("episodes from generate_multiple_episodes\n", episodes)
+            episodes.append(episode_result)
         return episodes
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:
         story_data = self.get_story_info(story_id)
         if "error" in story_data:
             return story_data
-
         episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
-        instruction = f"""
-        Create a 150-200 word audio teaser summary for "{story_data['title']}" based on these episode summaries:
-        {episode_summaries}
-        - Use short, vivid sentences (10-15 words) for TTS clarity.
-        - Highlight key moments with dramatic phrasing (e.g., 'A howl echoed').
-        - End with a hook to entice listeners (e.g., 'What’s next?').
-        - Avoid complex terms or ambiguity for smooth narration.
-        Return ONLY the summary text.
-        """
+        instruction = f"Create a 150-200 word audio teaser summary for '{story_data['title']}' based on: {episode_summaries}. Use vivid, short sentences. End with a hook."
         summary = self.ai_service.model.generate_content(instruction).text.strip()
         self.db_service.supabase.table("stories").update({"summary": summary}).eq(
             "id", story_id
