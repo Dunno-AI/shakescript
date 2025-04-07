@@ -73,16 +73,18 @@ class HumanValidation:
                 changes = self._process_feedback(feedback, episode_batch)
                 print(f"DEBUG: Parsed changes: {changes}")
                 if changes:
-                    current_batch_start = min(changes.keys())
-                    all_episodes = [
-                        ep
-                        for ep in all_episodes
-                        if ep["episode_number"] < current_batch_start
-                    ]
+                    # Keep track of which episodes we need to process in the batch
+                    # Instead of starting from the lowest change, we process the entire batch
+                    lowest_ep_to_change = min(changes.keys())
+
+                    # Make sure that the lowest episode number is within the current batch
+                    if lowest_ep_to_change < current_batch_start:
+                        lowest_ep_to_change = current_batch_start
+
                     while True:
                         proposed_batch = self._process_changes_with_appropriate_method(
                             story_id,
-                            current_batch_start,
+                            current_batch_start,  # Important: Use current_batch_start, not lowest_ep_to_change
                             batch_end,
                             metadata,
                             all_episodes,
