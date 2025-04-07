@@ -15,21 +15,32 @@ from app.utils import parse_user_prompt
 router = APIRouter(prefix="/stories", tags=["stories"])
 
 
-@router.get("/all", response_model=Union[StoryListResponse, ErrorResponse])
+@router.get(
+    "/all",
+    response_model=Union[StoryListResponse, ErrorResponse],
+    summary="Retrieve all stories",
+)
 def get_all_stories(service: StoryService = Depends(get_story_service)):
     """
-    Retrieve a list of all stories.
+    Retrieve a list of all stories with a structured response.
     """
     stories = service.get_all_stories()
-    return StoryListResponse(stories=stories)
+    return (
+        {"status": "success", "stories": stories}
+        if stories
+        else {"status": "success", "stories": [], "message": "No stories found"}
+    )
 
 
-@router.post("/", response_model=Union[StoryResponse, ErrorResponse])
+@router.post(
+    "/",
+    response_model=Union[Dict[str, Any], ErrorResponse],
+    summary="Create a new story",
+)
 async def create_story(
-    #   story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
     service: Annotated[StoryService, Depends(get_story_service)],
-    prompt: str = Body(...),  # Accept raw prompt as a string
-    num_episodes: int = Body(...),  # Accept num_episodes separately
+    prompt: str = Body(...),
+    num_episodes: int = Body(...),
     hinglish: bool = Body(default=False),
 ):
     prompt = parse_user_prompt(prompt)
@@ -41,53 +52,69 @@ async def create_story(
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
 
-    return StoryResponse(
-        story_id=story_info["id"],
-        title=story_info["title"],
-        setting=story_info["setting"],
-        characters=story_info.get("characters", {}),
-        special_instructions=story_info["special_instructions"],
-        story_outline=story_info["story_outline"],
-        current_episode=story_info["current_episode"],
-        episodes=story_info["episodes"],
-        summary=story_info.get("summary"),
-        protagonist=story_info["protagonist"],
-        timeline=story_info["timeline"],
-    )
+    return {
+        "status": "success",
+        "story": StoryResponse(
+            story_id=story_info["id"],
+            title=story_info["title"],
+            setting=story_info["setting"],
+            characters=story_info.get("characters", {}),
+            special_instructions=story_info["special_instructions"],
+            story_outline=story_info["story_outline"],
+            current_episode=story_info["current_episode"],
+            episodes=story_info["episodes"],
+            summary=story_info.get("summary"),
+            protagonist=story_info["protagonist"],
+            timeline=story_info["timeline"],
+        ),
+        "message": "Story created successfully",
+    }
 
 
-@router.get("/{story_id}", response_model=Union[StoryResponse, ErrorResponse])
+@router.get(
+    "/{story_id}",
+    response_model=Union[Dict[str, Any], ErrorResponse],
+    summary="Retrieve a specific story",
+)
 def get_story(story_id: int, service: StoryService = Depends(get_story_service)):
     """
-    Retrieve detailed information about a story.
+    Retrieve detailed information about a story with a structured response.
     """
     story_info = service.get_story_info(story_id)
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
 
-    return StoryResponse(
-        story_id=story_info["id"],
-        title=story_info["title"],
-        setting=story_info["setting"],
-        characters=story_info.get("characters", {}),
-        special_instructions=story_info["special_instructions"],
-        story_outline=story_info["story_outline"],
-        current_episode=story_info["current_episode"],
-        episodes=story_info["episodes"],
-        summary=story_info.get("summary"),
-        protagonist=story_info["protagonist"],
-        timeline=story_info["timeline"],
-    )
+    return {
+        "status": "success",
+        "story": StoryResponse(
+            story_id=story_info["id"],
+            title=story_info["title"],
+            setting=story_info["setting"],
+            characters=story_info.get("characters", {}),
+            special_instructions=story_info["special_instructions"],
+            story_outline=story_info["story_outline"],
+            current_episode=story_info["current_episode"],
+            episodes=story_info["episodes"],
+            summary=story_info.get("summary"),
+            protagonist=story_info["protagonist"],
+            timeline=story_info["timeline"],
+        ),
+        "message": "Story retrieved successfully",
+    }
 
 
-@router.post("/{story_id}/summary", response_model=Union[Dict[str, Any], ErrorResponse])
+@router.post(
+    "/{story_id}/summary",
+    response_model=Union[Dict[str, Any], ErrorResponse],
+    summary="Update story summary",
+)
 def update_story_summary(
     story_id: int, service: Annotated[StoryService, Depends(get_story_service)]
 ):
     """
-    Update the summary of a story based on its episodes.
+    Update the summary of a story based on its episodes with a structured response.
     """
     result = service.update_story_summary(story_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
-    return result
+    return {"status": "success", **result, "message": "Summary updated successfully"}

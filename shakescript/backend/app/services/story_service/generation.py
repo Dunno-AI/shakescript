@@ -2,38 +2,25 @@ from typing import Dict, List, Any
 from app.services.ai_service import AIService
 from app.services.db_service import DBService
 from app.services.embedding_service import EmbeddingService
-from app.models.schemas import StoryListItem
 import json
 
 
-class StoryService:
+class StoryGeneration:
     def __init__(self):
         self.ai_service = AIService()
         self.db_service = DBService()
         self.embedding_service = EmbeddingService()
+        self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
         self, prompt: str, num_episodes: int, hinglish: bool = False
     ) -> Dict[str, Any]:
         full_prompt = f"{prompt} number of episodes = {num_episodes}"
-        result = self.extract_and_store_metadata(full_prompt, num_episodes, hinglish)
-        return (
-            result
-            if "error" in result
-            else {"story_id": result["story_id"], "title": result["title"]}
-        )
-
-    def extract_and_store_metadata(
-        self, user_prompt: str, num_episodes: int, hinglish: bool
-    ) -> Dict[str, Any]:
-        metadata = self.ai_service.extract_metadata(user_prompt, num_episodes, hinglish)
+        metadata = self.ai_service.extract_metadata(full_prompt, num_episodes, hinglish)
         if "error" in metadata:
             return metadata
         story_id = self.db_service.store_story_metadata(metadata, num_episodes)
         return {"story_id": story_id, "title": metadata.get("Title", "Untitled Story")}
-
-    def get_story_info(self, story_id: int) -> Dict[str, Any]:
-        return self.db_service.get_story_info(story_id)
 
     def generate_episode(
         self,
@@ -41,9 +28,9 @@ class StoryService:
         episode_number: int,
         num_episodes: int,
         hinglish: bool = False,
-        prev_episodes=[],
+        prev_episodes: List = [],
     ) -> Dict[str, Any]:
-        story_data = self.get_story_info(story_id)
+        story_data = self.db_service.get_story_info(story_id)
         if "error" in story_data:
             return story_data
 
@@ -54,7 +41,7 @@ class StoryService:
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
             "current_episode": episode_number,
-            "timeline": story_data["timeline"],  # New
+            "timeline": story_data["timeline"],
         }
         return self.ai_service.generate_episode_helper(
             num_episodes,
@@ -66,21 +53,15 @@ class StoryService:
             hinglish,
         )
 
-    def get_all_stories(self) -> List[StoryListItem]:
-        return [
-            StoryListItem(story_id=story["id"], title=story["title"])
-            for story in self.db_service.get_all_stories()
-        ]
-
     def generate_and_store_episode(
         self,
         story_id: int,
         episode_number: int,
         num_episodes: int,
         hinglish: bool = False,
-        prev_episodes=[],
+        prev_episodes: List = [],
     ) -> Dict[str, Any]:
-        story_data = self.get_story_info(story_id)
+        story_data = self.db_service.get_story_info(story_id)
         if "error" in story_data:
             return story_data
 
@@ -116,40 +97,37 @@ class StoryService:
         }
 
     def generate_multiple_episodes(
-        self, story_id: int, num_episodes: int, hinglish: bool = False
+        self,
+        story_id: int,
+        num_episodes: int,
+        hinglish: bool = False,
+        batch_size: int = 1,
     ) -> List[Dict[str, Any]]:
-        story_data = self.get_story_info(story_id)
+        story_data = self.db_service.get_story_info(story_id)
         if "error" in story_data:
             return [story_data]
 
         episodes = []
         current_episode = story_data["current_episode"]
-        for i in range(num_episodes):
-            episode_number = current_episode + i
-            prev_episodes = [
-                {
-                    "episode_number": ep["episode_number"],
-                    "content": ep["episode_content"],
-                    "title": ep["episode_title"],
-                }
-                for ep in episodes[-2:]
-            ]
-            episode_result = self.generate_and_store_episode(
-                story_id, episode_number, num_episodes, hinglish, prev_episodes
+        effective_batch_size = batch_size if batch_size else self.DEFAULT_BATCH_SIZE
+        for i in range(0, num_episodes, effective_batch_size):
+            batch_end = min(
+                current_episode + i + effective_batch_size - 1,
+                current_episode + num_episodes - 1,
             )
-            if "error" in episode_result:
-                return episodes + [episode_result]
-            episodes.append(episode_result)
+            for j in range(current_episode + i, batch_end + 1):
+                prev_episodes = [
+                    {
+                        "episode_number": ep["episode_number"],
+                        "content": ep["episode_content"],
+                        "title": ep["episode_title"],
+                    }
+                    for ep in episodes[-2:]
+                ]
+                episode_result = self.generate_and_store_episode(
+                    story_id, j, num_episodes, hinglish, prev_episodes
+                )
+                if "error" in episode_result:
+                    return episodes + [episode_result]
+                episodes.append(episode_result)
         return episodes
-
-    def update_story_summary(self, story_id: int) -> Dict[str, Any]:
-        story_data = self.get_story_info(story_id)
-        if "error" in story_data:
-            return story_data
-        episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
-        instruction = f"Create a 150-200 word audio teaser summary for '{story_data['title']}' based on: {episode_summaries}. Use vivid, short sentences. End with a hook."
-        summary = self.ai_service.model.generate_content(instruction).text.strip()
-        self.db_service.supabase.table("stories").update({"summary": summary}).eq(
-            "id", story_id
-        ).execute()
-        return {"story_id": story_id, "summary": summary}
