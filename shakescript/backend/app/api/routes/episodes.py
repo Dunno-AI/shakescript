@@ -17,9 +17,8 @@ router = APIRouter(prefix="/episodes", tags=["episodes"])
 
 @router.post(
     "/{story_id}/generate",
-    response_model=Union[
-        EpisodeCreateResponse, List[EpisodeCreateResponse], ErrorResponse
-    ],
+    response_model=Union[Dict[str, Any], ErrorResponse],
+    summary="Generate and optionally refine episodes for a story",
 )
 def generate_episode(
     story_id: int,
@@ -28,10 +27,22 @@ def generate_episode(
     all: bool = Query(
         default=False, description="Generate all remaining episodes if true"
     ),
-    method: str = Query(default="human", description="Refinement method: 'human' or 'ai'"),
+    method: str = Query(
+        default="human",
+        description="Refinement method: 'human' or 'ai'",
+        regex="^(human|ai)$",
+    ),
+    batch_size: int = Query(
+        default=None,
+        description="Custom batch size for generation (defaults to 2 or num_episodes if all=True)",
+        ge=1,
+    ),
 ):
     """
-    Generate and store one or all remaining episodes for a story with refinement.
+    Generate and store one or all remaining episodes for a story with optional refinement.
+    - If `all=True`, generates all remaining episodes and applies refinement based on `method`.
+    - `batch_size` allows custom batching, overriding default behavior.
+    - Returns a structured response with episode details or error.
     """
     story_data = service.get_story_info(story_id)
     if "error" in story_data:
@@ -39,28 +50,47 @@ def generate_episode(
 
     num_episodes = story_data["num_episodes"]
     current_episode = story_data["current_episode"]
+    effective_batch_size = batch_size if batch_size else (num_episodes if all else 2)
 
     if all:
         episodes_to_generate = num_episodes - current_episode + 1
         if episodes_to_generate <= 0:
-            return []
+            return {
+                "status": "success",
+                "episodes": [],
+                "message": "All episodes generated",
+            }
         if method.lower() == "human":
-            results = service.process_episode_batches_with_human_feedback(story_id, episodes_to_generate, hinglish)
+            results = service.process_episode_batches_with_human_feedback(
+                story_id, episodes_to_generate, hinglish, effective_batch_size
+            )
         else:  # ai
-            results = service.process_episode_batches_with_ai_validation(story_id, episodes_to_generate, hinglish)
-        if "error" in results[-1]:
+            results = service.process_episode_batches_with_ai_validation(
+                story_id, episodes_to_generate, hinglish, effective_batch_size
+            )
+        if "error" in results:
             raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST, detail=results[-1]["error"]
+                status_code=HTTP_400_BAD_REQUEST, detail=results["error"]
             )
-        return [
-            EpisodeCreateResponse(
-                episode_number=result["episode_number"],
-                episode_title=result["episode_title"],
-                episode_content=result["episode_content"],
-                episode_emotional_state=result.get("episode_emotional_state", "neutral"),
-            )
-            for result in results
-        ]
+        return {
+            "status": results["status"],
+            "episodes": [
+                EpisodeCreateResponse(
+                    episode_number=result["episode_number"],
+                    episode_title=result["episode_title"],
+                    episode_content=result["episode_content"],
+                    episode_emotional_state=result.get(
+                        "episode_emotional_state", "neutral"
+                    ),
+                )
+                for result in results["episodes"]
+            ],
+            "message": (
+                "Episodes generated and refined successfully"
+                if results["status"] == "success"
+                else "Generation failed"
+            ),
+        }
     else:
         if current_episode > num_episodes:
             raise HTTPException(
@@ -77,9 +107,17 @@ def generate_episode(
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=result["error"]
             )
-        return EpisodeCreateResponse(
-            episode_number=result["episode_number"],
-            episode_title=result["episode_title"],
-            episode_content=result["episode_content"],
-            episode_emotional_state=result.get("episode_emotional_state", "neutral"),
-        )
+        return {
+            "status": "success",
+            "episodes": [
+                EpisodeCreateResponse(
+                    episode_number=result["episode_number"],
+                    episode_title=result["episode_title"],
+                    episode_content=result["episode_content"],
+                    episode_emotional_state=result.get(
+                        "episode_emotional_state", "neutral"
+                    ),
+                )
+            ],
+            "message": "Episode generated successfully",
+        }
