@@ -26,10 +26,9 @@ def get_all_stories(service: StoryService = Depends(get_story_service)):
 
 @router.post("/", response_model=Union[StoryResponse, ErrorResponse])
 async def create_story(
-    #   story: StoryCreate, service: Annotated[StoryService, Depends(get_story_service)]
     service: Annotated[StoryService, Depends(get_story_service)],
-    prompt: str = Body(...),  # Accept raw prompt as a string
-    num_episodes: int = Body(...),  # Accept num_episodes separately
+    prompt: str = Body(...),
+    num_episodes: int = Body(...),
     hinglish: bool = Body(default=False),
 ):
     prompt = parse_user_prompt(prompt)

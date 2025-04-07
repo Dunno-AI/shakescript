@@ -56,7 +56,7 @@ class DBService:
                 "Relationship": json.loads(char["relationship"] or "{}"),
                 "role_active": char.get("is_active", True),
                 "Emotional_State": char.get("emotional_state", "neutral"),
-                "Milestones": json.loads(char["milestones"] or "[]"),  # New
+                "Milestones": json.loads(char["milestones"] or "[]"),
             }
             for char in characters_result.data
         ]
@@ -74,7 +74,7 @@ class DBService:
             "summary": story_row.get("summary"),
             "num_episodes": story_row["num_episodes"],
             "protagonist": json.loads(story_row["protagonist"] or "[]"),
-            "timeline": json.loads(story_row["timeline"] or "[]"),  # New
+            "timeline": json.loads(story_row["timeline"] or "[]"),
         }
 
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
@@ -86,7 +86,7 @@ class DBService:
                     "protagonist": json.dumps(metadata.get("Protagonist", [])),
                     "setting": json.dumps(metadata.get("Settings", {})),
                     "key_events": json.dumps([]),
-                    "timeline": json.dumps([]),  # New
+                    "timeline": json.dumps([]),
                     "special_instructions": metadata.get("Special Instructions", ""),
                     "story_outline": json.dumps(metadata.get("Story Outline", [])),
                     "current_episode": 1,
@@ -106,7 +106,7 @@ class DBService:
                 "relationship": json.dumps(char.get("Relationship", {})),
                 "emotional_state": char.get("Emotional_State", "neutral"),
                 "is_active": True,
-                "milestones": json.dumps([]),  # New
+                "milestones": json.dumps([]),
             }
             for char in metadata.get("Characters", [])
         ]
@@ -200,7 +200,7 @@ class DBService:
                 "resolved": e["tier"] in ["foundational", "character-defining"],
             }
             for e in episode_data.get("Key Events", [])
-        ]  # Chekhov’s Gun: unresolved unless foundational/character-defining
+        ]
         self.supabase.table("stories").update(
             {
                 "current_episode": current_episode + 1,

@@ -68,12 +68,7 @@ class AIService:
         """
         response = self.model.generate_content(instruction)
         raw_text = response.text
-
-        if "```" in raw_text:
-            json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
-            matches = re.findall(json_pattern, raw_text, re.DOTALL)
-            if matches:
-                raw_text = matches[0]
+ 
         return json.loads(raw_text)
 
     def _parse_episode_response(self, response_text: str, metadata: Dict) -> Dict:
@@ -152,7 +147,7 @@ class AIService:
                     - Show the resolution of the dilemma through a meaningful choice
                     - Accelerate pacing with shorter sentences and immediate action
                     - Bring key characters into direct confrontation
-                    - Create a point of no return moment that commits to resolution
+                    - Create a point of return moment that commits to resolution
                 """,
             "Climax-Denouement": """
                     - Show immediate aftermath and emotional impact of the climax
@@ -184,7 +179,7 @@ class AIService:
 
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep['episode_number']}\nCONTENT: {ep['content']}\nTITLE: {ep['title']}"
+                f"EPISODE {ep['episode_number']}\nCONTENT: {ep['episode_content']}\nTITLE: {ep['episode_title']}"
                 for ep in prev_episodes[-3:]
             )
             or "First Episode"
@@ -362,9 +357,6 @@ class AIService:
 
         first_response = self.model.generate_content(instruction)
 
-        # Fix: Handle control characters and properly clean the response text
-        # use _parse_episode_response to clean the first_response
-
         title_content_data = self._parse_episode_response(first_response.text, metadata)
 
         # Second Model: Details with Character States
@@ -423,9 +415,12 @@ class AIService:
                 }
 
         complete_episode = {
+            "episode_number": episode_number,
             "episode_title": title_content_data["episode_title"],
             "episode_content": title_content_data["episode_content"],
             **details_data,
         }
         return self._parse_episode_response(json.dumps(complete_episode), metadata)
 
+    def _apply_human_input(self, content: str, human_input: str) -> str:
+        return f"{content}\n{{ Human Change: {human_input} }}".strip()

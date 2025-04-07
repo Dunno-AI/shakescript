@@ -15,8 +15,8 @@ class StoryResponse(BaseModel):
     current_episode: int
     episodes: List[Dict[str, Any]]
     summary: Optional[str] = None
-    protagonist:List[Dict[str, str]]
-    timeline:List[Dict[str, Any]]
+    protagonist: List[Dict[str, str]]
+    timeline: List[Dict[str, Any]]
 
 class EpisodeResponse(BaseModel):
     episode_id: int

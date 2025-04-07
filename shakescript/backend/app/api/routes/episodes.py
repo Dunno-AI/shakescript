@@ -28,9 +28,10 @@ def generate_episode(
     all: bool = Query(
         default=False, description="Generate all remaining episodes if true"
     ),
+    method: str = Query(default="human", description="Refinement method: 'human' or 'ai'"),
 ):
     """
-    Generate and store one or all remaining episodes for a story.
+    Generate and store one or all remaining episodes for a story with refinement.
     """
     story_data = service.get_story_info(story_id)
     if "error" in story_data:
@@ -43,9 +44,10 @@ def generate_episode(
         episodes_to_generate = num_episodes - current_episode + 1
         if episodes_to_generate <= 0:
             return []
-        results = service.generate_multiple_episodes(
-            story_id, episodes_to_generate, hinglish
-        )
+        if method.lower() == "human":
+            results = service.process_episode_batches_with_human_feedback(story_id, episodes_to_generate, hinglish)
+        else:  # ai
+            results = service.process_episode_batches_with_ai_validation(story_id, episodes_to_generate, hinglish)
         if "error" in results[-1]:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST, detail=results[-1]["error"]
@@ -55,11 +57,11 @@ def generate_episode(
                 episode_number=result["episode_number"],
                 episode_title=result["episode_title"],
                 episode_content=result["episode_content"],
+                episode_emotional_state=result.get("episode_emotional_state", "neutral"),
             )
             for result in results
         ]
     else:
-        # Generate the next episode based on current_episode
         if current_episode > num_episodes:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST,
@@ -67,7 +69,7 @@ def generate_episode(
             )
         prev_episodes = service.db_service.get_previous_episodes(
             story_id, current_episode, limit=2
-        )  # Fetch last 2 for context
+        )
         result = service.generate_and_store_episode(
             story_id, current_episode, num_episodes, hinglish, prev_episodes
         )
@@ -79,4 +81,5 @@ def generate_episode(
             episode_number=result["episode_number"],
             episode_title=result["episode_title"],
             episode_content=result["episode_content"],
+            episode_emotional_state=result.get("episode_emotional_state", "neutral"),
         )
