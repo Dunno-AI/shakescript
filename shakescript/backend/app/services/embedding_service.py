@@ -1,4 +1,3 @@
-from os import wait
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import Document
