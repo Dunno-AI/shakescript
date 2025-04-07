@@ -4,7 +4,7 @@ import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight } from 
 import { StoryPrompt } from './StoryPrompt';
 
 interface SidebarProps {
-  onSubmit: (prompt: string, episodes: number, isHinglish: boolean) => void;
+  onSubmit: (prompt: string, episodes: number, isHinglish: boolean, refineMethod: 'human' | 'ai', batchSize: number) => void;
   isGenerating: boolean;
 }
 
@@ -117,10 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSubmit, isGenerating }) => {
       {/* Story Prompt Modal */}
       {showStoryPrompt && (
         <StoryPrompt
-          onSubmit={(prompt, episodes, isHinglish) => {
-            onSubmit(prompt, episodes, isHinglish);
-            setShowStoryPrompt(false);
-          }}
+          onSubmit={onSubmit}
           isGenerating={isGenerating}
           onClose={() => setShowStoryPrompt(false)}
         />

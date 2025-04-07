@@ -16,36 +16,46 @@ export const Layout = () => {
   
   const isMainDashboard = path === '/dashboard' || path === '/dashboard/';
 
-  const handleStorySubmit = async (prompt: string, episodes: number, isHinglish: boolean) => {
+  const handleStorySubmit = async (prompt: string, episodes: number, isHinglish: boolean, refineMethod: 'human' | 'ai', batchSize: number) => {
     setIsGenerating(true);
     try {
       // First API call to create story
-      const createStoryResponse = await axios.post<StoryResponse>(
+      const createStoryResponse = await axios.post<{ status: string; story: StoryResponse; message: string }>(
         'http://localhost:8000/api/v1/stories/',
         {
-          prompt,
+          prompt: prompt,
           num_episodes: episodes,
           is_hinglish: isHinglish
         }
       );
 
+      if (!createStoryResponse.data.story || !createStoryResponse.data.story.story_id) {
+        throw new Error('No story ID received from create story response');
+      }
+
       // Second API call to generate episodes
       const episodesResponse = await axios.post<Episode[]>(
-        `http://localhost:8000/api/v1/episodes/${createStoryResponse.data.story_id}/generate`,
-        null,
+        `http://localhost:8000/api/v1/episodes/${createStoryResponse.data.story.story_id}/generate`,
+        {},
         {
           params: {
-            all: true
+            hinglish: isHinglish,
+            all: true,
+            method: refineMethod,
+            batch_size: batchSize
           }
         }
       );
 
       setCurrentStory({
-        title: createStoryResponse.data.title,
+        title: createStoryResponse.data.story.title,
         episodes: episodesResponse.data,
       });
     } catch (error) {
       console.error('Error generating story:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+      }
       // TODO: Add error handling UI
     } finally {
       setIsGenerating(false);

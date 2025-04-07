@@ -134,10 +134,18 @@ export const Library = () => {
     
     try {
       const response = await axios.get(`http://localhost:8000/api/v1/stories/${storyId}`);
-      setSelectedStory(response.data);
-      setCurrentEpisode(0); // Reset episode index when selecting a new story
+      
+      // Check if the response has the expected structure
+      if (response.data && response.data.story && response.data.story.episodes && Array.isArray(response.data.story.episodes) && response.data.story.episodes.length > 0) {
+        setSelectedStory(response.data.story);
+        setCurrentEpisode(0); // Reset episode index when selecting a new story
+      } else {
+        console.error('Invalid story data structure:', response.data);
+        // You might want to show an error message to the user here
+      }
     } catch (error) {
       console.error('Error fetching story details:', error);
+      // You might want to show an error message to the user here
     } finally {
       setLoadingStoryId(null);
     }

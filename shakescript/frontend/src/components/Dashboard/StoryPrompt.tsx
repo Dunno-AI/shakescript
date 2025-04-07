@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 interface StoryPromptProps {
-  onSubmit: (prompt: string, episodes: number, isHinglish: boolean) => void;
+  onSubmit: (prompt: string, episodes: number, isHinglish: boolean, refineMethod: 'human' | 'ai', batchSize: number) => void;
   isGenerating: boolean;
   onClose: () => void;
 }
@@ -37,6 +37,8 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
   const [prompt, setPrompt] = useState("");
   const [episodes, setEpisodes] = useState(5);
   const [isHinglish, setIsHinglish] = useState(false);
+  const [refineMethod, setRefineMethod] = useState<'human' | 'ai'>('ai');
+  const [batchSize, setBatchSize] = useState(2);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea when content changes
@@ -50,7 +52,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim() && episodes > 0) {
-      onSubmit(prompt, episodes, isHinglish);
+      onSubmit(prompt, episodes, isHinglish, refineMethod, batchSize);
     }
   };
 
@@ -60,6 +62,14 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
 
   const decrementEpisodes = () => {
     setEpisodes((prev) => Math.max(prev - 1, 1));
+  };
+
+  const incrementBatchSize = () => {
+    setBatchSize((prev) => Math.min(prev + 1, episodes));
+  };
+
+  const decrementBatchSize = () => {
+    setBatchSize((prev) => Math.max(prev - 1, 1));
   };
 
   return (
@@ -97,35 +107,10 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
               </div>
             </div>
            
-            <div className="flex items-center mb-8">
-              {/* Hinglish Checkbox on left */}
+            <div className="space-y-4 mb-8">
+              {/* Episodes Counter */}
               <div className="flex items-center">
-                <div className="relative inline-block w-10 mr-2 align-middle">
-                  <input
-                    type="checkbox"
-                    checked={isHinglish}
-                    onChange={(e) => setIsHinglish(e.target.checked)}
-                    className="sr-only"
-                    id="hinglish-toggle"
-                    disabled={isGenerating}
-                  />
-                  <label
-                    htmlFor="hinglish-toggle"
-                    className="block overflow-hidden h-5 rounded-full bg-zinc-800 cursor-pointer"
-                  >
-                    <span
-                      className={`block h-4 w-4 ml-0.5 mt-0.5 rounded-full bg-zinc-400 transform transition-transform duration-200 ease-in ${
-                        isHinglish ? 'translate-x-5 bg-zinc-300' : ''
-                      }`}
-                    ></span>
-                  </label>
-                </div>
-                <label htmlFor="hinglish-toggle" className="text-zinc-400 text-sm cursor-pointer">Hinglish</label>
-              </div>
-
-              {/* Episodes Counter - pushed all the way to right */}
-              <div className="flex items-center ml-auto">
-                <span className="text-zinc-400 text-sm mr-2">Episodes:</span>
+                <label className="text-zinc-400 text-sm w-32">Episodes:</label>
                 <div className="relative flex items-center">
                   <input
                     type="number"
@@ -133,7 +118,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                     onChange={(e) => setEpisodes(Number.parseInt(e.target.value) || 1)}
                     min="1"
                     max="50"
-                    className="w-16 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
+                    className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
                     disabled={isGenerating}
                   />
                   <div className="absolute right-0 top-0 bottom-0 flex flex-col">
@@ -153,6 +138,88 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                     >
                       <ChevronDown size={12} className="text-zinc-400" />
                     </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Batch Size Counter */}
+              <div className="flex items-center">
+                <label className="text-zinc-400 text-sm w-32">Batch Size:</label>
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    value={batchSize}
+                    onChange={(e) => setBatchSize(Number.parseInt(e.target.value) || 1)}
+                    min="1"
+                    max={episodes}
+                    className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
+                    disabled={isGenerating}
+                  />
+                  <div className="absolute right-0 top-0 bottom-0 flex flex-col">
+                    <button
+                      type="button"
+                      onClick={incrementBatchSize}
+                      className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
+                      disabled={isGenerating || batchSize >= episodes}
+                    >
+                      <ChevronUp size={12} className="text-zinc-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={decrementBatchSize}
+                      className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
+                      disabled={isGenerating || batchSize <= 1}
+                    >
+                      <ChevronDown size={12} className="text-zinc-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Refinement Method Dropdown */}
+              <div className="flex items-center">
+                <label className="text-zinc-400 text-sm w-32">Refinement:</label>
+                <select
+                  id="refine-method"
+                  value={refineMethod}
+                  onChange={(e) => setRefineMethod(e.target.value as 'human' | 'ai')}
+                  className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm"
+                  disabled={isGenerating}
+                >
+                  <option value="ai">AI</option>
+                  <option value="human">Human</option>
+                </select>
+              </div>
+
+              {/* Divider line */}
+              <div className="border-t border-zinc-800"></div>
+
+              {/* Hinglish Toggle - Moved to right */}
+              <div className="flex items-center justify-end">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-400 text-sm">English</span>
+                    <div className="relative inline-block w-10 align-middle">
+                      <input
+                        type="checkbox"
+                        checked={isHinglish}
+                        onChange={(e) => setIsHinglish(e.target.checked)}
+                        className="sr-only"
+                        id="hinglish-toggle"
+                        disabled={isGenerating}
+                      />
+                      <label
+                        htmlFor="hinglish-toggle"
+                        className="block overflow-hidden h-5 rounded-full bg-zinc-800 cursor-pointer"
+                      >
+                        <span
+                          className={`block h-4 w-4 ml-0.5 mt-0.5 rounded-full bg-zinc-400 transform transition-transform duration-200 ease-in ${
+                            isHinglish ? 'translate-x-5 bg-zinc-300' : ''
+                          }`}
+                        ></span>
+                      </label>
+                    </div>
+                    <span className="text-zinc-400 text-sm">Hinglish</span>
                   </div>
                 </div>
               </div>
