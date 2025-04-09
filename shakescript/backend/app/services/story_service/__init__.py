@@ -4,6 +4,8 @@ from app.services.story_service.human_validation import HumanValidation
 from app.services.story_service.ai_validation import AIValidation
 from app.services.story_service.utils import StoryUtils
 from app.models.schemas import StoryListItem
+from app.services.db_service import DBService
+from app.models.schemas import Feedback
 
 
 class StoryService:
@@ -12,6 +14,7 @@ class StoryService:
         self.human_validation = HumanValidation()
         self.ai_validation = AIValidation()
         self.utils = StoryUtils()
+        self.db_service = self.generation.db_service
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
@@ -62,13 +65,14 @@ class StoryService:
 
     def process_episode_batches_with_human_feedback(
         self,
-        story_id: int,
-        num_episodes: int,
-        hinglish: bool = False,
-        batch_size: int = 1,
-    ) -> Dict[str, Any]:
+        story_id,
+        num_episodes,
+        hinglish,
+        batch_size,
+        feedback: List[Feedback] = [],
+    ):
         return self.human_validation.process_episode_batches_with_human_feedback(
-            story_id, num_episodes, hinglish, batch_size
+            story_id, num_episodes, hinglish, batch_size, feedback
         )
 
     def process_episode_batches_with_ai_validation(

@@ -3,6 +3,7 @@ from app.services.ai_service import AIService
 from app.services.db_service import DBService
 import re
 import json
+from ...models.schemas import Feedback
 
 
 class HumanValidation:
@@ -17,10 +18,12 @@ class HumanValidation:
         num_episodes: int,
         hinglish: bool = False,
         batch_size: int = 1,
+        feedback: List[Feedback] = [],
     ) -> Dict[str, Any]:
         story_data = self.db_service.get_story_info(story_id)
         if "error" in story_data:
             return {"error": story_data["error"], "episodes": []}
+        print(f"Story data: {story_data}\n")
 
         metadata = {
             "title": story_data["title"],
@@ -28,17 +31,24 @@ class HumanValidation:
             "key_events": story_data["key_events"],
             "special_instructions": story_data["special_instructions"],
             "story_outline": story_data["story_outline"],
-            "current_episode": story_data.get("current_episode", 1),
+            "current_episode": story_data["current_episode"],
             "num_episodes": num_episodes,
             "story_id": story_id,
             "characters": story_data["characters"],
             "hinglish": hinglish,
         }
-        all_episodes = []
-        current_batch_start = 1
+        all_episodes = story_data["episodes"]
+        current_batch_start = story_data["current_episode"]
         effective_batch_size = batch_size if batch_size else self.DEFAULT_BATCH_SIZE
 
-        while current_batch_start <= num_episodes:
+        print(f"Current batch start: {current_batch_start}\n")
+        print(f"Number of episodes: {num_episodes}\n")
+
+        if current_batch_start > num_episodes:
+            return {"error": "All episodes generated", "episodes": []}
+
+        # Generate only new episodes starting from current_batch_start
+        if current_batch_start > len(all_episodes):
             batch_end = min(
                 current_batch_start + effective_batch_size - 1, num_episodes
             )
@@ -50,109 +60,35 @@ class HumanValidation:
                 all_episodes,
                 hinglish,
             )
+        else:
+            return {
+                "status": "success",
+                "episodes": [],
+            }  # No new episodes needed if already generated
 
-            print(f"Batch {current_batch_start}-{batch_end}:")
-            for ep in episode_batch:
-                print(
-                    f"Episode {ep['episode_number']}: {ep['episode_title']}\n{ep['episode_content']}\n"
-                )
-
-            print(
-                "Enter your feedback in natural language:\n"
-                f"- 'Change episode 2 title to \"The New Title\"'\n"
-                f"- 'Make episode 3 more suspenseful'\n"
-                f"- 'Change this line \"Original text\" to a more dramatic line in episode 1'\n"
-                f"- 'no change needed'"
-            )
-            feedback = input("Your changes: ").strip()
-
-            if feedback.lower() == "no change needed":
-                all_episodes.extend(episode_batch)
-                current_batch_start = batch_end + 1
-            else:
-                changes = self._process_feedback(feedback, episode_batch)
-                print(f"DEBUG: Parsed changes: {changes}")
-                if changes:
-                    # Keep track of which episodes we need to process in the batch
-                    # Instead of starting from the lowest change, we process the entire batch
-                    lowest_ep_to_change = min(changes.keys())
-
-                    # Make sure that the lowest episode number is within the current batch
-                    if lowest_ep_to_change < current_batch_start:
-                        lowest_ep_to_change = current_batch_start
-
-                    while True:
-                        proposed_batch = self._process_changes_with_appropriate_method(
-                            story_id,
-                            current_batch_start,  # Important: Use current_batch_start, not lowest_ep_to_change
-                            batch_end,
-                            metadata,
-                            all_episodes,
-                            hinglish,
-                            changes,
-                            episode_batch,
-                        )
-
-                        print(f"Proposed Batch {current_batch_start}-{batch_end}:")
-                        for ep in proposed_batch:
-                            print(
-                                f"Episode {ep['episode_number']}: {ep['episode_title']}\n{ep['episode_content']}\n"
-                            )
-                        validation = (
-                            input(
-                                f"Validate proposed batch {current_batch_start}-{batch_end}? (yes/no): "
-                            )
-                            .strip()
-                            .lower()
-                        )
-                        if validation == "yes":
-                            all_episodes.extend(proposed_batch)
-                            current_batch_start = batch_end + 1
-                            break
-                        elif validation == "no":
-                            feedback = input(
-                                "What changes do you want instead? (e.g., 'Change episode 2 title to \"Another Title\"'): "
-                            ).strip()
-                            if feedback.lower() == "no change needed":
-                                all_episodes.extend(episode_batch)
-                                current_batch_start = batch_end + 1
-                                break
-                            changes = self._process_feedback(feedback, episode_batch)
-                            print(f"DEBUG: New changes: {changes}")
-                            if not changes:
-                                print(
-                                    "Couldn't parse feedback. Keeping original batch."
-                                )
-                                all_episodes.extend(episode_batch)
-                                current_batch_start = batch_end + 1
-                                break
-                else:
-                    print("Couldn't understand feedback. Skipping to next batch.")
-                    all_episodes.extend(episode_batch)
-                    current_batch_start = batch_end + 1
-
-        while True:
-            print(
-                "Any final tweaks? Use natural language like:\n"
-                "- 'Change episode 3 title to \"Final Title\"'\n"
-                "- 'Improve the ending of episode 2'\n"
-                "- 'none'"
-            )
-            tweak_input = input("Your final tweaks: ").strip()
-            if tweak_input.lower() == "none":
-                break
-            changes = self._process_feedback(tweak_input, all_episodes)
-            print(f"DEBUG: Final tweak changes: {changes}")
+        if (
+            feedback
+            and current_batch_start
+            <= max(f.episode_number for f in feedback)
+            <= batch_end
+        ):
+            print(f"Feedback: {feedback}\n")
+            changes = self._process_api_feedback(feedback, episode_batch)
             if changes:
-                target_episode = min(changes.keys())
-                all_episodes = self._tweak_specific_episodes(
-                    story_id, target_episode, metadata, all_episodes, hinglish, changes
+                refined_batch = self._process_changes_with_appropriate_method(
+                    story_id,
+                    current_batch_start,
+                    batch_end,
+                    metadata,
+                    all_episodes,
+                    hinglish,
+                    changes,
+                    episode_batch,
                 )
-            else:
-                print("Couldn't understand tweak. Try again or say 'none'.")
+                episode_batch.extend(refined_batch)
 
         stored_episodes = []
-        for episode in all_episodes:
+        for episode in episode_batch:
             episode_id = self.db_service.store_episode(
                 story_id, episode, episode["episode_number"]
             )
@@ -169,11 +105,32 @@ class HumanValidation:
                 }
             )
 
+        # Update current_episode for the next batch
+        self.db_service.supabase.table("stories").update(
+            {"current_episode": min(batch_end + 1, num_episodes + 1)}
+        ).eq("id", story_id).execute()
+
         return (
             {"status": "success", "episodes": stored_episodes}
             if stored_episodes
             else {"error": "No episodes generated", "episodes": []}
         )
+
+    def _process_api_feedback(
+        self, feedback: List[Feedback], episodes: List[Dict]
+    ) -> Dict[int, List[Dict]]:
+        changes = {}
+        for fb in feedback:
+            ep_num = fb.episode_number
+            if ep_num in [ep["episode_number"] for ep in episodes]:
+                changes[ep_num] = [
+                    {
+                        "type": "content",
+                        "value": fb.feedback,
+                        "instruction": fb.feedback,
+                    }
+                ]
+        return changes
 
     def _process_feedback(
         self, feedback: str, episodes: List[Dict]

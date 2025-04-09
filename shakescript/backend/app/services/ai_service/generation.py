@@ -26,9 +26,10 @@ class AIGeneration:
             )
             or "No settings provided. Build your own."
         )
+        print(f"prev_episodes: {prev_episodes}\n")
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep['episode_number']}\nCONTENT: {ep['episode_content']}\nTITLE: {ep['episode_title']}"
+                f"EPISODE {ep.get('number', 'N/A')}\nCONTENT: {ep.get('content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
                 for ep in prev_episodes[-3:]
             )
             or "First Episode"

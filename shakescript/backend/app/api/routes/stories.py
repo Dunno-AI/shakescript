@@ -39,9 +39,15 @@ def get_all_stories(service: StoryService = Depends(get_story_service)):
 )
 async def create_story(
     service: Annotated[StoryService, Depends(get_story_service)],
-    prompt: str = Body(...),
-    num_episodes: int = Body(...),
-    hinglish: bool = Body(default=False),
+    prompt: str = Body(..., description="Detailed story idea or prompt"),
+    num_episodes: int = Body(..., description="Total number of episodes", ge=1),
+    batch_size: int = Body(
+        2, description="Number of episodes to generate per batch", ge=1
+    ),
+    refinement: str = Body(
+        "AI", description="Refinement method: 'AI' or 'Human'", regex="^(AI|Human)$"
+    ),
+    hinglish: bool = Body(False, description="Generate in Hinglish if true"),
 ):
     prompt = parse_user_prompt(prompt)
     result = await service.create_story(prompt, num_episodes, hinglish)
@@ -51,6 +57,9 @@ async def create_story(
     story_info = service.get_story_info(result["story_id"])
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
+
+    story_info["batch_size"] = batch_size
+    story_info["refinement_method"] = refinement
 
     return {
         "status": "success",
@@ -66,6 +75,8 @@ async def create_story(
             summary=story_info.get("summary"),
             protagonist=story_info["protagonist"],
             timeline=story_info["timeline"],
+            batch_size=batch_size,
+            refinement_method=refinement,
         ),
         "message": "Story created successfully",
     }
@@ -98,6 +109,8 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
             summary=story_info.get("summary"),
             protagonist=story_info["protagonist"],
             timeline=story_info["timeline"],
+            batch_size=story_info.get("batch_size", 2),
+            refinement_method=story_info.get("refinement_method", "AI"),
         ),
         "message": "Story retrieved successfully",
     }

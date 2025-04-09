@@ -34,7 +34,7 @@ class DBService:
                 "id": ep["id"],
                 "number": ep["episode_number"],
                 "title": ep["title"],
-                "content": ep["content"],  # Ensure full content is returned
+                "content": ep["content"],  
                 "summary": ep["summary"],
                 "emotional_state": ep.get("emotional_state", "neutral"),
                 "key_events": json.loads(ep["key_events"] or "[]"),
