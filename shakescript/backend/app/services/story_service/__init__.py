@@ -2,10 +2,10 @@ from typing import Dict, List, Any
 from app.services.story_service.generation import StoryGeneration
 from app.services.story_service.human_validation import HumanValidation
 from app.services.story_service.ai_validation import AIValidation
+from app.services.story_service.regeneration_service import RegenerationService
 from app.services.story_service.utils import StoryUtils
-from app.models.schemas import StoryListItem
+from app.models.schemas import StoryListItem, Feedback
 from app.services.db_service import DBService
-from app.models.schemas import Feedback
 
 
 class StoryService:
@@ -14,7 +14,10 @@ class StoryService:
         self.human_validation = HumanValidation()
         self.ai_validation = AIValidation()
         self.utils = StoryUtils()
-        self.db_service = self.generation.db_service
+        self.regeneration_service = RegenerationService()
+        self.db_service = (
+            DBService()
+        ) 
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
@@ -65,12 +68,12 @@ class StoryService:
 
     def process_episode_batches_with_human_feedback(
         self,
-        story_id,
-        num_episodes,
-        hinglish,
-        batch_size,
+        story_id: int,
+        num_episodes: int,
+        hinglish: bool = False,
+        batch_size: int = 1,
         feedback: List[Feedback] = [],
-    ):
+    ) -> Dict[str, Any]:
         return self.human_validation.process_episode_batches_with_human_feedback(
             story_id, num_episodes, hinglish, batch_size, feedback
         )

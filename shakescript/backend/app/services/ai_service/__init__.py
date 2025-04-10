@@ -5,7 +5,7 @@ from app.services.ai_service.instructions import AIInstructions
 from app.services.ai_service.generation import AIGeneration
 from app.services.ai_service.utils import AIUtils
 from app.services.embedding_service import EmbeddingService
-from typing import Dict, List
+from typing import Dict, List, Any, Optional
 import re , json
 
 
@@ -35,6 +35,7 @@ class AIService:
         story_id: int,
         prev_episodes: List = [],
         hinglish: bool = False,
+        feedback: Optional[str] = None,
     ) -> Dict:
         return self.generation.generate_episode_helper(
             num_episodes,
@@ -44,6 +45,7 @@ class AIService:
             story_id,
             prev_episodes,
             hinglish,
+            feedback
         )
 
     def _apply_human_input(self, content: str, human_input: str) -> str:

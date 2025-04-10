@@ -55,6 +55,7 @@ class EpisodeCreateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
+    episodes: List[Dict[str, Any]] = []  # Added to match existing error responses
 
 
 class StoryListItem(BaseModel):
@@ -64,3 +65,14 @@ class StoryListItem(BaseModel):
 
 class StoryListResponse(BaseModel):
     stories: List[StoryListItem]
+
+
+# New model for batch response
+class EpisodeBatchResponse(BaseModel):
+    status: str
+    episodes: List[EpisodeResponse]  # Use EpisodeResponse for typed episodes
+
+    class Config:
+        arbitrary_types_allowed = (
+            True  # Allow flexibility in Dict[str, Any] within EpisodeResponse
+        )
