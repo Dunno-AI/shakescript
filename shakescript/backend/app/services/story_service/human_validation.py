@@ -17,7 +17,7 @@ class HumanValidation:
         num_episodes: int,
         hinglish: bool = False,
         batch_size: int = 1,
-        feedback: List[Feedback] = [],
+        feedback: List[Dict[str, Any]] = [],
     ) -> Dict[str, Any]:
         story_data = self.db_service.get_story_info(story_id)
         if "error" in story_data:
@@ -35,6 +35,7 @@ class HumanValidation:
             "characters": story_data["characters"],
             "hinglish": hinglish,
         }
+
         prev_episodes = story_data["episodes"]
         current_batch_start = story_data["current_episode"]
         effective_batch_size = batch_size if batch_size else self.DEFAULT_BATCH_SIZE
@@ -43,8 +44,8 @@ class HumanValidation:
             return {"error": "All episodes generated", "episodes": []}
 
         batch_end = min(current_batch_start + effective_batch_size - 1, num_episodes)
-        changes = self._process_api_feedback(feedback, prev_episodes)
 
+        # Use the feedback directly as it's now in the correct format
         refined_batch = self.regeneration_service._regenerate_batch(
             story_id,
             current_batch_start,
@@ -52,7 +53,7 @@ class HumanValidation:
             metadata,
             prev_episodes,
             hinglish,
-            feedback,
+            feedback=feedback,
         )
 
         self.db_service.supabase.table("stories").update(
@@ -66,25 +67,22 @@ class HumanValidation:
         )
 
     def _process_api_feedback(
-        self, feedback: List[Feedback], episodes: List[Dict]
-    ) -> Dict[int, List[Dict]]:
-        changes = {}
-        for fb in feedback:
-            ep_num = fb.episode_number
-            if ep_num in [ep["number"] for ep in episodes]:
-                changes[ep_num] = [
-                    {
-                        "type": (
-                            "content"
-                            if not fb.feedback.startswith("Change title")
-                            else "title"
-                        ),
-                        "value": (
-                            fb.feedback.split("to ")[-1]
-                            if "Change title" in fb.feedback
-                            else fb.feedback
-                        ),
-                        "instruction": fb.feedback,
-                    }
-                ]
-        return changes
+        self, feedback_list: List[Feedback]
+    ) -> List[Dict[str, Any]]:
+        """
+        Transforms API feedback list into the format expected by regeneration_service.
+        Each item in the returned list should have:
+        {
+            "episode_number": int,
+            "feedback": str
+        }
+        """
+        processed_feedback = []
+        for fb in feedback_list:
+            feedback_item = {
+                "episode_number": fb.episode_number,
+                "feedback": fb.feedback,
+            }
+            processed_feedback.append(feedback_item)
+
+        return processed_feedback

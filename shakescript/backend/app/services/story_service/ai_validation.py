@@ -63,11 +63,12 @@ class AIValidation:
                     metadata,
                     prev_episodes + all_episodes,
                     hinglish,
-                    feedback=feedback,  # Using feedback in generation
+                    feedback=feedback,
                 )
 
                 validation_result = self.regeneration_service._validate_batch(
-                    initial_batch, metadata
+                    initial_batch,
+                    {**metadata, "prev_episodes": prev_episodes + all_episodes},
                 )
                 batch_valid = validation_result.get("valid", False)
 
