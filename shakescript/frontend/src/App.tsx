@@ -1,12 +1,46 @@
-import "./index.css"
-import { BackgroundLines } from "./components/AceternityUI/background-lines"
-import StoryViewer from "./StoryView"
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { HeroSection } from "./components/Home/Hero";
+import Home from "./components/Home/Home";
+import { StartBuildingSection } from "./components/Home/StartBuilding";
+import Footer from "./components/Navigation/Footer";
+import { Navbar } from "./components/Navigation/Navbar";
+import { Layout } from "./components/Dashboard/Layout";
+
+// Wrapper component to conditionally render Navbar and Footer
+const AppLayout = () => {
+  const location = useLocation();
+  const isDashboardRoute = location.pathname.startsWith('/dashboard');
+
+  return (
+    <>
+      {!isDashboardRoute && <Navbar />}
+      <Routes>
+        <Route path="/" element={
+          <>
+            <HeroSection />
+            <StartBuildingSection />
+            <Home />
+          </>
+        } />
+        <Route path="/dashboard/*" element={<Layout/>} />
+        <Route path="/product" element={<div>Product Page</div>} />
+        <Route path="/developers" element={<div>Developers Page</div>} />
+        <Route path="/pricing" element={<div>Pricing Page</div>} />
+        <Route path="/enterprise" element={<div>Enterprise Page</div>} />
+        <Route path="/blog" element={<div>Blog Page</div>} />
+        <Route path="/signin" element={<div>Sign In Page</div>} />
+        <Route path="/start-project" element={<div>Start Project Page</div>} />
+      </Routes>
+      {!isDashboardRoute && <Footer />}
+    </>
+  );
+}
 
 function App() {
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-50">
-      <StoryViewer />
-    </div>
+    <Router>
+      <AppLayout />
+    </Router>
   );
 }
 
