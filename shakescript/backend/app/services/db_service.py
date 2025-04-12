@@ -114,7 +114,10 @@ class DBService:
             self.supabase.table("characters").insert(character_data_list).execute()
         return story_id
 
+    
     def update_character_state(self, story_id: int, character_data: List[Dict]) -> None:
+        records_to_upsert = []
+
         for char in character_data:
             current_char = (
                 self.supabase.table("characters")
@@ -124,31 +127,40 @@ class DBService:
                 .execute()
                 .data
             )
-            if not current_char:
-                continue
-            current = current_char[0]
-            new_emotional = char.get("Emotional_State", current["emotional_state"])
-            milestones = json.loads(current["milestones"] or "[]")
-            if new_emotional != current["emotional_state"]:
-                milestones.append(
-                    {
-                        "event": f"Shift to {new_emotional}",
-                        "episode": current.get("last_episode", 0) + 1,
-                    }
-                )
-            self.supabase.table("characters").update(
-                {
-                    "emotional_state": new_emotional,
-                    "relationship": json.dumps(
-                        {
-                            **json.loads(current["relationship"] or "{}"),
-                            **char.get("Relationship", {}),
-                        }
-                    ),
-                    "milestones": json.dumps(milestones[-5:]),
-                    "last_episode": current.get("last_episode", 0) + 1,
-                }
-            ).eq("id", current["id"]).execute()
+            
+            current = current_char[0] if current_char else {}
+            new_emotional = char.get("Emotional_State", current.get("emotional_state", "Neutral"))
+            
+            milestones = json.loads(current.get("milestones") or "[]")
+            if new_emotional != current.get("emotional_state") and current:
+                milestones.append({
+                    "event": f"Shift to {new_emotional}",
+                    "episode": current.get("last_episode", 0) + 1,
+                })
+
+            updated_relationship = {
+                **json.loads(current.get("relationship") or "{}"),
+                **char.get("Relationship", {})
+            }
+
+            record = {
+                "story_id": story_id,
+                "name": char["Name"],
+                "emotional_state": new_emotional,
+                "role": char["Role"],
+                "relationship": json.dumps(updated_relationship),
+                "milestones": json.dumps(milestones[-5:]),
+                "last_episode": current.get("last_episode", 0) + 1 if current else 1,
+                "description": char.get("Description", current.get("description", "")),
+                "is_active": char.get("role_active", current.get("role_active", True)),
+            }
+
+            if current:
+                record["id"] = current["id"]  # for targeting specific row
+
+            records_to_upsert.append(record)
+        self.supabase.table("characters").upsert(records_to_upsert, on_conflict="id").execute()
+
 
     def store_episode(
         self, story_id: int, episode_data: Dict, current_episode: int

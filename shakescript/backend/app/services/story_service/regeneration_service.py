@@ -38,6 +38,7 @@ class RegenerationService:
         for i in range(start_episode, end_episode + 1):
             instructions = feedback_map.get(i, [])
             combined_instruction = "\n".join(instructions) if instructions else None
+            print("10. Trying to regenerate episode ", i, "\n")
 
             try:
                 episode = self.ai_service.generate_episode_helper(
@@ -69,6 +70,7 @@ class RegenerationService:
         self, story_id: int, validated_batch: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         stored_episodes = []
+        print("11. Storing Validated Batch.\n")
         for episode in validated_batch:
             episode_id = self.db_service.store_episode(
                 story_id, episode, episode["episode_number"]
@@ -139,6 +141,7 @@ class RegenerationService:
 
         response = self.ai_service.model.generate_content(instruction)
         response_text = response.text
+        print(f"AI Validation Prompt: {instruction}")
         print(f"AI Validation: {response_text}")
 
         if "valid" in response_text.lower() and "invalid" not in response_text.lower():

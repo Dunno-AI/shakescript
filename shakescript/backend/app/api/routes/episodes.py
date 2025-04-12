@@ -89,25 +89,23 @@ def generate_batch(
     else:  # human
         episodes = (
             service.generate_multiple_episodes(
-                story_id, batch_size, hinglish, batch_size
+                story_id, story_data["num_episodes"], hinglish, batch_size
             )
             if service
             else StoryService().generate_multiple_episodes(
-                story_id, batch_size, hinglish, batch_size
+                story_id, story_data["num_episodes"], hinglish, batch_size
             )
         )
         # Convert raw episode dicts to EpisodeResponse instances with type safety
         formatted_episodes = [
             EpisodeResponse(
-                episode_id=int(
-                    ep.get("episode_id", 0)
-                ),  # Default to 0 if None or missing
                 episode_number=int(
                     ep.get("episode_number", 0)
-                ),  # Default to 0 if None or missing
+                ), 
                 episode_title=ep.get("episode_title", ""),
                 episode_content=ep.get("episode_content", ""),
                 episode_summary=ep.get("episode_summary", ""),
+                episode_id=int(ep.get("episode_id", 0)),
                 characters_featured=ep.get("characters_featured", {}),
                 settings=ep.get("settings", {}),
             )

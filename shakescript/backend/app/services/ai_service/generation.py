@@ -1,6 +1,7 @@
 import json
 import re
 from typing import Dict, List, Any, Optional
+from app.services.ai_service.utils import AIUtils
 from app.services.embedding_service import EmbeddingService
 
 
@@ -8,6 +9,7 @@ class AIGeneration:
     def __init__(self, model, embedding_service: EmbeddingService):
         self.model = model
         self.embedding_service = embedding_service
+        self.utils = AIUtils()
 
     def generate_episode_helper(
         self,
@@ -27,10 +29,10 @@ class AIGeneration:
             )
             or "No settings provided. Build your own."
         )
-        # print(f"prev_episodes: {prev_episodes}\n")
+
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep.get('number', 'N/A')}\nCONTENT: {ep.get('content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
+                f"EPISODE {ep.get('episode_number', 'N/A')}\nCONTENT: {ep.get('content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
                 for ep in prev_episodes[-3:]
             )
             or "First Episode"
@@ -44,7 +46,7 @@ class AIGeneration:
             )
             or ""
         )
-        # Ensure characters is a List[Dict[str, Any]]
+        
         try:
             characters = json.loads(char_text) if char_text else []
             if not isinstance(characters, list):
@@ -66,6 +68,7 @@ class AIGeneration:
 
         story_outline = metadata.get("story_outline", [])
         episode_info = current_phase = next_phase = ""
+        start = end = num_episodes
         for i, arc in enumerate(story_outline):
             arc_key = list(arc.keys())[0]
             episode_range = arc_key.split(" ")[1].split("-")
@@ -81,48 +84,90 @@ class AIGeneration:
                     next_phase = story_outline[i + 1].get("Phase_name", "Unknown Phase")
                 break
 
-        transition_guide = (
+        transition_guide = f"""
+        This is the last episode of this phase So we have to smoothly transit to the next phase:
+        {(
             self._get_phase_transition_guide(current_phase, next_phase)
             if next_phase
             else ""
-        )
+        )}"""
+        phase_description = f"""Things you can follow in this phase:
+        {self._get_phase_description(current_phase)}"""
+
+        PHASE_INFORMATION = ( transition_guide if end == episode_number and next_phase != current_phase else phase_description)
         key_events_summary = self._summarize_key_events(
             metadata.get("key_events", []), characters, episode_info
-        )  # Pass typed characters
-        hinglish_instruction = (
-            "Use pure Hinglish for *all fields* (e.g., 'Arjun ka dar', not 'Arjun's fear')"
-            if hinglish
-            else ""
         )
-        phase_description = self._get_phase_description(current_phase)
+
+        general_pts = """
+        GENERAL POINTS:
+        - Use Character Snapshot to track arcs and relationships, but shift focus to secondary characters or subplots at least once per episode.
+        - When ever introduce a new character, show their backstory and introduce their role in the story.
+        - Whenever remove a character, show their departure and the impact on the story properly.
+        - Use sensory-rich descriptions and varied dialogue, alternating tone (e.g., tense, reflective, humorous) to keep the style dynamic.
+        - Are you skipping days at a time? Summarizing events? Don't do that, add scenes to detail them.
+        - Is the story rushing over certain plot points and excessively focusing on others?
+        - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
+        - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
+        - Characters: Who are the characters in this chapter? What do they mean to each other? What is the situation between them? Is it a conflict? Is there tension? Is there a reason that the characters have been brought together?
+        - Development: What are the goals of each character, and do they meet those goals? Do the characters change and exhibit growth? Do the goals of each character change over the story?
+        - Details: How are things described? Is it repetitive? Is the word choice appropriate for the scene? Are we describing things too much or too little?
+        - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)? 
+        - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards? 
+        - Fill the episodes with necessary details.
+
+        Don't answer these questions directly, instead make your plot implicitly answer them. (Show, don't tell)
+        """
+
+        feedback_pts = """
+        You have to refine this Episode based on the feedback given below.
+        FEEDBACK:
+        {feedback}
+
+        From the Previous Episode Recaps understand what this episode was about and based on the FEEDBACK refine this Episode.
+        
+        - Does the Episode fits in the story where it belongs?
+        - Does the requirements of the feedback are fullfilled?
+        - Does the episode feels fresh and not use anything from the previous episodes?
+
+        Don't answer these questions directly, instead make your plot implicitly answer them. (Show, don't tell)
+        """
+
+        GENERATE_OR_REFINE = (
+            general_pts if not feedback else general_pts + "\n" + feedback_pts
+        )
 
         instruction = f"""
-        You are crafting a structured, immersive story titled "{metadata.get('title', 'Untitled Story')}" for engaging narration.
-        {hinglish_instruction} Episode {episode_number} of {num_episodes} (Target: 300-400 words).
-        The story is set in diverse environments inspired by "{settings_data}", but avoid repetitive weather references (e.g., rain) unless critical to the plot. Vary the opening line with actions, dialogue, or unexpected events instead of fixed patterns.
+        I want your help in crafting the story titled "{metadata.get('title', 'Untitled Story')}" for engaging narration.
+        We will now be generating the EPISODE {episode_number} of {num_episodes} (Target: upto 450 words).
+        The story is set in diverse environments inspired by 
+        <SETTINGS>
+        {settings_data}
+        </SETTINGS>
+
+        Avoid repetitive weather references (e.g., rain) unless critical to the plot. Vary the opening line with actions, dialogue, or unexpected events instead of fixed patterns.
 
         ---
         CURRENT_PHASE: {current_phase}
         Brief of things that should happen in this phase: {episode_info}
-        PHASE REQUIREMENTS: 
-        {phase_description}
-        TRANSITION TO NEXT PHASE ({next_phase if next_phase else 'None'}):
-        {transition_guide}
+        <PHASE_INFORMATION>
+        {PHASE_INFORMATION}
+        </PHASE_INFORMATION>
 
-        GUIDELINES:
-        - Use Character Snapshot to track arcs and relationships, but shift focus to secondary characters or subplots at least once per episode.
-        - Reference Relevant Context selectively—blend past events with fresh narrative elements to avoid repetition.
-        - Start story with some backstory (don't do sudden introduction of char . smooth development should be there)
-        - When ever introduce a new character, show their backstory and introduce their role in the story.
-        - Introduce characters with unique hooks reflecting their current state, varying their presentation (e.g., through others' eyes, internal monologue).
-        - Whenever remove a character, show their departure and the impact on the story properly.
-        - End with a lead-in to the next episode unless final, reflecting the transition guide if applicable, and introduce a new twist or perspective.
-        - Use sensory-rich descriptions and varied dialogue, alternating tone (e.g., tense, reflective, humorous) to keep the style dynamic.
+        {GENERATE_OR_REFINE} 
 
-        Previous Episodes Recap: {prev_episodes_text} (use sparingly to avoid over-reliance).
-        Relevant Context: {chunks_text} (integrate creatively, not as a template).
-        Character Snapshot: {char_snapshot}
-        Key Events So Far: {key_events_summary}
+        <Previous_Episodes (use sparingly to avoid over-reliance)> 
+        {prev_episodes_text}
+        </Previous_Episodes>
+        <Relevant_Context (integrate creatively, not as a template)>
+        {chunks_text}
+        </Relevant_Context>
+        <Character_Snapshot>
+        {char_snapshot}
+        </Character_Snapshot>
+        <Key_Events>
+        {key_events_summary}
+        </Key_Events>
 
         - Output STRICTLY a valid JSON object with NO additional text:
         {{
@@ -134,15 +179,19 @@ class AIGeneration:
             instruction += f"\nStrictly follow this : Apply the following REFINEMENT based on feedback:\n{feedback}"
 
         first_response = self.model.generate_content(instruction)
-        title_content_data = self._parse_episode_response(first_response.text, metadata)
+        title_content_data = self.utils._parse_episode_response(first_response.text, metadata)
+        if hinglish:
+            title_content_data = self.hinglish_conversion(title_content_data["episode_content"], title_content_data["episode_title"])
 
         details_instruction = f"""
-        Based on the episode title and content, generate details for "{metadata.get('title', 'Untitled Story')}" Episode {episode_number}.
-        {hinglish_instruction}
-        Title: {title_content_data['episode_title']}
-        Content: {title_content_data['episode_content']}
+        I have written episode {episode_number} for the story "{metadata.get('title', 'Untitled Story')}".
+        Title: 
+        {title_content_data['episode_title']}
+        Content: 
+        {title_content_data['episode_content']}
 
         GUIDELINES:
+        - Update all the asked details extract enough information so that I can write the next episode by just reading these.
         - Update Character Snapshot based on content (emotional state, relationships).
         - Identify 1-3 Key Events; tag as 'foundational' if they shift the story significantly, 'character-defining' if they develop a character.
         - Summarize concisely (50-70 words) with vivid language.
@@ -161,7 +210,7 @@ class AIGeneration:
         }}
         """
         second_response = self.model.generate_content(details_instruction)
-        details_data = self._parse_and_clean_response(second_response.text, metadata)
+        details_data = self.utils._parse_and_clean_response(second_response.text, metadata)
 
         complete_episode = {
             "episode_number": episode_number,
@@ -169,78 +218,30 @@ class AIGeneration:
             "episode_content": title_content_data["episode_content"],
             **details_data,
         }
-        return self._parse_episode_response(json.dumps(complete_episode), metadata)
+        return self.utils._parse_episode_response(json.dumps(complete_episode), metadata)
 
-    def _parse_episode_response(
-        self, response_text: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        try:
-            return json.loads(response_text)
-        except json.JSONDecodeError:
-            json_pattern = r"```(?:json)?\s*\n(.*?)\n```"
-            matches = re.findall(json_pattern, response_text, re.DOTALL)
-            if matches:
-                try:
-                    return json.loads(matches[0])
-                except:
-                    cleaned_text = matches[0].replace("'", '"')
-                    try:
-                        return json.loads(cleaned_text)
-                    except:
-                        pass
-            json_pattern2 = r'{[\s\S]*"episode_title"[\s\S]*"episode_content"[\s\S]*}'
-            match = re.search(json_pattern2, response_text)
-            if match:
-                try:
-                    cleaned_json = match.group(0).replace("'", '"')
-                    return json.loads(cleaned_json)
-                except:
-                    pass
-            title_match = re.search(r'"episode_title":\s*"([^"]+)"', response_text)
-            content_match = re.search(
-                r'"episode_content":\s*"([^"]*(?:(?:"[^"]*)*[^"])*)"', response_text
-            )
-            summary_match = re.search(r'"episode_summary":\s*"([^"]+)"', response_text)
-            episode_title = (
-                title_match.group(1)
-                if title_match
-                else f"Episode {metadata.get('current_episode', 1)}"
-            )
-            episode_content = content_match.group(1) if content_match else response_text
-            episode_summary = (
-                summary_match.group(1)
-                if summary_match
-                else "Episode summary not available."
-            )
-            return {
-                "episode_title": episode_title,
-                "episode_content": episode_content,
-                "episode_summary": episode_summary,
-            }
+    def hinglish_conversion(self, ep_content, ep_title)->Dict[str, Any]:
+        instruction = f"""
+        I want your help in converting one of my story's episode to Hinglish.
+        EPISODE TITLE:
+        {ep_title}
+        EPISODE CONTENT:
+        {ep_content}
 
-    def _parse_and_clean_response(
-        self, raw_text: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        if "```json" in raw_text:
-            raw_text = re.sub(r"```json\s*|\s*```", "", raw_text)
-        elif "```" in raw_text:
-            raw_text = re.sub(r"```\s*|\s*```", "", raw_text)
-        try:
-            return json.loads(raw_text)
-        except json.JSONDecodeError:
-            clean_text = "".join(ch for ch in raw_text if ch.isprintable())
-            try:
-                return json.loads(clean_text)
-            except json.JSONDecodeError as e:
-                print(f"DEBUG: JSON parsing failed with error: {e}")
-                print(f"DEBUG: Raw text:\n{raw_text}\n")
-                return {
-                    "episode_summary": "Summary placeholder due to parsing error.",
-                    "episode_emotional_state": "neutral",
-                    "characters_featured": [],
-                    "Key Events": [{"event": "Default event", "tier": "contextual"}],
-                    "Settings": {},
-                }
+        GUIDELINES:
+        - Convert both the title and episode content to Hinglish.
+        - Dont use any english word unless it becomes a necessity.
+        - You just have to translate the episode not change it, it should remain the same but in hinglish.
+        - Give output in a JSON format dont give any additional text.
+
+        {{
+            "episode_title": "string",
+            "episode_content": "string",
+        }}
+        """
+
+        reposne = self.model.generate_content(instruction)
+        return self.utils._parse_episode_response(reposne.text, {})
 
     def _summarize_key_events(
         self, key_events: List[str], characters: List[Dict[str, Any]], episode_info: str
@@ -272,47 +273,10 @@ class AIGeneration:
         )
 
     def _get_phase_description(self, current_phase: str) -> str:
-        story_phases = {
-            "Exposition": """
-            - Set the scene with vivid sensory details (sight, sound, smell) and atmosphere.  
-            - Introduce the protagonist via actions and thoughts, showing their normal world and backstory.  
-            - Highlight strengths, flaws, and routines through interactions.  
-            - Subtly hint at tensions or themes to come.
-            """,
-            "Inciting Incident": """
-            - Disrupt the status quo with a mysterious, tense, or unexpected event.  
-            - Hook with a moment demanding the protagonist's response.  
-            - Plant seeds of the central conflict without full reveal.  
-            - Raise stakes to push the story forward.
-            """,
-            "Rising Action": """
-            - Escalate obstacles testing the protagonist's values and skills.  
-            - Deepen character bonds or conflicts through shared challenges.  
-            - Reveal backstory and complications forcing tough choices.  
-            - Build tension with pacing and a mini-cliffhanger raising stakes.
-            """,
-            "Dilemma": """
-            - Present a multi-layered obstacle (emotional, moral, physical) with no easy solution.  
-            - Force a pivotal choice revealing the protagonist's core beliefs.  
-            - Heighten stakes with conflicting goals and mutual reliance.  
-            - End with urgency pushing toward a critical decision.
-            """,
-            "Climax": """
-            - Peak tension as conflicts collide in a decisive confrontation.  
-            - Force the protagonist to face the central challenge or antagonist.  
-            - Reveal a final twist or surprise recontextualizing the struggle.  
-            - Show growth through bold choices and sacrifices, testing resolve.
-            """,
-            "Denouement": """
-            - Resolve conflicts with emotional and narrative closure.  
-            - Show consequences of the climax for characters and world.  
-            - Reflect growth and themes via dialogue, imagery, or realization.  
-            - Establish a new status quo, leaving a memorable final impression.
-            """,
-        }
+        story_phases = self.utils.story_phases 
         return (
-            "".join(
-                phase for phase, desc in story_phases.items() if phase in current_phase
+            "\n".join(
+                desc for phase, desc in story_phases.items() if phase in current_phase
             )
             + "\n"
         )
@@ -349,5 +313,10 @@ class AIGeneration:
                     - Reflect on how the protagonist has changed from beginning to end
                     - Create symmetry with opening through mirrored imagery or situations
                 """,
+            "Denouement-Final Episode": """
+                    - Conclude the journey with a definitive settling of the world and characters’ lives.  
+                    - Depict the protagonist actively shaping their future, cementing their growth.  
+                    - End with a poignant, grounded moment—dialogue, action, or imagery—that echoes the story’s heart and leaves no ambiguity.
+                """
         }
         return transition_guides.get(f"{current_phase}-{next_phase}", "")
