@@ -74,13 +74,6 @@ const TabsContent = ({ value, children }: { value: string; children: React.React
   return activeTab === value ? <div>{children}</div> : null
 }
 
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-  return (
-    <div className={`bg-gray-900 rounded-lg border border-gray-800 p-6 ${className}`}>
-      {children}
-    </div>
-  )
-}
 
 const CardHeader = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return <div className={`mb-4 ${className}`}>{children}</div>
@@ -134,22 +127,6 @@ export default function StatsDashboard() {
     { attribute: "T/S", fullName: "Themes / Symbolism", story1: 9.4, story2: 9.6, baseline: 7.3 },
   ]
 
-  // Monthly performance data
-  const monthlyData = [
-    { month: "Jan", story1: 8.7, story2: 8.5, baseline: 7.1 },
-    { month: "Feb", story1: 8.9, story2: 8.7, baseline: 7.2 },
-    { month: "Mar", story1: 9.0, story2: 8.9, baseline: 7.3 },
-    { month: "Apr", story1: 9.1, story2: 9.0, baseline: 7.3 },
-    { month: "May", story1: 9.2, story2: 9.2, baseline: 7.4 },
-    { month: "Jun", story1: 9.3, story2: 9.3, baseline: 7.4 },
-    { month: "Jul", story1: 9.3, story2: 9.4, baseline: 7.5 },
-    { month: "Aug", story1: 9.4, story2: 9.5, baseline: 7.5 },
-    { month: "Sep", story1: 9.4, story2: 9.6, baseline: 7.5 },
-    { month: "Oct", story1: 9.5, story2: 9.7, baseline: 7.6 },
-    { month: "Nov", story1: 9.5, story2: 9.7, baseline: 7.6 },
-    { month: "Dec", story1: 9.6, story2: 9.8, baseline: 7.7 },
-  ]
-
   const radarChartData = attributes.map(({ full }) => {
     const match = chartData.find((item) => item.fullName === full)
     if (!match) return null
@@ -163,21 +140,6 @@ export default function StatsDashboard() {
 
   const barChartData = chartData.map((item) => ({
     attribute: item.fullName,
-    story1: item.story1 * (animationStep / 100),
-    story2: item.story2 * (animationStep / 100),
-    baseline: item.baseline * (animationStep / 100),
-  }))
-
-  const wormChartData = chartData.map((item) => ({
-    ...item,
-    story1: item.story1 * (animationStep / 100),
-    story2: item.story2 * (animationStep / 100),
-    baseline: item.baseline * (animationStep / 100),
-  }))
-
-  // Animated monthly data
-  const animatedMonthlyData = monthlyData.map((item) => ({
-    ...item,
     story1: item.story1 * (animationStep / 100),
     story2: item.story2 * (animationStep / 100),
     baseline: item.baseline * (animationStep / 100),
