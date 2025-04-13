@@ -36,6 +36,22 @@ interface StoryDetails {
   summary: string;
 }
 
+// Add cache interfaces
+interface StoryCache {
+  data: Story[];
+  timestamp: number;
+}
+
+interface StoryDetailsCache {
+  [key: number]: {
+    data: StoryDetails;
+    timestamp: number;
+  };
+}
+
+// Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 const ClassicLoader = () => {
   return (
     <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
@@ -113,14 +129,33 @@ export const Library = () => {
   const [loadingStoryId, setLoadingStoryId] = useState<number | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
 
+  // Initialize caches
+  const [storiesCache, setStoriesCache] = useState<StoryCache | null>(null);
+  const [storyDetailsCache, setStoryDetailsCache] = useState<StoryDetailsCache>({});
+
   useEffect(() => {
     fetchStories();
   }, []);
 
   const fetchStories = async () => {
+    // Check cache first
+    if (storiesCache && Date.now() - storiesCache.timestamp < CACHE_DURATION) {
+      setStories(storiesCache.data);
+      setLoadingStories(false);
+      return;
+    }
+
     try {
       const response = await axios.get('http://localhost:8000/api/v1/stories/all');
-      setStories(response.data.stories);
+      const newStories = response.data.stories;
+      
+      // Update cache
+      setStoriesCache({
+        data: newStories,
+        timestamp: Date.now()
+      });
+      
+      setStories(newStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
     } finally {
@@ -129,23 +164,37 @@ export const Library = () => {
   };
 
   const handleStoryClick = async (storyId: number) => {
-    // Set loading state specifically for this story card
+    // Check cache first
+    if (storyDetailsCache[storyId] && Date.now() - storyDetailsCache[storyId].timestamp < CACHE_DURATION) {
+      setSelectedStory(storyDetailsCache[storyId].data);
+      setCurrentEpisode(0);
+      return;
+    }
+
     setLoadingStoryId(storyId);
     
     try {
       const response = await axios.get(`http://localhost:8000/api/v1/stories/${storyId}`);
       
-      // Check if the response has the expected structure
       if (response.data && response.data.story && response.data.story.episodes && Array.isArray(response.data.story.episodes) && response.data.story.episodes.length > 0) {
-        setSelectedStory(response.data.story);
-        setCurrentEpisode(0); // Reset episode index when selecting a new story
+        const storyData = response.data.story;
+        
+        // Update cache
+        setStoryDetailsCache(prev => ({
+          ...prev,
+          [storyId]: {
+            data: storyData,
+            timestamp: Date.now()
+          }
+        }));
+        
+        setSelectedStory(storyData);
+        setCurrentEpisode(0);
       } else {
         console.error('Invalid story data structure:', response.data);
-        // You might want to show an error message to the user here
       }
     } catch (error) {
       console.error('Error fetching story details:', error);
-      // You might want to show an error message to the user here
     } finally {
       setLoadingStoryId(null);
     }
