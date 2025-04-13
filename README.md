@@ -162,25 +162,19 @@ Traditional AI-generated stories often struggle with:
 
 ### 🧩 Model Pipeline
 
-<p align="center">
-  <img src="../charts_and_pipeline/pipeline.svg" alt="Model Pipeline" width="700"/>
-</p>
+<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/pipeline.svg" alt="Model Pipeline" width="700"/> </p>
 
 ---
 
 ### 📈 Radar Chart - Story Attribute Comparison
 
-<p align="center">
-  <img src="../charts_and_pipeline/radarChart.png" alt="Radar Chart" width="500"/>
-</p>
+<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/radarChart.png" alt="Radar Chart" width="500"/> </p>
 
 ---
 
 ### 🪱 Worm Graph - Evaluation Metrics (out of 10)
 
-<p align="center">
-  <img src="../charts_and_pipeline/wormChart.png" alt="Worm Chart" width="700"/>
-</p>
+<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/wormChart.png" alt="Worm Chart" width="700"/> </p>
 
 ---
 
