@@ -162,7 +162,7 @@ Traditional AI-generated stories often struggle with:
 
 ### 🧩 Model Pipeline
 
-<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/pipeline.svg" alt="Model Pipeline" width="700"/> </p>
+<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/pipeline.png" alt="Model Pipeline" width="700"/> </p>
 
 ---
 
