@@ -17,6 +17,7 @@ class EmbeddingService:
             embed_model=self.embedding_model,
         )
 
+    
     def _process_and_store_chunks(
         self,
         story_id: int,
@@ -28,41 +29,43 @@ class EmbeddingService:
         doc = Document(text=content)
         nodes = self.splitter.get_nodes_from_documents([doc])
         characters_json = json.dumps(characters)
+
+        chunk_data = []
         for chunk_number, node in enumerate(nodes):
             chunk_text = node.text
             embedding = self.embedding_model.get_text_embedding(chunk_text)
-            # Calculate importance score
             importance_score = self._calculate_importance_score(
                 story_id, chunk_text, characters, episode_number
             )
-            result = (
-                self.db_service.supabase.table("chunks")
-                .insert(
-                    {
-                        "story_id": story_id,
-                        "episode_id": episode_id,
-                        "episode_number": episode_number,
-                        "chunk_number": chunk_number,
-                        "content": chunk_text,
-                        "characters": characters_json,
-                        "embedding": "[" + ",".join(map(str, embedding)) + "]",
-                        "importance_score": importance_score,
-                    }
-                )
-                .execute()
-            )
+
+            chunk_data.append({
+                "story_id": story_id,
+                "episode_id": episode_id,
+                "episode_number": episode_number,
+                "chunk_number": chunk_number,
+                "content": chunk_text,
+                "characters": characters_json,
+                "embedding": "[" + ",".join(map(str, embedding)) + "]",
+                "importance_score": importance_score,
+            })
+
+        result = (
+            self.db_service.supabase.table("chunks")
+            .insert(chunk_data)
+            .execute()
+        )
+
 
     def retrieve_relevant_chunks(
         self,
         story_id: int,
         current_episode_info: str,
         k: int = 5,
-        character_names: List[str] = None,
+        character_names: List[str] = [],
     ) -> List[Dict]:
         query_embedding = self.embedding_model.get_text_embedding(current_episode_info)
         query_embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
-        # Fetch chunks with character and importance filtering
         query = (
             self.db_service.supabase.table("chunks")
             .select("id, episode_number, chunk_number, content, importance_score")
