@@ -34,7 +34,7 @@ class DBService:
                 "id": ep["id"],
                 "number": ep["episode_number"],
                 "title": ep["title"],
-                "content": ep["content"],  
+                "content": ep["content"],
                 "summary": ep["summary"],
                 "emotional_state": ep.get("emotional_state", "neutral"),
                 "key_events": json.loads(ep["key_events"] or "[]"),
@@ -75,7 +75,9 @@ class DBService:
             "num_episodes": story_row["num_episodes"],
             "protagonist": json.loads(story_row["protagonist"] or "[]"),
             "timeline": json.loads(story_row["timeline"] or "[]"),
-            "current_episodes_content": json.loads(story_row.get("current_episodes_content", "[]") or "[]"),  # Add current_episodes_content
+            "current_episodes_content": json.loads(
+                story_row.get("current_episodes_content", "[]") or "[]"
+            ),  # Add current_episodes_content
         }
 
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
@@ -92,7 +94,9 @@ class DBService:
                     "story_outline": json.dumps(metadata.get("Story Outline", [])),
                     "current_episode": 1,
                     "num_episodes": num_episodes,
-                    "current_episodes_content": json.dumps([]),  # Initialize current_episodes_content
+                    "current_episodes_content": json.dumps(
+                        []
+                    ),  # Initialize current_episodes_content
                 }
             )
             .execute()
@@ -116,11 +120,10 @@ class DBService:
             self.supabase.table("characters").insert(character_data_list).execute()
         return story_id
 
-    
     def update_character_state(self, story_id: int, character_data: List[Dict]) -> None:
-        records_to_upsert = []
-
+        # Separate existing characters and new characters
         for char in character_data:
+            # Query for existing character
             current_char = (
                 self.supabase.table("characters")
                 .select("*")
@@ -129,40 +132,59 @@ class DBService:
                 .execute()
                 .data
             )
-            
-            current = current_char[0] if current_char else {}
-            new_emotional = char.get("Emotional_State", current.get("emotional_state", "Neutral"))
-            
-            milestones = json.loads(current.get("milestones") or "[]")
-            if new_emotional != current.get("emotional_state") and current:
-                milestones.append({
-                    "event": f"Shift to {new_emotional}",
-                    "episode": current.get("last_episode", 0) + 1,
-                })
 
-            updated_relationship = {
-                **json.loads(current.get("relationship") or "{}"),
-                **char.get("Relationship", {})
-            }
+            if current_char:
+                # Existing character: Update by ID
+                current = current_char[0]
+                new_emotional = char.get(
+                    "Emotional_State", current.get("emotional_state", "neutral")
+                )
+                milestones = json.loads(current.get("milestones", "[]"))
+                if new_emotional != current.get("emotional_state"):
+                    milestones.append(
+                        {
+                            "event": f"Shift to {new_emotional}",
+                            "episode": current.get("last_episode", 0) + 1,
+                        }
+                    )
 
-            record = {
-                "story_id": story_id,
-                "name": char["Name"],
-                "emotional_state": new_emotional,
-                "role": char["Role"],
-                "relationship": json.dumps(updated_relationship),
-                "milestones": json.dumps(milestones[-5:]),
-                "last_episode": current.get("last_episode", 0) + 1 if current else 1,
-                "description": char.get("Description", current.get("description", "")),
-                "is_active": char.get("role_active", current.get("role_active", True)),
-            }
-
-            if current:
-                record["id"] = current["id"]  # for targeting specific row
-
-            records_to_upsert.append(record)
-        self.supabase.table("characters").upsert(records_to_upsert, on_conflict="id").execute()
-
+                # Update existing character by ID
+                self.supabase.table("characters").update(
+                    {
+                        "role": char.get("Role", current.get("role", "Unknown")),
+                        "description": char.get(
+                            "Description", current.get("description", "No description")
+                        ),
+                        "relationship": json.dumps(
+                            {
+                                **json.loads(current.get("relationship", "{}")),
+                                **char.get("Relationship", {}),
+                            }
+                        ),
+                        "is_active": char.get(
+                            "role_active", current.get("is_active", True)
+                        ),
+                        "emotional_state": new_emotional,
+                        "milestones": json.dumps(milestones[-5:]),
+                        "last_episode": current.get("last_episode", 0) + 1,
+                    }
+                ).eq("id", current["id"]).execute()
+            else:
+                # New character: Insert without ID
+                new_emotional = char.get("Emotional_State", "neutral")
+                self.supabase.table("characters").insert(
+                    {
+                        "story_id": story_id,
+                        "name": char["Name"],
+                        "role": char.get("Role", "Unknown"),
+                        "description": char.get("Description", "No description"),
+                        "relationship": json.dumps(char.get("Relationship", {})),
+                        "is_active": char.get("role_active", True),
+                        "emotional_state": new_emotional,
+                        "milestones": json.dumps([]),
+                        "last_episode": 1,
+                    }
+                ).execute()
 
     def store_episode(
         self, story_id: int, episode_data: Dict, current_episode: int
@@ -255,7 +277,9 @@ class DBService:
             for ep in result.data or []
         ]
 
-    def update_story_current_episodes_content(self, story_id: int, episodes: List[Dict]):
+    def update_story_current_episodes_content(
+        self, story_id: int, episodes: List[Dict]
+    ):
         """Update the current_episodes_content field in the stories table with refined episodes."""
         self.supabase.table("stories").update(
             {"current_episodes_content": json.dumps(episodes)}
@@ -271,3 +295,11 @@ class DBService:
         self.supabase.table("stories").update(
             {"current_episodes_content": json.dumps([])}
         ).eq("id", story_id).execute()
+
+    def delete_story(self, story_id: int) -> None:
+        """Delete a story from the database."""
+        story = self.supabase.table("stories").select("id").eq("id", story_id).execute()
+        if not story.data:
+            raise ValueError(f"Story with ID {story_id} not found")
+
+        self.supabase.table("stories").delete().eq("id", story_id).execute()

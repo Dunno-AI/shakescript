@@ -128,3 +128,12 @@ class StoryService:
     def clear_current_episodes_content(self, story_id: int):
         # Clear the current episodes after they've been validated and stored
         self.db_service.clear_current_episodes_content(story_id)
+
+
+    def delete_story(self, story_id: int) -> None:
+        self.db_service.delete_story(story_id)
+
+
+
+
+

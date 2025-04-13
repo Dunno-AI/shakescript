@@ -131,3 +131,20 @@ def update_story_summary(
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
     return {"status": "success", **result, "message": "Summary updated successfully"}
+
+
+@router.delete(
+    "/{story_id}",
+    response_model=Dict[str, str],
+    summary="Delete a story and all associated data",
+)
+def delete_story(story_id: int, service: StoryService = Depends(get_story_service)):
+    try:
+        service.delete_story(story_id)
+        return {
+            "message": f"Story {story_id} and all associated data deleted successfully"
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete story: {str(e)}")

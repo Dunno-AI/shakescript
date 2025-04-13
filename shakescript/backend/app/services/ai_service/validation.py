@@ -179,6 +179,7 @@ def regenerate_batch(self, story_id, episodes, prev_episodes, metadata, feedback
             - Character locations or who is present
             - Key decisions or discoveries made
             - The timing of events relative to other episodes
+            - Don't give out response with statements like "here is you refined statements etc etc" just give refined content cuz when taking out response in text format those statements come along..
             
             Focus on maintaining continuity while applying the specific feedback.
             Apply the refinement instructions to improve writing style, emotional tone, descriptiveness, 
