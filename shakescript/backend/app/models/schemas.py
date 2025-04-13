@@ -67,12 +67,10 @@ class StoryListResponse(BaseModel):
     stories: List[StoryListItem]
 
 
-# New model for batch response
 class EpisodeBatchResponse(BaseModel):
     status: str
-    episodes: List[EpisodeResponse]  # Use EpisodeResponse for typed episodes
+    episodes: List[Dict[str, Any]] 
+    message: Optional[str] = None  # ✅ Added to avoid ResponseValidationError
 
     class Config:
-        arbitrary_types_allowed = (
-            True  # Allow flexibility in Dict[str, Any] within EpisodeResponse
-        )
+        arbitrary_types_allowed = True 

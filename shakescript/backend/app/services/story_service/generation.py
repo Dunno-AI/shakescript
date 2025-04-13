@@ -138,3 +138,47 @@ class StoryGeneration:
                     return episodes + [episode_result]
                 episodes.append(episode_result)
         return episodes
+
+    def get_episodes_by_range(
+        self, story_id: int, start_episode: int, end_episode: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Get episodes for a story within a specific range.
+        """
+        try:
+            result = (
+                self.db_service.supabase.table("episodes")
+                .select("*")
+                .eq("story_id", story_id)
+                .gte("episode_number", start_episode)
+                .lte("episode_number", end_episode)
+                .order("episode_number")
+                .execute()
+            )
+            # Check if the response contains data
+            if hasattr(result, "data"):
+                return result.data
+            return []
+        except Exception as e:
+            print(f"Error fetching episodes: {e}")
+            return []
+
+    def get_all_episodes(self, story_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all stored episodes for a story.
+        """
+        try:
+            result = (
+                self.db_service.supabase.table("episodes")
+                .select("*")
+                .eq("story_id", story_id)
+                .order("episode_number")
+                .execute()
+            )
+            # Check if the response contains data
+            if hasattr(result, "data"):
+                return result.data
+            return []
+        except Exception as e:
+            print(f"Error fetching all episodes: {e}")
+            return []
