@@ -13,7 +13,7 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/developers" },
-    { name: "Pricing", href: "/pricing" },
+    { name: "Statistics", href: "/stats" },
     { name: "Enterprise", href: "/enterprise" },
     { name: "Blog", href: "/blog" },
   ];

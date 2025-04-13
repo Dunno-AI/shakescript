@@ -5,6 +5,7 @@ import { StartBuildingSection } from "./components/Home/StartBuilding";
 import Footer from "./components/Navigation/Footer";
 import { Navbar } from "./components/Navigation/Navbar";
 import { Layout } from "./components/Dashboard/Layout";
+import StatsDashboard from "./components/Statistics/StatsDashboard";
 
 // Wrapper component to conditionally render Navbar and Footer
 const AppLayout = () => {
@@ -28,8 +29,7 @@ const AppLayout = () => {
         <Route path="/pricing" element={<div>Pricing Page</div>} />
         <Route path="/enterprise" element={<div>Enterprise Page</div>} />
         <Route path="/blog" element={<div>Blog Page</div>} />
-        <Route path="/signin" element={<div>Sign In Page</div>} />
-        <Route path="/start-project" element={<div>Start Project Page</div>} />
+        <Route path="/stats" element={<StatsDashboard />} />
       </Routes>
       {!isDashboardRoute && <Footer />}
     </>
