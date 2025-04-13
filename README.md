@@ -1,5 +1,3 @@
----
-
 # 🎭 ShakeScript - AI-Based Story Creation Platform
 
 ShakeScript is a cutting-edge, AI-powered storytelling system designed to generate immersive, multi-episode narratives with rich characters, evolving plots, and long-term memory. By blending the strengths of GPT-4o and Google Gemini, it overcomes traditional limitations in AI storytelling—like token constraints and inconsistent narratives.
@@ -159,6 +157,33 @@ Traditional AI-generated stories often struggle with:
 
 ---
 
+
+## 🖼️ Visuals & Evaluations
+
+### 🧩 Model Pipeline
+
+<p align="center">
+  <img src="../charts_and_pipeline/pipeline.svg" alt="Model Pipeline" width="700"/>
+</p>
+
+---
+
+### 📈 Radar Chart - Story Attribute Comparison
+
+<p align="center">
+  <img src="../charts_and_pipeline/radarChart.png" alt="Radar Chart" width="500"/>
+</p>
+
+---
+
+### 🪱 Worm Graph - Evaluation Metrics (out of 10)
+
+<p align="center">
+  <img src="../charts_and_pipeline/wormChart.png" alt="Worm Chart" width="700"/>
+</p>
+
+---
+
 ## 🔮 Future Enhancements
 
 | Feature                  | Description                                                                 |
@@ -171,32 +196,6 @@ Traditional AI-generated stories often struggle with:
 
 ---
 
-## 📊 System Architecture
-
-```
-User Prompt (/stories)
-        ↓
-Metadata Extraction (Gemini → instructions.py)
-        ↓
-Store Metadata (Supabase → stories, characters)
-        ↓
-Episode Generation (GPT-4o → generation.py)
-        ↓
-Memory Retrieval (Embeddings → embedding_service.py)
-        ↓
-AI Validation (Gemini → validation.py)
-        ↓
-Optional Human Feedback (→ refinement.py)
-        ↓
-Store Final Episode (Supabase → episodes, chunks)
-        ↓
-Deliver to Frontend (FastAPI → stories.py, episodes.py)
-```
-
-> 📌 *[Add a visual diagram using Lucidchart/Draw.io here for better clarity]*
-
----
-
 ## 💬 Final Thoughts
 
 ShakeScript redefines AI-powered storytelling by:
@@ -205,6 +204,8 @@ ShakeScript redefines AI-powered storytelling by:
 - Supporting long-form, culturally nuanced storytelling
 - Seamlessly blending LLMs, embeddings, and human input
 
-> 🎉 Let the stories unfold — with ShakeScript, your narrative has no limits.  
+> 🎉 Let the stories unfold — with ShakeScript, your narrative has no limits.
 
 ---
+
+
