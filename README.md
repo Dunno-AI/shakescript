@@ -1,317 +1,210 @@
-<!-- # **Shakescript - AI-Based Story Creation**  
+---
 
-## **📝 Problem**  
-Traditional AI-generated stories often lack **continuity, character consistency, and structured progression** due to **token limitations** in large language models (LLMs). Standard text generation approaches struggle with **long-form storytelling**, making it difficult to maintain coherent multi-episode narratives.  
+# 🎭 ShakeScript - AI-Based Story Creation Platform
 
-### **🔹 Challenges in AI Storytelling**  
-1️⃣ **Maintaining Narrative Coherence** – Ensuring a seamless connection between episodes.  
-2️⃣ **Overcoming Token Limitations** – AI models have a restricted memory window, making it hard to track long-term plots.  
-3️⃣ **Character Consistency & Evolution** – Preventing AI from altering personalities or forgetting key character traits.  
-4️⃣ **Handling Extended Narratives** – Breaking big stories into **manageable episodic chunks** while keeping the flow intact.  
-5️⃣ **Integrating AI Memory** – Ensuring past episodes influence future storytelling without repetition or contradictions.  
+ShakeScript is a cutting-edge, AI-powered storytelling system designed to generate immersive, multi-episode narratives with rich characters, evolving plots, and long-term memory. By blending the strengths of GPT-4o and Google Gemini, it overcomes traditional limitations in AI storytelling—like token constraints and inconsistent narratives.
 
 ---
 
-## **🚀 Shakescript: The AI-Powered Story Generation System**  
-Shakescript is a **cutting-edge, AI-driven storytelling pipeline** that generates multi-episode narratives **with structured plot progression, character memory, and long-term consistency**.  
+## 🔍 Problem Statement
 
-✅ **Accepts a brief prompt** (trope, genre, plotline).  
-✅ **Generates a structured multi-episode story** with character depth.  
-✅ **Maintains character arcs & world-building** over multiple episodes.  
-✅ **Retrieves past story elements** using **memory-aware AI techniques**.  
-✅ **Ensures AI-generated content is immersive, engaging, and logically connected.**  
+Traditional AI-generated stories often struggle with:
 
----
-
-## **📂 Project Architecture & Workflow**  
-
-Shakescript follows a **hybrid AI approach**, using **GPT-4o for high-quality episode generation** and **Gemini for metadata extraction, chunk storage, and retrieval**.  
-
-### **1️⃣ User Input & Metadata Extraction (Handled by Gemini)**  
-📌 **User provides a prompt** (e.g., "A forbidden love story in the city of Veridion").  
-📌 **Gemini AI extracts metadata**:  
-   - **Characters** (Name, Role, Relationships).  
-   - **Setting & World-building** (City, Environment, Theme).  
-   - **Story Structure** (Introduction → Climax → Resolution).  
-📌 **Metadata is stored in the relational database (PostgreSQL).**  
+| Challenge                        | Description                                                             |
+|----------------------------------|-------------------------------------------------------------------------|
+| 🔄 Narrative Coherence           | Maintaining seamless connections between episodes                       |
+| 🧠 Token Limitations             | Handling restricted context windows in large language models            |
+| 👤 Character Consistency         | Preserving character traits, relationships, and emotional states        |
+| 📚 Extended Narratives           | Structuring long stories into coherent, episodic chunks                 |
+| 💾 AI Memory Integration         | Retaining relevant story context across episodes                        |
 
 ---
 
-### **2️⃣ AI Model - Episode Generation (Handled by GPT-4o)**  
-📌 **First Episode Generation (GPT-4o)**:  
-   - Uses structured **JSON-based prompts** for controlled output.  
-   - Retrieves **previously stored metadata** for consistency.  
-   - Follows a **predefined episode structure** (Intro, Conflict, Climax, etc.).  
+## 🚀 ShakeScript: Your AI Storytelling Engine
 
-📌 **Subsequent Episode Generation (GPT-4o + Gemini Retrieval)**:  
-   - Retrieves **last 2-3 episode summaries**.  
-   - Fetches **relevant contextual chunks** from the vector database (Pinecone).  
-   - Generates the next episode while **maintaining flow and consistency**.  
+**ShakeScript** enables long-form storytelling with AI memory, human feedback integration, and cultural nuance.
 
-📌 **Episode Storage (Handled by Gemini + Relational DB)**:  
-   - Episode content is stored in the relational database.  
-   - Key chunks are **vectorized & stored in Pinecone** for fast retrieval.  
+### ✅ Core Capabilities
+
+- Accepts brief prompts (genre, trope, or plotline)
+- Generates multi-episode stories with world-building and character arcs
+- Maintains narrative continuity via metadata & embeddings
+- Supports Hinglish storytelling
+- Offers both AI-driven and human-in-the-loop episode refinement
+- Uses a robust database + semantic embeddings for memory
 
 ---
 
-### **3️⃣ Memory Management & Long-Form Continuity (Handled by Gemini)**  
-📌 **Retrieves past episode summaries** → Ensures logical progression.  
-📌 **Fetches character & setting details** → Prevents AI from altering key traits.  
-📌 **Uses a Hybrid Retrieval Model**:  
-   - **Relational DB** for structured metadata.  
-   - **Vector DB (Pinecone)** for **semantic episode chunk retrieval**.  
+## 📂 Architecture & Workflow
+
+### 1️⃣ Prompt to Metadata Extraction (via Google Gemini)
+
+- Endpoint: `/stories`
+- Gemini extracts:
+  - **Characters**: Names, roles, relationships, emotions
+  - **Settings**: Detailed location descriptions
+  - **Structure**: Exposition → Climax → Denouement
+  - **Theme & Tone**: (e.g., Suspenseful, Romantic)
+- Data stored in Supabase:
+  - `stories`, `characters` tables
 
 ---
 
-### **4️⃣ Frontend API & Story Display**  
-📌 **FastAPI backend serves generated episodes to a React/Next.js frontend**.  
-📌 Users can:  
-   - **View structured episodes** with summaries.  
-   - **Explore character profiles & key events**.  
-   - **Listen to AI-generated stories (TTS support in progress)**.  
+### 2️⃣ Episode Generation (via GPT-4o)
+
+#### Initial Episode
+
+- Uses structured metadata
+- Generates the episode aligned to outline (e.g., Exposition)
+
+#### Subsequent Episodes
+
+- Retrieves up to 2-3 past episodes for context
+- Embeddings fetch relevant content chunks for long-form continuity
+- Ensures:
+  - Character consistency
+  - Thematic alignment
+  - Narrative progression
+
+#### Storage
+
+- Saves episode content, title, summary, emotion in `episodes` table
+- Splits episode into semantic chunks using `SemanticSplitterNodeParser`
+- Vectorizes & stores in `chunks` table
 
 ---
 
-## **🛠 Technologies & Techniques Used**  
+### 3️⃣ Validation & Refinement (via Gemini)
 
-✅ **Natural Language Processing (NLP)**
-   - **Named Entity Recognition (NER)** for character & setting extraction.  
-   - **Text summarization** to track episode key events.  
+#### AI Validation (`validation.py`)
 
-✅ **Retrieval-Augmented Generation (RAG)**
-   - **Vector Database (Pinecone) for long-term memory retrieval**.  
-   - **Semantic search for relevant past episodes**.  
+- Checks:
+  - Timeline alignment
+  - Character location/motivation consistency
+  - Dialogue and tone coherence
+- Refines up to 3 times if inconsistencies found
 
-✅ **AI Memory & Context Optimization**
-   - **Chunking & Sliding Window Approach** for retrieval.  
-   - **Hierarchical embeddings** for characters & settings.  
+#### Human Feedback Support (`episodes.py`)
 
-✅ **Backend & Storage**
-   - **FastAPI for API endpoints**.  
-   - **PostgreSQL for structured story metadata**.  
-   - **Pinecone for vectorized episode storage**.  
+- Users can refine via `/refine-batch`
+- Gemini regenerates while preserving core elements
 
-✅ **AI Model Usage**
-   - **GPT-4o** → Generates full-length, high-quality episodes.  
-   - **Gemini** → Handles metadata extraction, chunk storage, retrieval, and pre-processing.  
+#### Batch Processing (`refinement.py`)
+
+- Default batch size: 2 episodes
+- Intermediate state stored in `current_episodes_content`
 
 ---
 
-## **🎯 Key Achievements & Innovation**  
+### 4️⃣ Memory Management
 
-✅ **Multi-Episode AI Storytelling** – Ensures logical episode flow.  
-✅ **Token Limit Workaround** – Uses **memory-aware retrieval methods**.  
-✅ **Character Consistency** – AI **remembers past interactions & relationships**.  
-✅ **Advanced Story Structuring** – Generates a well-paced narrative.  
+#### Supabase (`db_service.py`)
 
----
+- Tracks:
+  - `current_episode`
+  - `key_events`, `timeline`
+  - Character evolution
 
-## **🔮 Future Enhancements**  
+#### Embedding Service (`embedding_service.py`)
 
-🚀 **Interactive Storytelling** – Users influence AI-driven story decisions.  
-🚀 **TTS Narration** – AI-generated audiobook-style narration.  
-🚀 **Fine-Tuned AI Models** – Custom-trained models for better storytelling control.  
-
----
-
-## **💡 Final Thoughts**  
-
-🔹 **Shakescript fully addresses the problem of AI-generated storytelling by integrating memory, retrieval, and structured multi-episode generation.**  
-🔹 **Using a hybrid approach (GPT-4o for episodes + Gemini for metadata & retrieval), we ensure high-quality, consistent, and immersive storytelling.**  
-
-🔥 **Shakescript is pushing the boundaries of AI-generated narratives!** 🚀📖  
-
----
-## 📊 System Architecture & Workflow
-
-Below is the **Shakescript AI Storytelling Pipeline**:
-
-![Shakescript Flow Diagram](AI_pipeline) -->
-
-# **ShakeScript - AI-Based Story Creation** 🎭✨
-
-## **🔍 Problem Statement**  
-
-Traditional AI-generated stories often lack **continuity, character consistency, and structured progression** due to **token limitations** in large language models (LLMs). Standard text generation approaches struggle with **long-form storytelling**, making it difficult to maintain coherent multi-episode narratives.  
-
-### **🔹 Challenges in AI Storytelling**  
-
-| Challenge | Description |
-|:----------|:------------|
-| 🔄 **Maintaining Narrative Coherence** | Ensuring a seamless connection between episodes |
-| 🧠 **Overcoming Token Limitations** | AI models have a restricted memory window, making it hard to track long-term plots |
-| 👤 **Character Consistency & Evolution** | Preventing AI from altering personalities or forgetting key character traits |
-| 📚 **Handling Extended Narratives** | Breaking big stories into **manageable episodic chunks** while keeping the flow intact |
-| 💾 **Integrating AI Memory** | Ensuring past episodes influence future storytelling without repetition or contradictions |
+- HuggingFace embeddings vectorize story chunks
+- Relevance scored based on:
+  - Characters involved
+  - Episode order
+- Enables memory-aware story generation
 
 ---
 
-## **🚀 ShakeScript: The AI-Powered Story Generation System**  
+### 5️⃣ API & Frontend Integration
 
-ShakeScript is a **cutting-edge, AI-driven storytelling pipeline** that generates multi-episode narratives **with structured plot progression, character memory, and long-term consistency**.  
+#### FastAPI Backend
 
-<div align="center">
+- Endpoints:
+  - `/stories` – Create new story
+  - `/generate-batch` – Batch generate episodes
+  - `/validate-batch` – AI validation
+  - `/refine-batch` – Human feedback and refinement
+- Uses Pydantic models for structure (`schemas.py`)
 
-### **Core Capabilities**
+#### Frontend (Planned)
 
-</div>
-
-- ✅ **Accepts a brief prompt** (trope, genre, plotline)
-- ✅ **Generates a structured multi-episode story** with character depth
-- ✅ **Maintains character arcs & world-building** over multiple episodes
-- ✅ **Retrieves past story elements** using **memory-aware AI techniques**
-- ✅ **Ensures AI-generated content is immersive, engaging, and logically connected**
-
----
-
-## **📂 Project Architecture & Workflow**  
-
-ShakeScript follows a **hybrid AI approach**, using **GPT-4o for high-quality episode generation** and **Gemini for metadata extraction, chunk storage, and retrieval**.  
-
-### **1️⃣ User Input & Metadata Extraction** *(Handled by Gemini)*
-
-<div align="center">
-  
-***From Prompt to Structure***
-
-</div>
-
-📌 **User provides a prompt** (e.g., "A forbidden love story in the city of Veridion")  
-📌 **Gemini AI extracts metadata**:  
-   - **Characters** (Name, Role, Relationships)  
-   - **Setting & World-building** (City, Environment, Theme)  
-   - **Story Structure** (Introduction → Climax → Resolution)  
-📌 **Metadata is stored in the relational database (PostgreSQL)**  
+- React/Next.js UI
+- Features:
+  - Episode display
+  - Character profiles
+  - Hinglish support
+  - Real-time story updates
 
 ---
 
-### **2️⃣ AI Model - Episode Generation** *(Handled by GPT-4o)*
+## 🛠️ Tech Stack
 
-<div align="center">
-  
-***Crafting the Narrative***
-
-</div>
-
-#### **First Episode Generation**
-- 📝 Uses structured **JSON-based prompts** for controlled output
-- 🔄 Retrieves **previously stored metadata** for consistency
-- 📊 Follows a **predefined episode structure** (Intro, Conflict, Climax, etc.)
-
-#### **Subsequent Episode Generation** *(GPT-4o + Gemini Retrieval)*
-- 📜 Retrieves **last 2-3 episode summaries**
-- 🔍 Fetches **relevant contextual chunks** from the vector database (Pinecone)
-- 📚 Generates the next episode while **maintaining flow and consistency**
-
-#### **Episode Storage** *(Handled by Gemini + Relational DB)*
-- 💾 Episode content is stored in the relational database
-- 🧠 Key chunks are **vectorized & stored in Pinecone** for fast retrieval
+| Category              | Technologies Used                                                                 |
+|-----------------------|-----------------------------------------------------------------------------------|
+| AI & NLP              | GPT-4o, Google Gemini, HuggingFace Embeddings                                    |
+| Backend               | FastAPI, Pydantic, Asyncio                                                       |
+| Database              | Supabase (PostgreSQL)                                                            |
+| Embeddings & Retrieval| LlamaIndex (`SemanticSplitterNodeParser`), Supabase Vector DB                    |
+| Language              | Python 3.13 with type hints                                                      |
 
 ---
 
-### **3️⃣ Memory Management & Long-Form Continuity** *(Handled by Gemini)*
+## 🎯 Key Achievements
 
-<div align="center">
-  
-***The Heart of Narrative Consistency***
-
-</div>
-
-📌 **Retrieves past episode summaries** → Ensures logical progression  
-📌 **Fetches character & setting details** → Prevents AI from altering key traits  
-📌 **Uses a Hybrid Retrieval Model**:  
-   - **Relational DB** for structured metadata  
-   - **Vector DB (Pinecone)** for **semantic episode chunk retrieval**  
+- 🏆 **Multi-Episode Consistency** – Maintains coherent, evolving narratives
+- 💡 **Token Limit Workaround** – Smart retrieval with embeddings
+- 👤 **Character Evolution** – Tracks traits, arcs, and relationships
+- 🔁 **AI + Human Refinement** – Combines LLM polish with user feedback
+- 🌍 **Hinglish Support** – Culturally tuned storytelling
 
 ---
 
-### **4️⃣ Frontend API & Story Display**
+## 🔮 Future Enhancements
 
-<div align="center">
-  
-***Delivering the Experience***
-
-</div>
-
-📌 **FastAPI backend serves generated episodes to a React/Next.js frontend**  
-📌 Users can:  
-   - 📱 **View structured episodes** with summaries  
-   - 👥 **Explore character profiles & key events**  
-   - 🎧 **Listen to AI-generated stories** (TTS support in progress)  
+| Feature                  | Description                                                                 |
+|--------------------------|-----------------------------------------------------------------------------|
+| 🎮 Interactive Storylines| Let users influence story direction via input parameters                   |
+| 🎧 TTS Narration         | Audio playback support with Text-to-Speech                                 |
+| 🧠 Custom AI Models      | Fine-tune LLMs for specific genres or styles                                |
+| 📱 Frontend UI           | Responsive, real-time React/Next.js interface                              |
+| 🔍 Smart Retrieval       | Advanced hybrid/cosine similarity chunk search                             |
 
 ---
 
-## **🛠️ Technologies & Techniques Used**  
+## 📊 System Architecture
 
-<div align="center">
+```
+User Prompt (/stories)
+        ↓
+Metadata Extraction (Gemini → instructions.py)
+        ↓
+Store Metadata (Supabase → stories, characters)
+        ↓
+Episode Generation (GPT-4o → generation.py)
+        ↓
+Memory Retrieval (Embeddings → embedding_service.py)
+        ↓
+AI Validation (Gemini → validation.py)
+        ↓
+Optional Human Feedback (→ refinement.py)
+        ↓
+Store Final Episode (Supabase → episodes, chunks)
+        ↓
+Deliver to Frontend (FastAPI → stories.py, episodes.py)
+```
 
-### **The Tech Stack Behind ShakeScript**
-
-</div>
-
-| Category | Technologies & Approaches |
-|:---------|:--------------------------|
-| **Natural Language Processing (NLP)** | • **Named Entity Recognition (NER)** for character & setting extraction<br>• **Text summarization** to track episode key events |
-| **Retrieval-Augmented Generation (RAG)** | • **Vector Database (Pinecone)** for long-term memory retrieval<br>• **Semantic search** for relevant past episodes |
-| **AI Memory & Context Optimization** | • **Chunking & Sliding Window Approach** for retrieval<br>• **Hierarchical embeddings** for characters & settings |
-| **Backend & Storage** | • **FastAPI** for API endpoints<br>• **PostgreSQL** for structured story metadata<br>• **Pinecone** for vectorized episode storage |
-| **AI Model Usage** | • **GPT-4o** → Generates full-length, high-quality episodes<br>• **Gemini** → Handles metadata extraction, chunk storage, retrieval, and pre-processing |
-
----
-
-## **🎯 Key Achievements & Innovation**  
-
-<div align="center">
-
-### **Breaking New Ground in AI Storytelling**
-
-</div>
-
-- 🏆 **Multi-Episode AI Storytelling** – Ensures logical episode flow
-- 💡 **Token Limit Workaround** – Uses **memory-aware retrieval methods**
-- 👤 **Character Consistency** – AI **remembers past interactions & relationships**
-- 📝 **Advanced Story Structuring** – Generates a well-paced narrative
+> 📌 *[Add a visual diagram using Lucidchart/Draw.io here for better clarity]*
 
 ---
 
-## **🔮 Future Enhancements**  
+## 💬 Final Thoughts
 
-<div align="center">
+ShakeScript redefines AI-powered storytelling by:
 
-### **What's Next for ShakeScript**
+- Solving token limitation challenges
+- Supporting long-form, culturally nuanced storytelling
+- Seamlessly blending LLMs, embeddings, and human input
 
-</div>
-
-| Enhancement | Description |
-|:------------|:------------|
-| 🎮 **Interactive Storytelling** | Users influence AI-driven story decisions |
-| 🎧 **TTS Narration** | AI-generated audiobook-style narration |
-| 🧠 **Fine-Tuned AI Models** | Custom-trained models for better storytelling control |
+> 🎉 Let the stories unfold — with ShakeScript, your narrative has no limits.  
 
 ---
-
-## **💡 Final Thoughts**  
-
-<div align="center">
-
-### **Revolutionizing AI Storytelling**
-
-</div>
-
-> 🔹 **ShakeScript fully addresses the problem of AI-generated storytelling by integrating memory, retrieval, and structured multi-episode generation.**
-> 
-> 🔹 **Using a hybrid approach (GPT-4o for episodes + Gemini for metadata & retrieval), we ensure high-quality, consistent, and immersive storytelling.**
-
-<div align="center">
-  
-## 🔥 **ShakeScript is pushing the boundaries of AI-generated narratives!** 🚀📖
-  
-</div>
-
----
-
-## 📊 System Architecture & Workflow
-
-Below is the **ShakeScript AI Storytelling Pipeline**:
-
-![ShakeScript Flow Diagram](AI_pipeline.png)
