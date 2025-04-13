@@ -102,7 +102,7 @@ class AIGeneration:
         general_pts = """
         GENERAL POINTS:
         - Use Character Snapshot to track arcs and relationships, but shift focus to secondary characters or subplots at least once per episode.
-        - When ever introduce a new character, show their backstory and introduce their role in the story.
+        - When ever introducing a new character, show their backstory and introduce their role in the story.
         - Whenever remove a character, show their departure and the impact on the story properly.
         - Use sensory-rich descriptions and varied dialogue, alternating tone (e.g., tense, reflective, humorous) to keep the style dynamic.
         - Are you skipping days at a time? Summarizing events? Don't do that, add scenes to detail them.
@@ -139,6 +139,7 @@ class AIGeneration:
 
         instruction = f"""
         I want your help in crafting the story titled "{metadata.get('title', 'Untitled Story')}" for engaging narration.
+        We are writing a story not a stagecraft drama so dont show scene transitions like "camera focuses to canvas", "Stage is set for forest scene".
         We will now be generating the EPISODE {episode_number} of {num_episodes} (Target: upto 450 words).
         The story is set in diverse environments inspired by 
         <SETTINGS>

@@ -2,8 +2,6 @@ from typing import Dict, List, Any
 from app.services.story_service.regeneration_service import RegenerationService
 from app.services.db_service import DBService
 from app.models.schemas import Feedback
-import json
-
 
 class HumanValidation:
     def __init__(self):
@@ -45,8 +43,6 @@ class HumanValidation:
 
         batch_end = min(current_batch_start + effective_batch_size - 1, num_episodes)
         
-        print(f"9. Started Regeneration with human feedback {current_batch_start} - {batch_end} \n")
-        # Use the feedback directly as it's now in the correct format
         refined_batch = self.regeneration_service._regenerate_batch(
             story_id,
             current_batch_start,
@@ -60,7 +56,6 @@ class HumanValidation:
         self.db_service.supabase.table("stories").update(
             {"current_episode": min(batch_end + 1, num_episodes + 1)}
         ).eq("id", story_id).execute()
-        print("12. Regeneration complete.\n")
         return (
             {"status": "success", "episodes": refined_batch}
             if refined_batch
