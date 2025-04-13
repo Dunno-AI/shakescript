@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from app.services.embedding_service import EmbeddingService
 
 
@@ -18,6 +18,7 @@ class AIGeneration:
         story_id: int,
         prev_episodes: List[Dict[str, Any]] = [],
         hinglish: bool = False,
+        feedback: Optional[str] = None,
     ) -> Dict[str, Any]:
         settings_data = (
             "\n".join(
@@ -26,9 +27,10 @@ class AIGeneration:
             )
             or "No settings provided. Build your own."
         )
+        # print(f"prev_episodes: {prev_episodes}\n")
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep['episode_number']}\nCONTENT: {ep['episode_content']}\nTITLE: {ep['episode_title']}"
+                f"EPISODE {ep.get('number', 'N/A')}\nCONTENT: {ep.get('content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
                 for ep in prev_episodes[-3:]
             )
             or "First Episode"
@@ -128,6 +130,9 @@ class AIGeneration:
           "episode_content": "An immersive episode with compelling storytelling and varied style."
         }}
         """
+        if feedback:
+            instruction += f"\nStrictly follow this : Apply the following REFINEMENT based on feedback:\n{feedback}"
+
         first_response = self.model.generate_content(instruction)
         title_content_data = self._parse_episode_response(first_response.text, metadata)
 

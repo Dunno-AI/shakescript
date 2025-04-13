@@ -34,7 +34,7 @@ class DBService:
                 "id": ep["id"],
                 "number": ep["episode_number"],
                 "title": ep["title"],
-                "content": ep["content"],  # Ensure full content is returned
+                "content": ep["content"],  
                 "summary": ep["summary"],
                 "emotional_state": ep.get("emotional_state", "neutral"),
                 "key_events": json.loads(ep["key_events"] or "[]"),
@@ -75,6 +75,7 @@ class DBService:
             "num_episodes": story_row["num_episodes"],
             "protagonist": json.loads(story_row["protagonist"] or "[]"),
             "timeline": json.loads(story_row["timeline"] or "[]"),
+            "current_episodes_content": json.loads(story_row.get("current_episodes_content", "[]") or "[]"),  # Add current_episodes_content
         }
 
     def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
@@ -91,6 +92,7 @@ class DBService:
                     "story_outline": json.dumps(metadata.get("Story Outline", [])),
                     "current_episode": 1,
                     "num_episodes": num_episodes,
+                    "current_episodes_content": json.dumps([]),  # Initialize current_episodes_content
                 }
             )
             .execute()
@@ -240,3 +242,20 @@ class DBService:
             }
             for ep in result.data or []
         ]
+
+    def update_story_current_episodes_content(self, story_id: int, episodes: List[Dict]):
+        """Update the current_episodes_content field in the stories table with refined episodes."""
+        self.supabase.table("stories").update(
+            {"current_episodes_content": json.dumps(episodes)}
+        ).eq("id", story_id).execute()
+
+    def get_refined_episodes(self, story_id: int) -> List[Dict]:
+        """Retrieve the refined episodes from current_episodes_content if they exist."""
+        story_data = self.get_story_info(story_id)
+        return story_data.get("current_episodes_content", [])
+
+    def clear_current_episodes_content(self, story_id: int):
+        """Clear the current_episodes_content field after validation."""
+        self.supabase.table("stories").update(
+            {"current_episodes_content": json.dumps([])}
+        ).eq("id", story_id).execute()

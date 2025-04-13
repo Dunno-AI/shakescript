@@ -1,123 +1,190 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from starlette.status import HTTP_404_NOT_FOUND
+from pydantic import BaseModel
 from ...models.schemas import (
-    EpisodeCreateResponse,
-    StoryCreate,
-    StoryResponse,
+    Feedback,
     ErrorResponse,
-    EpisodeResponse,
+    EpisodeBatchResponse,
 )
-from app.services.story_service import StoryService
 from app.api.dependencies import get_story_service
-from typing import Annotated, Union, Dict, Any, List
-
+from app.services.story_service import StoryService
+from ...services.ai_service import AIService
+from typing import Union, List, Dict
 
 router = APIRouter(prefix="/episodes", tags=["episodes"])
 
 
+# Generate batch endpoint
 @router.post(
-    "/{story_id}/generate",
-    response_model=Union[Dict[str, Any], ErrorResponse],
-    summary="Generate and optionally refine episodes for a story",
+    "/{story_id}/generate-batch",
+    response_model=Union[EpisodeBatchResponse, ErrorResponse],
+    summary="Generate a batch of episodes with optional AI or human refinement",
 )
-def generate_episode(
+async def generate_batch(
     story_id: int,
-    service: Annotated[StoryService, Depends(get_story_service)],
-    hinglish: bool = Query(default=False, description="Generate in Hinglish if true"),
-    all: bool = Query(
-        default=False, description="Generate all remaining episodes if true"
-    ),
-    method: str = Query(
-        default="human",
-        description="Refinement method: 'human' or 'ai'",
-        regex="^(human|ai)$",
-    ),
-    batch_size: int = Query(
-        default=None,
-        description="Custom batch size for generation (defaults to 2 or num_episodes if all=True)",
-        ge=1,
-    ),
+    batch_size: int = Query(2, ge=1),
+    hinglish: bool = Query(False),
+    refinement_type: str = Query("ai", enum=["ai", "human"]),
+    service: StoryService = Depends(get_story_service),
 ):
-    """
-    Generate and store one or all remaining episodes for a story with optional refinement.
-    - If `all=True`, generates all remaining episodes and applies refinement based on `method`.
-    - `batch_size` allows custom batching, overriding default behavior.
-    - Returns a structured response with episode details or error.
-    """
     story_data = service.get_story_info(story_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
 
-    num_episodes = story_data["num_episodes"]
-    current_episode = story_data["current_episode"]
-    effective_batch_size = batch_size if batch_size else (num_episodes if all else 2)
+    current_episode = story_data.get("current_episode", 1)
+    if current_episode > story_data.get("num_episodes", 0):
+        return {"error": "All episodes generated", "episodes": []}
 
-    if all:
-        episodes_to_generate = num_episodes - current_episode + 1
-        if episodes_to_generate <= 0:
-            return {
-                "status": "success",
-                "episodes": [],
-                "message": "All episodes generated",
-            }
-        if method.lower() == "human":
-            results = service.process_episode_batches_with_human_feedback(
-                story_id, episodes_to_generate, hinglish, effective_batch_size
-            )
-        else:  # ai
-            results = service.process_episode_batches_with_ai_validation(
-                story_id, episodes_to_generate, hinglish, effective_batch_size
-            )
-        if "error" in results:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST, detail=results["error"]
-            )
-        return {
-            "status": results["status"],
-            "episodes": [
-                EpisodeCreateResponse(
-                    episode_number=result["episode_number"],
-                    episode_title=result["episode_title"],
-                    episode_content=result["episode_content"],
-                    episode_emotional_state=result.get(
-                        "episode_emotional_state", "neutral"
-                    ),
-                )
-                for result in results["episodes"]
-            ],
-            "message": (
-                "Episodes generated and refined successfully"
-                if results["status"] == "success"
-                else "Generation failed"
-            ),
-        }
+    episodes = service.generate_and_refine_batch(
+        story_id, batch_size, hinglish, refinement_type
+    )
+
+    # For AI refinement, return all episodes
+    # For human refinement, return just the batch
+    if refinement_type == "ai":
+        message = "All episodes generated, refined, and stored successfully"
     else:
-        if current_episode > num_episodes:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
-                detail="All episodes have already been generated.",
-            )
-        prev_episodes = service.db_service.get_previous_episodes(
-            story_id, current_episode, limit=2
+        message = "Batch generated, awaiting human refinement"
+
+    return {
+        "status": "success",
+        "episodes": episodes,
+        "message": message,
+    }
+
+
+# Validate batch endpoint
+@router.post(
+    "/{story_id}/validate-batch",
+    response_model=Union[EpisodeBatchResponse, ErrorResponse],
+    summary="Validate and store the current batch of episodes",
+)
+async def validate_batch(
+    story_id: int,
+    service: StoryService = Depends(get_story_service),
+):
+    story_data = service.get_story_info(story_id)
+    print(f"Story data keys: {list(story_data.keys())}")
+
+    if "error" in story_data:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
+
+    current_episodes_content = story_data.get("current_episodes_content", [])
+    print(f"Current episodes found: {len(current_episodes_content)}")
+
+    # Debug the structure if episodes exist
+    if current_episodes_content:
+        print(
+            f"Sample episode structure: {list(current_episodes_content[0].keys()) if current_episodes_content else 'None'}"
         )
-        result = service.generate_and_store_episode(
-            story_id, current_episode, num_episodes, hinglish, prev_episodes
+
+    if not current_episodes_content:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND, detail="No batch found to validate"
         )
-        if "error" in result:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST, detail=result["error"]
-            )
+
+    # Store the validated episodes (implicit approval)
+    service.store_validated_episodes(story_id, current_episodes_content)
+
+    # Update the current episode number
+    max_episode = max(
+        [ep.get("episode_number", 0) for ep in current_episodes_content], default=0
+    )
+    next_episode = max_episode + 1
+
+    # Check completion status
+    if next_episode <= story_data.get("num_episodes", 0):
         return {
             "status": "success",
-            "episodes": [
-                EpisodeCreateResponse(
-                    episode_number=result["episode_number"],
-                    episode_title=result["episode_title"],
-                    episode_content=result["episode_content"],
-                    episode_emotional_state=result.get(
-                        "episode_emotional_state", "neutral"
-                    ),
-                )
-            ],
-            "message": "Episode generated successfully",
+            "episodes": [],
+            "message": "Batch validated and stored. Ready for next batch generation.",
         }
+    else:
+        return {
+            "status": "success",
+            "episodes": [],
+            "message": "All episodes validated and stored. Story complete.",
+        }
+
+
+@router.post(
+    "/{story_id}/refine-batch",
+    response_model=Union[EpisodeBatchResponse, ErrorResponse],
+    summary="Refine a batch of episodes based on human instructions",
+)
+async def refine_batch(
+    story_id: int,
+    feedback: List[Feedback] = Body(...),
+    service: StoryService = Depends(get_story_service),
+):
+    story_data = service.get_story_info(story_id)
+    if "error" in story_data:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
+
+    # Get the current episodes content
+    current_episodes_content = story_data.get("current_episodes_content", [])
+    if not current_episodes_content:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND, detail="No current batch found to refine"
+        )
+
+    # Extract episode numbers from feedback
+    episode_numbers = [fb.episode_number for fb in feedback]
+
+    # Create metadata for refinement
+    metadata = {
+        "title": story_data["title"],
+        "setting": story_data["setting"],
+        "key_events": story_data.get("key_events", []),
+        "special_instructions": story_data.get("special_instructions", ""),
+        "story_outline": story_data.get("story_outline", []),
+        "current_episode": story_data.get("current_episode", 1),
+        "num_episodes": story_data.get("num_episodes", 0),
+        "story_id": story_id,
+        "characters": story_data.get("characters", {}),
+        "hinglish": story_data.get("hinglish", False),
+    }
+
+    # Get previous episodes for context
+    prev_batch_start = max(1, metadata["current_episode"] - 3)
+    prev_batch_end = metadata["current_episode"] - 1
+    prev_episodes = []
+    if prev_batch_end >= prev_batch_start:
+        prev_episodes = service.get_episodes_by_range(
+            story_id, prev_batch_start, prev_batch_end
+        )
+
+        print(f"Previous episodes found: {prev_episodes}")
+
+        prev_episodes = [
+            {
+                "episode_number": ep["episode_number"],
+                "content": ep["content"], 
+                "title": ep["title"],
+            }
+            for ep in prev_episodes
+        ]
+
+    # Create AI service
+    ai_service = AIService()
+
+    # Regenerate the whole batch with feedback
+    refined_episodes = ai_service.regenerate_batch(
+        story_id,
+        current_episodes_content,
+        prev_episodes,
+        metadata,
+        [
+            {"episode_number": fb.episode_number, "feedback": fb.feedback}
+            for fb in feedback
+        ],
+    )
+
+    # Store the refined episodes
+    service.update_current_episodes_content(story_id, refined_episodes)
+
+    return {
+        "status": "pending",
+        "episodes": refined_episodes,
+        "message": f"Batch refined with feedback, awaiting validation",
+    }

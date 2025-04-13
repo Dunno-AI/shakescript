@@ -68,8 +68,11 @@ class StoryGeneration:
         episode_data = self.generate_episode(
             story_id, episode_number, num_episodes, hinglish, prev_episodes
         )
-        if "error" in episode_data:
-            return episode_data
+        if "error" in episode_data or not episode_data.get("episode_content"):
+            return {
+                "error": "Failed to generate episode content",
+                "episode_data": episode_data,
+            }
 
         episode_id = self.db_service.store_episode(
             story_id, episode_data, episode_number
@@ -77,13 +80,17 @@ class StoryGeneration:
         character_names = [
             char["Name"] for char in episode_data.get("characters_featured", [])
         ]
-        self.embedding_service._process_and_store_chunks(
-            story_id,
-            episode_id,
-            episode_number,
-            episode_data["episode_content"],
-            character_names,
-        )
+        if episode_data.get("episode_content"):
+            self.embedding_service._process_and_store_chunks(
+                story_id,
+                episode_id,
+                episode_number,
+                episode_data["episode_content"],
+                character_names,
+            )
+            print(f"Chunking completed for episode {episode_number}")
+        else:
+            print(f"Warning: No episode_content for episode {episode_number}")
 
         return {
             "episode_id": episode_id,
@@ -131,3 +138,47 @@ class StoryGeneration:
                     return episodes + [episode_result]
                 episodes.append(episode_result)
         return episodes
+
+    def get_episodes_by_range(
+        self, story_id: int, start_episode: int, end_episode: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Get episodes for a story within a specific range.
+        """
+        try:
+            result = (
+                self.db_service.supabase.table("episodes")
+                .select("*")
+                .eq("story_id", story_id)
+                .gte("episode_number", start_episode)
+                .lte("episode_number", end_episode)
+                .order("episode_number")
+                .execute()
+            )
+            # Check if the response contains data
+            if hasattr(result, "data"):
+                return result.data
+            return []
+        except Exception as e:
+            print(f"Error fetching episodes: {e}")
+            return []
+
+    def get_all_episodes(self, story_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all stored episodes for a story.
+        """
+        try:
+            result = (
+                self.db_service.supabase.table("episodes")
+                .select("*")
+                .eq("story_id", story_id)
+                .order("episode_number")
+                .execute()
+            )
+            # Check if the response contains data
+            if hasattr(result, "data"):
+                return result.data
+            return []
+        except Exception as e:
+            print(f"Error fetching all episodes: {e}")
+            return []
