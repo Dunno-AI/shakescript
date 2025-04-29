@@ -24,7 +24,7 @@ async def generate_batch(
     story_id: int,
     batch_size: int = Query(2, ge=1),
     hinglish: bool = Query(False),
-    refinement_type: str = Query("ai", enum=["ai", "human"]),
+    refinement_type: str = Query("AI", enum=["AI", "HUMAN"]),
     service: StoryService = Depends(get_story_service),
 ):
     story_data = service.get_story_info(story_id)
@@ -41,7 +41,7 @@ async def generate_batch(
 
     # For AI refinement, return all episodes
     # For human refinement, return just the batch
-    if refinement_type == "ai":
+    if refinement_type == "AI":
         message = "All episodes generated, refined, and stored successfully"
     else:
         message = "Batch generated, awaiting human refinement"
@@ -96,7 +96,6 @@ async def validate_batch(
     if next_episode <= story_data.get("num_episodes", 0):
         return {
             "status": "success",
-            "episodes": [],
             "message": "Batch validated and stored. Ready for next batch generation.",
         }
     else:

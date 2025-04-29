@@ -52,7 +52,7 @@ def generate_and_refine_batch(
     )
 
     # Apply AI refinement internally if requested
-    if refinement_type == "ai":
+    if refinement_type == "AI":
         # Process AI refinement for this batch
         max_attempts = 3
         attempt = 0

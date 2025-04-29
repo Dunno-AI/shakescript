@@ -45,7 +45,7 @@ async def create_story(
         2, description="Number of episodes to generate per batch", ge=1
     ),
     refinement: str = Body(
-        "AI", description="Refinement method: 'AI' or 'Human'", regex="^(AI|Human)$"
+        "AI", description="Refinement method: 'AI' or 'Human'", regex="^(AI|HUMAN)$"
     ),
     hinglish: bool = Body(False, description="Generate in Hinglish if true"),
 ):
