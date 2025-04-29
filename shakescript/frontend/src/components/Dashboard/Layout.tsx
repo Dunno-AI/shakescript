@@ -20,12 +20,15 @@ export const Layout = () => {
     setIsGenerating(true);
     try {
       // First API call to create story
+      console.log("in Layout.tsx")
       const createStoryResponse = await axios.post<{ status: string; story: StoryResponse; message: string }>(
         'http://localhost:8000/api/v1/stories/',
         {
           prompt: prompt,
           num_episodes: episodes,
-          is_hinglish: isHinglish
+          is_hinglish: isHinglish,
+          batch_size: batchSize,
+          refinement: refineMethod
         }
       );
 
@@ -35,13 +38,13 @@ export const Layout = () => {
 
       // Second API call to generate episodes
       const episodesResponse = await axios.post<Episode[]>(
-        `http://localhost:8000/api/v1/episodes/${createStoryResponse.data.story.story_id}/generate`,
+        `http://localhost:8000/api/v1/episodes/${createStoryResponse.data.story.story_id}/generate-batch`,
         {},
         {
           params: {
+            story_id: createStoryResponse.data.story.story_id,
             hinglish: isHinglish,
-            all: true,
-            method: refineMethod,
+            refinement_type: refineMethod,
             batch_size: batchSize
           }
         }
