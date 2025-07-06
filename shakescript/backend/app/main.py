@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import stories, episodes, embeddings, search
+from app.api.routes import stories_routes, episodes_routes
 
 app = FastAPI()
 
@@ -15,8 +15,8 @@ app.add_middleware(
 
 api_router = APIRouter(prefix="/api/v1")
 
-api_router.include_router(stories.router, tags=["stories"])
-api_router.include_router(episodes.router, tags=["episodes"])
+api_router.include_router(stories_routes.router, tags=["stories"])
+api_router.include_router(episodes_routes.router, tags=["episodes"])
 # api_router.include_router(embeddings.router, prefix="/embeddings", tags=["embeddings"])
 # api_router.include_router(search.router, prefix="/search", tags=["search"])
 

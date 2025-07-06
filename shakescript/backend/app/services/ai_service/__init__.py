@@ -1,19 +1,21 @@
 import google.generativeai as genai
 from openai import OpenAI
 from app.core.config import settings
-from app.services.ai_service.instructions import AIInstructions
-from app.services.ai_service.generation import AIGeneration
-from app.services.ai_service.utils import AIUtils
-from app.services.ai_service.validation import (
+from app.services.ai_service.metadata_extractorAI import extract_metadata
+from app.services.ai_service.episode_generatorAI import AIGeneration
+from app.services.ai_service.utilsAI import AIUtils
+from app.services.ai_service.prompts import AIPrompts
+from app.services.ai_service.ai_refinementAI import (
     validate_batch,
-    regenerate_batch,
     is_consistent_with_previous,
     check_episode_quality,
+)
+from app.services.ai_service.human_refinementAI import (
+    regenerate_batch,
     generate_episode_title,
 )
 from app.services.embedding_service import EmbeddingService
 from typing import Dict, List, Any, Optional
-import json
 
 
 class AIService:
@@ -22,17 +24,16 @@ class AIService:
         self.model = genai.GenerativeModel("gemini-2.0-flash")
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.embedding_service = EmbeddingService()
-        self.instructions = AIInstructions()
         self.generation = AIGeneration(self.model, self.embedding_service)
         self.utils = AIUtils()
+        self.prompts = AIPrompts()
 
     def call_llm(
         self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
     ) -> str:
         """
-        Call the Gemini language model with the given prompt.
+        Call the AI model with the given prompt.
         """
-        # Adjust temperature and max_tokens as needed for Gemini
         instruction = prompt
         first_response = self.model.generate_content(instruction)
         return first_response.text
@@ -40,8 +41,8 @@ class AIService:
     def extract_metadata(
         self, user_prompt: str, num_episodes: int, hinglish: bool = False
     ) -> Dict:
-        return self.instructions.extract_metadata(
-            user_prompt, num_episodes, hinglish, self.model
+        return extract_metadata(
+            self, user_prompt, num_episodes, hinglish 
         )
 
     def generate_episode_helper(
@@ -63,7 +64,6 @@ class AIService:
             story_id,
             prev_episodes,
             hinglish,
-            feedback,
         )
 
     def validate_batch(

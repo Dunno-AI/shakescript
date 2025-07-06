@@ -119,4 +119,42 @@ class AIUtils:
                     "Settings": {},
                 }
 
-
+    def _get_phase_transition_guide(self, current_phase: str, next_phase: str) -> str:
+        transition_guides = {
+            "Exposition-Inciting Incident": """
+                    - Bridge the normal world to the inciting event with subtle foreshadowing
+                    - Show the protagonist's routine/worldview just before disruption
+                    - Create contrast between "before" and "after" states
+                    - Use sensory details that hint at the coming change
+                """,
+            "Inciting Incident-Rising Action": """
+                    - Show the protagonist's immediate emotional reaction to the inciting event
+                    - Illustrate their decision to engage with the new situation
+                    - Introduce secondary characters who will aid or hinder progress
+                    - Begin complicating the initial problem with new obstacles
+                """,
+            "Rising Action-Dilemma": """
+                    - Escalate stakes to force a critical decision point
+                    - Create a situation where the protagonist's old methods fail
+                    - Bring conflicting values or goals into direct opposition
+                    - Reveal new information that changes the protagonist's understanding
+                """,
+            "Dilemma-Climax": """
+                    - Show the resolution of the dilemma through a meaningful choice
+                    - Accelerate pacing with shorter sentences and immediate action
+                    - Bring key characters into direct confrontation
+                    - Create a point of return moment that commits to resolution
+                """,
+            "Climax-Denouement": """
+                    - Show immediate aftermath and emotional impact of the climax
+                    - Begin resolving secondary conflicts and character arcs
+                    - Reflect on how the protagonist has changed from beginning to end
+                    - Create symmetry with opening through mirrored imagery or situations
+                """,
+            "Denouement-Final Episode": """
+                    - Conclude the journey with a definitive settling of the world and characters’ lives.  
+                    - Depict the protagonist actively shaping their future, cementing their growth.  
+                    - End with a poignant, grounded moment—dialogue, action, or imagery—that echoes the story’s heart and leaves no ambiguity.
+                """
+        }
+        return transition_guides.get(f"{current_phase}-{next_phase}", "")

@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from ...models.schemas import (
-    StoryCreate,
     StoryListResponse,
     StoryResponse,
     ErrorResponse,
-    EpisodeResponse,
 )
-from app.services.story_service import StoryService
+from app.services.core_service import StoryService
 from app.api.dependencies import get_story_service
 from typing import Annotated, Union, Dict, Any, List
 from app.utils import parse_user_prompt

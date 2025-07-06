@@ -63,8 +63,8 @@ class EmbeddingService:
         k: int = 5,
         character_names: List[str] = [],
     ) -> List[Dict]:
-        query_embedding = self.embedding_model.get_text_embedding(current_episode_info)
-        query_embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
+        # query_embedding = self.embedding_model.get_text_embedding(current_episode_info)
+        # query_embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
 
         query = (
             self.db_service.supabase.table("chunks")
