@@ -81,16 +81,18 @@ export const Refinement: React.FC<RefinementProps> = ({
       console.log('Generate batch response:', response.data);
 
       if (response.data.status === 'success') {
-        console.log('Episodes received:', response.data.episodes.length);
-        setEpisodes(response.data.episodes);
-        
+        // Map API response to only include episode_content as content
+        const mappedEpisodes = response.data.episodes.map((ep: any) => ({
+          episode_number: ep.episode_number,
+          content: ep.episode_content,
+        }));
+        setEpisodes(mappedEpisodes);
         // If AI refinement, move directly to ready state
         // If human refinement, prepare for human input
         setStatus(refinementType === 'ai' ? 'ready' : 'refining');
-
         // Initialize feedback object
         const initialFeedback: { [key: number]: string } = {};
-        response.data.episodes.forEach((ep: Episode) => {
+        mappedEpisodes.forEach((ep: any) => {
           initialFeedback[ep.episode_number] = '';
         });
         setFeedback(initialFeedback);
@@ -270,11 +272,7 @@ export const Refinement: React.FC<RefinementProps> = ({
             <div className="space-y-6">
               {episodes.map((episode) => (
                 <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
-                  <h3 className="text-lg font-medium text-zinc-200 mb-2">
-                    Episode {episode.episode_number}: {episode.title}
-                  </h3>
                   <div className="text-zinc-300 whitespace-pre-wrap mb-4">{episode.content}</div>
-                  
                   {status === 'refining' && refinementType === 'human' && (
                     <div>
                       <div className="flex items-center mb-2">
