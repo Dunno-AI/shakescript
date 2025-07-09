@@ -66,7 +66,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
         prompt,
         num_episodes: episodes,
         batch_size: batchSize,
-        refinement: refineMethod === "ai" ? "AI": "Human",
+        refinement: refineMethod === "ai" ? "AI": "HUMAN",
         hinglish: isHinglish
       });
 
