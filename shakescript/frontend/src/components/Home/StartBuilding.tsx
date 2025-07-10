@@ -13,6 +13,7 @@ export const StartBuildingSection: React.FC<StartBuildingSectionProps> = ({
 }) => {
   return (
     <motion.section
+      id="start-building"
       className={`bg-black text-white w-full pt-0 pb-12 -mt-4 ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}

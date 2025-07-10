@@ -128,7 +128,7 @@ const StoryCard = ({
             {isLoading ? (
               <div className="flex flex-col items-center justify-center space-y-3">
                 <ClassicLoader />
-                <p className="text-xs text-zinc-500">Loading story...</p>
+                <p className="text-xs text-zinc-500">Loading stories</p>
               </div>
             ) : (
               <div className="space-y-4">

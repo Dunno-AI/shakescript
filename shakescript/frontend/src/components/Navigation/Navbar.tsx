@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSmoothScroll } from "../../lib/useSmoothScroll";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,11 +13,13 @@ export const Navbar: React.FC = () => {
 
   const navItems = [
     { name: "Home", href: "/" },
-    { name: "About", href: "/developers" },
+    { name: "About", href: "/#start-building" },
     { name: "Statistics", href: "/stats" },
     { name: "Enterprise", href: "/enterprise" },
     { name: "Blog", href: "/blog" },
   ];
+
+  const smoothScroll = useSmoothScroll();
 
   return (
     <motion.nav
@@ -48,6 +51,15 @@ export const Navbar: React.FC = () => {
                     key={item.name}
                     to={item.href}
                     className="text-gray-300 hover:text-white px-5 py-2 rounded-md text-m font-medium"
+                    onClick={e => {
+                      if (item.name === "About") {
+                        e.preventDefault();
+                        smoothScroll("start-building");
+                      } else if (item.name === "Home") {
+                        e.preventDefault();
+                        smoothScroll();
+                      }
+                    }}
                   >
                     {item.name}
                   </Link>
@@ -92,6 +104,15 @@ export const Navbar: React.FC = () => {
               key={item.name}
               to={item.href}
               className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={e => {
+                if (item.name === "About") {
+                  e.preventDefault();
+                  smoothScroll("start-building");
+                } else if (item.name === "Home") {
+                  e.preventDefault();
+                  smoothScroll();
+                }
+              }}
             >
               {item.name}
             </Link>
