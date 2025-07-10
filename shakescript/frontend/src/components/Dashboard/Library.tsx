@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { Search, Download, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, ArrowLeft, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { cn } from "../../lib/utils";
 
@@ -58,34 +58,73 @@ const ClassicLoader = () => {
   );
 };
 
+// Confirmation Modal
+const ConfirmModal = ({ open, onConfirm, onCancel, message }: { open: boolean; onConfirm: () => void; onCancel: () => void; message: string }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+      <div className="backdrop-blur-lg bg-zinc-950/95 p-10 rounded-2xl shadow-2xl border border-zinc-800 w-full max-w-lg mx-4">
+        <div className="mb-6 text-zinc-100 text-xl text-center font-semibold">{message}</div>
+        <div className="flex justify-center gap-8 mt-4">
+          <button
+            onClick={onCancel}
+            className="px-6 py-3 rounded-lg bg-zinc-700 text-zinc-200 hover:bg-zinc-600 transition text-base font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-6 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-base font-medium shadow-md"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const StoryCard = ({ 
   story, 
   onClick, 
-  isLoading 
+  isLoading, 
+  onDelete
 }: { 
   story: Story; 
   onClick: () => void;
   isLoading: boolean;
+  onDelete: (storyId: number) => void;
 }) => {
   const common = "absolute flex w-full h-full [backface-visibility:hidden]";
 
   return (
-    <div className={cn("group relative h-[280px] w-52 [perspective:1000px] cursor-pointer")} onClick={onClick}>
+    <div className={cn("group relative h-[280px] w-52 [perspective:1000px] cursor-pointer")}>
+      {/* Delete (cross) button */}
+      <button
+        className={cn(
+          "absolute top-2 right-0 z-50 p-1 rounded-full bg-zinc-800 text-zinc-300 transition-all duration-300 shadow-none opacity-0 pointer-events-none",
+          "group-hover:opacity-100 group-hover:pointer-events-auto group-hover:scale-125 group-hover:-translate-y-2 group-hover:bg-red-600 group-hover:text-white group-hover:shadow-lg"
+        )}
+        onClick={e => { e.stopPropagation(); onDelete(story.story_id); }}
+        title="Delete story"
+        style={{ transitionProperty: 'background, color, box-shadow, transform, opacity' }}
+      >
+        <X size={18} />
+      </button>
       {/* Back cover - static */}
       <div className={cn("absolute inset-0 h-full w-48 rounded-lg bg-zinc-900/50 shadow-md border border-zinc-800/50")}></div>
-
       {/* Card container with slight book opening effect on hover */}
       <div
         className={cn(
           "relative z-50 h-full w-48 origin-left transition-transform duration-500 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(-30deg)]",
         )}
+        onClick={onClick}
       >
         {/* Front side of the card */}
         <div className={cn("h-full w-full rounded-lg bg-black border-2 border-zinc-800", common)}>
           <div className="relative flex h-full w-full flex-col items-center justify-center p-6 text-center">
             {/* Inner border */}
             <div className="absolute inset-3 border rounded-md border-zinc-800/50" />
-            
             {isLoading ? (
               <div className="flex flex-col items-center justify-center space-y-3">
                 <ClassicLoader />
@@ -104,7 +143,6 @@ const StoryCard = ({
           </div>
         </div>
       </div>
-
       {/* Sliding link/tab coming out from behind */}
       <div
         className={cn(
@@ -132,6 +170,10 @@ export const Library = () => {
   // Initialize caches
   const [storiesCache, setStoriesCache] = useState<StoryCache | null>(null);
   const [storyDetailsCache, setStoryDetailsCache] = useState<StoryDetailsCache>({});
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; from: 'card' | 'details' } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchStories();
@@ -293,12 +335,47 @@ export const Library = () => {
     doc.save(`${selectedStory.title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
   };
 
+  const handleDelete = (storyId: number, from: 'card' | 'details') => {
+    setDeleteTarget({ id: storyId, from });
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await axios.delete(`http://localhost:8000/api/v1/stories/${deleteTarget.id}`);
+      setStories(prev => prev.filter(s => s.story_id !== deleteTarget.id));
+      setStoriesCache(prev => prev ? { ...prev, data: prev.data.filter(s => s.story_id !== deleteTarget.id) } : null);
+      setStoryDetailsCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[deleteTarget.id];
+        return newCache;
+      });
+      if (selectedStory && selectedStory.story_id === deleteTarget.id) {
+        setSelectedStory(null);
+      }
+    } catch (error) {
+      alert('Failed to delete story.');
+    } finally {
+      setDeleting(false);
+      setShowConfirm(false);
+      setDeleteTarget(null);
+    }
+  };
+
   const filteredStories = stories.filter((story) =>
     story.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="flex-1 bg-[#0A0A0A] p-8 overflow-y-auto">
+      <ConfirmModal
+        open={showConfirm}
+        onConfirm={confirmDelete}
+        onCancel={() => { setShowConfirm(false); setDeleteTarget(null); }}
+        message={deleting ? "Deleting..." : "Are you sure you want to delete this story? This action cannot be undone."}
+      />
       <div className="max-w-6xl mx-auto">
         {!selectedStory ? (
           <>
@@ -318,7 +395,12 @@ export const Library = () => {
 
             {loadingStories ? (
               <div className="flex items-center justify-center py-12">
-                <ClassicLoader />
+                <StoryCard 
+                  story={{ story_id: -1, title: "" }} 
+                  onClick={() => {}} 
+                  isLoading={true} 
+                  onDelete={() => {}} 
+                />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 place-items-center">
@@ -334,6 +416,7 @@ export const Library = () => {
                         story={story} 
                         onClick={() => handleStoryClick(story.story_id)} 
                         isLoading={loadingStoryId === story.story_id}
+                        onDelete={(id) => handleDelete(id, 'card')}
                       />
                     </motion.div>
                   ))}
@@ -351,13 +434,22 @@ export const Library = () => {
                 <ArrowLeft size={20} />
                 <span>Back to Library</span>
               </button>
-              <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
-              >
-                <Download size={20} />
-                <span>Download PDF</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                >
+                  <Download size={20} />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedStory.story_id, 'details')}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <X size={20} />
+                  <span>Delete</span>
+                </button>
+              </div>
             </div>
 
             {loading ? (
