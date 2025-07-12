@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: shakescript/backend 
+        working-directory: shakescript/backend
 
     steps:
     - name: Checkout code
@@ -20,19 +20,22 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13'
+        python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install dependencies into Azure-ready venv
       run: |
+        python -m venv antenv
+        source antenv/bin/activate
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Zip backend code
-      run: zip -r backend.zip .
+    - name: Zip backend code including antenv
+      run: |
+        zip -r backend.zip . -x '*.git*' '*.github*' 'venv/*'
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ShakescriptAI
+        app-name: your-backend-app-name
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: shakescript/backend/backend.zip
+        package: backend/backend.zip
