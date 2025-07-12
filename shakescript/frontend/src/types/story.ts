@@ -18,3 +18,47 @@ export interface StoryCreate {
   prompt: string;
   num_episodes: number;
 }
+
+export interface Story {
+  story_id: number;
+  title: string;
+  summary: string;
+}
+
+export interface Character {
+  Name: string;
+  Role: string;
+  Description: string;
+  Relationship: Record<string, any>;
+  role_active: boolean;
+}
+
+export interface StoryDetails {
+  story_id: number;
+  title: string;
+  setting: string[];
+  characters: Record<string, Character>;
+  special_instructions: string;
+  story_outline: Record<string, string>;
+  current_episode: number;
+  episodes: {
+  id: number;
+  number: number;
+  title: string;
+  content: string;
+  summary: string;
+}[];
+  summary: string;
+}
+
+export interface StoryCache {
+  data: Story[];
+  timestamp: number;
+}
+
+export interface StoryDetailsCache {
+  [key: number]: {
+    data: StoryDetails;
+    timestamp: number;
+  };
+}

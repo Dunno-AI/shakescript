@@ -3,12 +3,8 @@ import { NavLink } from 'react-router-dom';
 import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StoryPrompt } from './StoryPrompt';
 
-interface SidebarProps {
-  onSubmit: (prompt: string, episodes: number, isHinglish: boolean, refineMethod: 'human' | 'ai', batchSize: number) => void;
-  isGenerating: boolean;
-}
 
-export const Sidebar: React.FC<SidebarProps> = ({ onSubmit, isGenerating }) => {
+export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showStoryPrompt, setShowStoryPrompt] = useState(false);
 
@@ -78,19 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSubmit, isGenerating }) => {
             </li>
             <li>
               <NavLink
-                to="/spaces"
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 text-sm ${
-                    isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                  } rounded-md ${isCollapsed ? 'justify-center' : ''}`
-                }
-              >
-                <FolderKanban size={16} />
-                {!isCollapsed && 'Spaces'}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
                 to="/dashboard/library"
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 text-sm ${
@@ -117,8 +100,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSubmit, isGenerating }) => {
       {/* Story Prompt Modal */}
       {showStoryPrompt && (
         <StoryPrompt
-          onSubmit={onSubmit}
-          isGenerating={isGenerating}
           onClose={() => setShowStoryPrompt(false)}
         />
       )}

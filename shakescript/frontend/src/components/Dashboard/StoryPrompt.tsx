@@ -2,11 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ChevronUp, ChevronDown, X } from 'lucide-react';
 import axios from 'axios';
 import { Refinement } from './Refinement';
-import { StoryDisplay } from './StoryDisplay';
 
 interface StoryPromptProps {
-  onSubmit: (prompt: string, episodes: number, isHinglish: boolean, refineMethod: 'human' | 'ai', batchSize: number, storyId: number) => void;
-  isGenerating: boolean;
   onClose: () => void;
 }
 
@@ -36,7 +33,7 @@ const ScrollbarStyles = () => {
   );
 };
 
-export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating, onClose }) => {
+export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   const [prompt, setPrompt] = useState("");
   const [episodes, setEpisodes] = useState(5);
   const [isHinglish, setIsHinglish] = useState(false);
@@ -46,7 +43,6 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
   const [showRefinement, setShowRefinement] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [showStoryDisplay, setShowStoryDisplay] = useState(false);
   const [displayStoryData, setDisplayStoryData] = useState<any>(null);
 
   // Auto-resize textarea when content changes
@@ -72,15 +68,11 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
         refinement: refineMethod === "ai" ? "AI": "HUMAN",
         hinglish: isHinglish
       });
-
-      console.log('Story creation response:', storyResponse.data);
-
+      
       if (storyResponse.data.story && storyResponse.data.story.story_id) {
         const newStoryId = storyResponse.data.story.story_id;
-        console.log('Setting story ID to:', newStoryId);
         setStoryId(newStoryId);
         setShowRefinement(true);
-        console.log("mounted the refinement component");
       } else {
         console.error('No story ID found in response');
         alert('Failed to get story ID. Please try again.');
@@ -100,7 +92,6 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
         const response = await axios.get(`http://localhost:8000/api/v1/stories/${storyId}`);
         if (response.data && response.data.story) {
           setDisplayStoryData(response.data.story);
-          setShowStoryDisplay(true);
         }
       } catch (error) {
         alert('Failed to load story for display.');
@@ -128,9 +119,8 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
 
   return (
     <>
-      {!showRefinement && !showStoryDisplay && (
+      {!showRefinement && (
         <div className="fixed inset-0 flex items-center justify-center z-10 bg-black bg-opacity-50">
-          {/* Include the scrollbar styles */}
           <ScrollbarStyles />
          
           <div className="bg-[#111111] rounded-xl border border-[#2a2a2a] shadow-lg w-full max-w-3xl mx-3">
@@ -157,7 +147,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder="Describe your story idea..."
                       className="w-full p-4 bg-zinc-900 text-zinc-100 rounded-lg border border-zinc-800 focus:outline-none focus:border-zinc-700 resize-none min-h-[120px] max-h-[200px] overflow-y-auto"
-                      disabled={isGenerating || isCreatingStory}
+                      disabled={isCreatingStory}
                       rows={3}
                     />
                   </div>
@@ -175,14 +165,14 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                         min="1"
                         max="50"
                         className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
-                        disabled={isGenerating || isCreatingStory}
+                        disabled={isCreatingStory}
                       />
                       <div className="absolute right-0 top-0 bottom-0 flex flex-col">
                         <button
                           type="button"
                           onClick={incrementEpisodes}
                           className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
-                          disabled={isGenerating || isCreatingStory || episodes >= 50}
+                          disabled={isCreatingStory || episodes >= 50}
                         >
                           <ChevronUp size={12} className="text-zinc-400" />
                         </button>
@@ -190,7 +180,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                           type="button"
                           onClick={decrementEpisodes}
                           className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
-                          disabled={isGenerating || isCreatingStory || episodes <= 1}
+                          disabled={isCreatingStory || episodes <= 1}
                         >
                           <ChevronDown size={12} className="text-zinc-400" />
                         </button>
@@ -209,14 +199,14 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                         min="1"
                         max={episodes}
                         className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
-                        disabled={isGenerating || isCreatingStory}
+                        disabled={isCreatingStory}
                       />
                       <div className="absolute right-0 top-0 bottom-0 flex flex-col">
                         <button
                           type="button"
                           onClick={incrementBatchSize}
                           className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
-                          disabled={isGenerating || isCreatingStory || batchSize >= episodes}
+                          disabled={isCreatingStory || batchSize >= episodes}
                         >
                           <ChevronUp size={12} className="text-zinc-400" />
                         </button>
@@ -224,7 +214,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                           type="button"
                           onClick={decrementBatchSize}
                           className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
-                          disabled={isGenerating || isCreatingStory || batchSize <= 1}
+                          disabled={isCreatingStory || batchSize <= 1}
                         >
                           <ChevronDown size={12} className="text-zinc-400" />
                         </button>
@@ -232,7 +222,6 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                     </div>
                   </div>
 
-                  {/* Refinement Method Dropdown */}
                   <div className="flex items-center">
                     <label className="text-zinc-400 text-sm w-32">Refinement:</label>
                     <select
@@ -240,17 +229,15 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                       value={refineMethod}
                       onChange={(e) => setRefineMethod(e.target.value as 'human' | 'ai')}
                       className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm"
-                      disabled={isGenerating || isCreatingStory}
+                      disabled={isCreatingStory}
                     >
                       <option value="ai">AI</option>
                       <option value="human">Human</option>
                     </select>
                   </div>
 
-                  {/* Divider line */}
                   <div className="border-t border-zinc-800"></div>
 
-                  {/* Hinglish Toggle - Moved to right */}
                   <div className="flex items-center justify-end">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
@@ -262,7 +249,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                             onChange={(e) => setIsHinglish(e.target.checked)}
                             className="sr-only"
                             id="hinglish-toggle"
-                            disabled={isGenerating || isCreatingStory}
+                            disabled={isCreatingStory}
                           />
                           <label
                             htmlFor="hinglish-toggle"
@@ -287,7 +274,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
                   ) : (
                     <button
                       type="submit"
-                      disabled={!prompt.trim() || isGenerating}
+                      disabled={!prompt.trim()}
                       className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       <Send className="w-4 h-4" />
@@ -300,7 +287,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
           </div>
         </div>
       )}
-      {showRefinement && storyId !== null && !showStoryDisplay && (
+      {showRefinement && storyId !== null && (
         <Refinement
           storyId={storyId}
           totalEpisodes={episodes}
@@ -313,27 +300,6 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onSubmit, isGenerating
             onClose();
           }}
         />
-      )}
-      {showStoryDisplay && displayStoryData && (
-        <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
-          <div className="bg-[#111111] rounded-xl border border-[#2a2a2a] shadow-lg w-full max-w-4xl mx-3 max-h-[90vh] flex flex-col">
-            <StoryDisplay
-              title={displayStoryData.title}
-              episodes={displayStoryData.episodes}
-              isGenerating={false}
-            />
-            <button
-              className="m-4 px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-800"
-              onClick={() => {
-                setShowStoryDisplay(false);
-                setDisplayStoryData(null);
-                onClose();
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
       )}
     </>
   );

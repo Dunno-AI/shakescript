@@ -213,15 +213,6 @@ export const Refinement: React.FC<RefinementProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
-      {/* Debug panel for the refinement component */}
-      <div className="absolute top-4 left-4">
-        <button
-          onClick={generateBatch}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-        >
-          {status === 'loading' ? 'Loading...' : 'Manually Generate Batch'}
-        </button>
-      </div>
       
       <div className="bg-[#111111] rounded-xl border border-[#2a2a2a] shadow-lg w-full max-w-4xl mx-3 max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-zinc-800 flex justify-between items-center">
@@ -332,15 +323,6 @@ export const Refinement: React.FC<RefinementProps> = ({
             </button>
           )}
           
-          {status === 'complete' && (
-            <button
-              onClick={onComplete}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              <span>View Story</span>
-            </button>
-          )}
         </div>
       </div>
     </div>
