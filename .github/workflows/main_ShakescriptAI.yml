@@ -14,4 +14,5 @@ jobs:
       uses: azure/webapps-deploy@v2
       with:
         app-name: ShakescriptAI
-        package: ./shakescript/backend
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: shakescript/backend/backend.zip
