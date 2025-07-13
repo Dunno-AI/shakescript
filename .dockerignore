@@ -1,0 +1,40 @@
+# Don't include version control and build context
+.git
+.github
+.gitignore
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+**/venv/
+*.egg-info/
+.eggs/
+
+# OS and IDE junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Env and secrets
+.env
+**/.env
+
+# Node junk (just in case)
+node_modules/
+npm-debug.log
+
+# Frontend code (not needed in backend image)
+shakescript/frontend/
+
+# Charts/pipelines (non-runtime artifacts)
+charts_and_pipeline/
+
+# Docker-related
+docker-compose.yml
+Dockerfile.dev
+.dockerignore

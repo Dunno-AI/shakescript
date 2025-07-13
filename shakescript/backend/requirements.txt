@@ -1,13 +1,12 @@
 fastapi
-uvicorn[standard]
+uvicorn
 gunicorn
 pydantic
 supabase
 google-generativeai
 psycopg2-binary
-llama-index
+llama-index-core 
 llama-index-embeddings-huggingface
 python-dotenv
-tqdm
 openai
 pydantic-settings
