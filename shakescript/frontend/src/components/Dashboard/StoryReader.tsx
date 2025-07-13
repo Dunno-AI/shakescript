@@ -33,6 +33,7 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [cache, setCache] = useState<StoryCache | null>(null);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL
 
   const handleDelete = (id: number) => {
     setDeleteTarget(id);
@@ -41,7 +42,7 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
   const confirmDelete = async () => {
     try {
       if (deleteTarget !== null) {
-        await axios.delete(`http://localhost:8000/api/v1/stories/${deleteTarget}`);
+        await axios.delete(`${BASE_URL}api/v1/stories/${deleteTarget}`);
         setCache(prev => prev ? { ...prev, data: prev.data.filter(s => s.story_id !== deleteTarget) } : null);
       }
       onBack();

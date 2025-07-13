@@ -44,6 +44,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [displayStoryData, setDisplayStoryData] = useState<any>(null);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL
 
   // Auto-resize textarea when content changes
   useEffect(() => {
@@ -61,7 +62,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
 
     try {
       // First, create the story metadata
-      const storyResponse = await axios.post('http://localhost:8000/api/v1/stories/', {
+      const storyResponse = await axios.post(`${BASE_URL}api/v1/stories/`, {
         prompt,
         num_episodes: episodes,
         batch_size: batchSize,
@@ -89,7 +90,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
     if (storyId) {
       // Fetch the full story by id
       try {
-        const response = await axios.get(`http://localhost:8000/api/v1/stories/${storyId}`);
+        const response = await axios.get(`${BASE_URL}api/v1/stories/${storyId}`);
         if (response.data && response.data.story) {
           setDisplayStoryData(response.data.story);
         }

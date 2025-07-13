@@ -24,6 +24,8 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [cache, setCache] = useState<StoryCache | null>(null);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  console.log(BASE_URL)
 
   useEffect(() => {
     if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
@@ -34,7 +36,7 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
 
   const fetchStories = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/v1/stories/all");
+      const res = await axios.get(BASE_URL+"api/v1/stories/all");
       setStories(res.data.stories);
       setCache({ data: res.data.stories, timestamp: Date.now() });
     } catch (err) {
@@ -53,7 +55,7 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
     try {
       if (deleteTarget !== null) {
         await axios.delete(
-          `http://localhost:8000/api/v1/stories/${deleteTarget}`,
+          `${BASE_URL}api/v1/stories/${deleteTarget}`,
         );
         setStories(stories.filter((s) => s.story_id !== deleteTarget));
         setCache((prev) =>
