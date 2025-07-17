@@ -36,7 +36,7 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
 
   const fetchStories = async () => {
     try {
-      const res = await axios.get(BASE_URL+"api/v1/stories/all");
+      const res = await axios.get(BASE_URL+"/api/v1/stories/all");
       setStories(res.data.stories);
       setCache({ data: res.data.stories, timestamp: Date.now() });
     } catch (err) {
@@ -55,7 +55,7 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
     try {
       if (deleteTarget !== null) {
         await axios.delete(
-          `${BASE_URL}api/v1/stories/${deleteTarget}`,
+          `${BASE_URL}/api/v1/stories/${deleteTarget}`,
         );
         setStories(stories.filter((s) => s.story_id !== deleteTarget));
         setCache((prev) =>

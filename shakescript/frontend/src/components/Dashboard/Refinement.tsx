@@ -68,7 +68,7 @@ export const Refinement: React.FC<RefinementProps> = ({
       });
       
       const response = await axios.post(
-        `${BASE_URL}api/v1/episodes/${storyId}/generate-batch`,
+        `${BASE_URL}/api/v1/episodes/${storyId}/generate-batch`,
         {},
         {
           params: {
@@ -138,7 +138,7 @@ export const Refinement: React.FC<RefinementProps> = ({
       if (feedbackToSubmit.length > 0) {
         console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/refine-batch`);
         const response = await axios.post(
-          `${BASE_URL}api/v1/episodes/${storyId}/refine-batch`,
+          `${BASE_URL}/api/v1/episodes/${storyId}/refine-batch`,
           feedbackToSubmit
         );
 
@@ -178,7 +178,7 @@ export const Refinement: React.FC<RefinementProps> = ({
     try {
       console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/validate-batch`);
       const response = await axios.post(
-        `${BASE_URL}api/v1/episodes/${storyId}/validate-batch`
+        `${BASE_URL}/api/v1/episodes/${storyId}/validate-batch`
       );
 
       console.log('Validate batch response:', response.data);

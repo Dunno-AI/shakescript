@@ -42,7 +42,7 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
   const confirmDelete = async () => {
     try {
       if (deleteTarget !== null) {
-        await axios.delete(`${BASE_URL}api/v1/stories/${deleteTarget}`);
+        await axios.delete(`${BASE_URL}/api/v1/stories/${deleteTarget}`);
         setCache(prev => prev ? { ...prev, data: prev.data.filter(s => s.story_id !== deleteTarget) } : null);
       }
       onBack();
