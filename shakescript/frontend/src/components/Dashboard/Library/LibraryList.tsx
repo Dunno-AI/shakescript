@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import StoryCard from "./StoryCard";
-import ConfirmModal from "../utils/ConfirmModal";
+import ConfirmModal from "../../utils/ConfirmModal";
 import { StoryDetails, StoryCache, Story } from "@/types/story";
 
 interface LibraryListProps {
