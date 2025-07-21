@@ -104,3 +104,6 @@ class StoryService:
             refinement_type,
             hinglish,
         )
+
+    def set_story_completed(self, story_id: int, completed: bool = True):
+        return self.db_service.set_story_completed(story_id, completed)

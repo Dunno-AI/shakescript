@@ -59,7 +59,7 @@ export const Sidebar = () => {
                 {!isCollapsed && 'Home'}
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to="/discover"
                 className={({ isActive }) =>
@@ -71,7 +71,7 @@ export const Sidebar = () => {
                 <Compass size={16} />
                 {!isCollapsed && 'Discover'}
               </NavLink>
-            </li>
+            </li> */}
             <li>
               <NavLink
                 to="/dashboard/continue"

@@ -35,6 +35,9 @@ class DBService:
     def delete_story(self, story_id):
         return self.stories.delete_story(story_id)
 
+    def set_story_completed(self, story_id, completed=True):
+        return self.stories.set_story_completed(story_id, completed)
+
     # Episodes
     def store_episode(self, story_id, episode_data, current_episode):
         return self.episodes.store_episode(story_id, episode_data, current_episode)

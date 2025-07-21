@@ -27,6 +27,7 @@ interface SelectedStory {
     batchSize: number;
     refinementType: 'human' | 'ai';
     isHinglish: boolean;
+    initialBatch: number;
 }
 
 export const ResumeStory: React.FC = () => {
@@ -60,12 +61,15 @@ export const ResumeStory: React.FC = () => {
         try {
             const detailResponse = await axios.get<{ story: StoryDetail }>(`${BASE_URL}/api/v1/stories/${storyId}`);
             const story = detailResponse.data.story;
+            // Calculate initial batch: (validated_episodes / batch_size) + 1
+            const initialBatch = Math.floor((story.validated_episodes || 0) / (story.batch_size || 1)) + 1;
             setSelectedStory({
                 storyId: story.story_id,
                 totalEpisodes: story.num_episodes,
-                batchSize: story.batch_size,
-                refinementType: story.refinement === 'AI' ? 'ai' : 'human',
+                batchSize: story.batch_size, // always use batch_size from detail
+                refinementType: story.refinement === 'HUMAN' ? 'human' : 'ai',
                 isHinglish: story.is_hinglish,
+                initialBatch,
             });
         } catch (err) {
             setError(`Failed to fetch story details for story ${storyId}.`);
@@ -107,6 +111,9 @@ export const ResumeStory: React.FC = () => {
                 <div className="space-y-4">
                     {incompleteStories.map(story => {
                         const progress = story.num_episodes > 0 ? (story.validated_episodes / story.num_episodes) * 100 : 0;
+                        // Use batch_size if present, otherwise default to 1
+                        const batchSize = (story as any).batch_size || 1;
+                        const initialBatch = Math.floor((story.validated_episodes || 0) / batchSize) + 1;
                         return (
                             <div key={story.story_id} className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex items-center justify-between hover:bg-zinc-800/50 transition-colors duration-200">
                                 <div className="flex-1">
@@ -118,6 +125,9 @@ export const ResumeStory: React.FC = () => {
                                         </div>
                                         <p className="text-xs text-zinc-400 font-mono">{story.validated_episodes} / {story.num_episodes}</p>
                                     </div>
+                                    <p className="text-xs text-zinc-500 mt-1">
+                                      Resumes from batch {initialBatch}
+                                    </p>
                                 </div>
                                 <button
                                     onClick={() => handleResume(story.story_id)}
@@ -144,6 +154,7 @@ export const ResumeStory: React.FC = () => {
                     batchSize={selectedStory.batchSize}
                     refinementType={selectedStory.refinementType}
                     isHinglish={selectedStory.isHinglish}
+                    initialBatch={selectedStory.initialBatch}
                     onComplete={handleRefinementComplete}
                     onClose={handleRefinementClose}
                 />
