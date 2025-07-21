@@ -98,9 +98,10 @@ class StoryDB:
                     "story_outline": json.dumps(metadata.get("Story Outline", [])),
                     "current_episode": 1,
                     "num_episodes": num_episodes,
+                    "genre": metadata.get("Genre", "NULL"),
                     "current_episodes_content": json.dumps(
                         []
-                    ),  # Initialize current_episodes_content
+                    ), 
                 }
             )
             .execute()

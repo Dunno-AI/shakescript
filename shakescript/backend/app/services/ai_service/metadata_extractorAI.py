@@ -30,6 +30,7 @@ def extract_metadata(
             }
         ],
         "Special Instructions": "string (include tone: e.g., suspenseful)",
+        "Genre": "string (Give the best suited Genre for this story. Give only one genre.)"
     }
     instruction = self.prompts.METADATA_EXTRACTOR_PROMPT(cleaned_prompt, num_episodes, metadata_template)
 

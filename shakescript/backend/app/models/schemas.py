@@ -55,7 +55,7 @@ class EpisodeCreateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
-    episodes: List[Dict[str, Any]] = []  # Added to match existing error responses
+    episodes: List[Dict[str, Any]] = []  
 
 
 class StoryListItem(BaseModel):
