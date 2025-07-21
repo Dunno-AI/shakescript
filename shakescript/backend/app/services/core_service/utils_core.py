@@ -1,18 +1,24 @@
 from typing import Dict, List, Any
 from app.models.schemas import StoryListItem
 
+
 def get_story_info(self, story_id: int) -> Dict[str, Any]:
     return self.db_service.get_story_info(story_id)
 
+
 def get_all_stories(self) -> List[StoryListItem]:
     return [
-        StoryListItem(story_id=story["id"], title=story["title"])
+        StoryListItem(
+            story_id=story["id"],
+            title=story["title"],
+            genre=story["genre"],
+            is_completed=story["is_completed"],
+        )
         for story in self.db_service.get_all_stories()
     ]
 
-def _update_story_memory(
-    self, story_id: int, episode_data: Dict, story_memory: Dict
-):
+
+def _update_story_memory(self, story_id: int, episode_data: Dict, story_memory: Dict):
     if story_id not in story_memory:
         story_memory[story_id] = {
             "characters": {},
@@ -33,6 +39,7 @@ def _update_story_memory(
         }
     )
 
+
 def update_story_summary(self, story_id: int) -> Dict[str, Any]:
     story_data = self.get_story_info(story_id)
     if "error" in story_data:
@@ -45,6 +52,7 @@ def update_story_summary(self, story_id: int) -> Dict[str, Any]:
     ).execute()
     return {"status": "success", "summary": summary}
 
+
 def store_validated_episodes(
     self, story_id: int, episodes: List[Dict[str, Any]]
 ) -> None:
@@ -54,22 +62,24 @@ def store_validated_episodes(
     if not episodes:
         print("No episodes to store")
         return
-    
+
     # Store each episode in the episodes table
     for episode in episodes:
         episode_number = episode.get("episode_number")
         if not episode_number:
             print(f"Warning: Episode missing episode_number: {episode}")
             continue
-            
+
         # Store episode in database
         episode_id = self.db_service.store_episode(story_id, episode, episode_number)
-        
+
         # Process for embedding/chunking if needed
-        character_names = [
-            char["Name"] for char in episode.get("characters_featured", [])
-        ] if "characters_featured" in episode else []
-        
+        character_names = (
+            [char["Name"] for char in episode.get("characters_featured", [])]
+            if "characters_featured" in episode
+            else []
+        )
+
         if episode.get("episode_content"):
             self.embedding_service._process_and_store_chunks(
                 story_id,
@@ -88,6 +98,6 @@ def store_validated_episodes(
             {"current_episode": max_episode_num + 1}
         ).eq("id", story_id).execute()
         print(f"Updated story current_episode to {max_episode_num + 1}")
-    
+
     # Clear the current_episodes field after validation
     self.clear_current_episodes_content(story_id)
