@@ -61,7 +61,8 @@ class ErrorResponse(BaseModel):
 class StoryListItem(BaseModel):
     story_id: int
     title: str
-    theme: str
+    is_completed: bool = False
+    genre: str
 
 
 class StoryListResponse(BaseModel):
@@ -70,8 +71,5 @@ class StoryListResponse(BaseModel):
 
 class EpisodeBatchResponse(BaseModel):
     status: str
-    episodes: List[Dict[str, Any]] 
-    message: Optional[str] = None  
-
-    class Config:
-        arbitrary_types_allowed = True 
+    episodes: List[Dict[str, Any]]
+    message: Optional[str] = None  # ✅ Added to avoid ResponseValidationError

@@ -11,7 +11,11 @@ class StoryDB:
         )
 
     def get_all_stories(self) -> List[Dict[str, Any]]:
-        result = self.supabase.table("stories").select("id, title").execute()
+        result = (
+            self.supabase.table("stories")
+            .select("id, title, genre, is_completed")
+            .execute()
+        )
         return result.data if result.data else []
 
     def get_story_info(self, story_id: int) -> Dict:
