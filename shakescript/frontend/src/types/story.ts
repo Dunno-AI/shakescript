@@ -22,7 +22,8 @@ export interface StoryCreate {
 export interface Story {
   story_id: number;
   title: string;
-  summary: string;
+  is_completed: boolean;
+  genre: string;
 }
 
 export interface Character {

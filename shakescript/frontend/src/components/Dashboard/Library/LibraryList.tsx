@@ -37,8 +37,10 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   const fetchStories = async () => {
     try {
       const res = await axios.get(BASE_URL+"/api/v1/stories/all");
-      setStories(res.data.stories);
-      setCache({ data: res.data.stories, timestamp: Date.now() });
+      // Only show completed stories in the library
+      const completedStories = res.data.stories.filter((s: any) => s.is_completed);
+      setStories(completedStories);
+      setCache({ data: completedStories, timestamp: Date.now() });
     } catch (err) {
       console.error("Failed fetching stories", err);
     } finally {
