@@ -55,12 +55,13 @@ class EpisodeCreateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
-    episodes: List[Dict[str, Any]] = []  # Added to match existing error responses
+    episodes: List[Dict[str, Any]] = []  
 
 
 class StoryListItem(BaseModel):
     story_id: int
     title: str
+    theme: str
 
 
 class StoryListResponse(BaseModel):
@@ -70,7 +71,7 @@ class StoryListResponse(BaseModel):
 class EpisodeBatchResponse(BaseModel):
     status: str
     episodes: List[Dict[str, Any]] 
-    message: Optional[str] = None  # ✅ Added to avoid ResponseValidationError
+    message: Optional[str] = None  
 
     class Config:
         arbitrary_types_allowed = True 
