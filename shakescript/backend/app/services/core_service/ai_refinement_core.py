@@ -66,7 +66,7 @@ def refine_batch_by_ai(
             f"AI refinement warning: Failed to refine after {max_attempts} attempts, proceeding anyway"
         )
 
-    self.store_validated_episodes(story_id, episodes)
+    self.store_validated_episodes(story_id, episodes, metadata["num_episodes"])
 
     # Update current_episode
     new_current_episode = current_episode + len(episodes)

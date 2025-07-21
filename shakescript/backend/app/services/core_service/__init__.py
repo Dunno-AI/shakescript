@@ -37,21 +37,21 @@ class StoryService:
     def generate_multiple_episodes(
         self,
         story_id: int,
-        num_episodes: int,
-        hinglish: bool = False,
+        start_episode: int,
         batch_size: int = 1,
+        hinglish: bool = False,
     ) -> List[Dict[str, Any]]:
         return story_generator_core.generate_multiple_episodes(
-            self, story_id, num_episodes, hinglish, batch_size
+            self, story_id, start_episode, batch_size, hinglish 
         )
 
     def update_story_summary(self, story_id: int) -> Dict[str, Any]:
         return utils_core.update_story_summary(self, story_id)
 
     def store_validated_episodes(
-        self, story_id: int, episodes: List[Dict[str, Any]]
+        self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int
     ) -> None:
-        return utils_core.store_validated_episodes(self, story_id, episodes)
+        return utils_core.store_validated_episodes(self, story_id, episodes, total_episodes)
 
     def generate_and_refine_batch(
         self, story_id: int, batch_size: int, hinglish: bool, refinement_type: str
@@ -84,10 +84,6 @@ class StoryService:
         self,
         story_id,
         episodes,
-        prev_episodes,
-        metadata,
-        story_data,
-        current_episode,
         batch_size,
         refinement_type,
         hinglish,
@@ -96,10 +92,6 @@ class StoryService:
             self,
             story_id,
             episodes,
-            prev_episodes,
-            metadata,
-            story_data,
-            current_episode,
             batch_size,
             refinement_type,
             hinglish,

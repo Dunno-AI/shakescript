@@ -79,7 +79,9 @@ def validate_episode_batch(
             status_code=HTTP_404_NOT_FOUND, detail="No batch found to validate"
         )
 
-    self.store_validated_episodes(story_id, current_episodes_content)
+    total_episodes = story_data["num_episodes"]
+    print(total_episodes)
+    self.store_validated_episodes(story_id, current_episodes_content, total_episodes)
 
     max_episode = max([ep.get("episode_number", 0) for ep in current_episodes_content], default=0)
     next_episode = max_episode + 1
