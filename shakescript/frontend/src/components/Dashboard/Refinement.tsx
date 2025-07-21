@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { X, Check, PenLine, Loader2, ArrowRight } from 'lucide-react';
+import { TypingAnimation } from '../utils/TypingAnimation';
 
 interface RefinementProps {
   storyId: number;
@@ -10,6 +11,7 @@ interface RefinementProps {
   isHinglish: boolean;
   onComplete: () => void;
   onClose: () => void;
+  initialBatch?: number;
 }
 
 interface Episode {
@@ -31,11 +33,12 @@ export const Refinement: React.FC<RefinementProps> = ({
   refinementType,
   isHinglish,
   onComplete,
-  onClose
+  onClose,
+  initialBatch
 }) => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [status, setStatus] = useState<'loading' | 'refining' | 'ready' | 'complete'>('loading');
-  const [currentBatch, setCurrentBatch] = useState<number>(1);
+  const [currentBatch, setCurrentBatch] = useState<number>(initialBatch || 1);
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -186,6 +189,8 @@ export const Refinement: React.FC<RefinementProps> = ({
       if (response.data.status === 'success') {
         if (response.data.message && response.data.message.includes('Story complete')) {
           console.log('Story generation complete');
+          // Mark story as completed in backend
+          await axios.post(`${BASE_URL}/api/v1/stories/${storyId}/complete`);
           setStatus('complete');
           onComplete();
         } else {
@@ -207,6 +212,13 @@ export const Refinement: React.FC<RefinementProps> = ({
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const episodesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollToBottom = () => {
+    if (episodesEndRef.current) {
+      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -245,8 +257,8 @@ export const Refinement: React.FC<RefinementProps> = ({
         <div className="overflow-y-auto flex-1 p-5">
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-              <p className="text-zinc-300">Generating episodes...</p>
+              {/* <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" /> */}
+              <TypingAnimation text="Generating episodes..." speed={30} className="text-zinc-300 text-lg mb-4" />
             </div>
           )}
           
@@ -259,12 +271,17 @@ export const Refinement: React.FC<RefinementProps> = ({
           )}
           
           {(status === 'refining' || status === 'ready') && episodes.length > 0 && (
-            <div className="space-y-6">
+            <div className="space-y-6" style={{ position: 'relative' }}>
               {episodes.map((episode) => (
-                <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
-                  <div className="text-zinc-300 whitespace-pre-wrap mb-4">{episode.content}</div>
+                <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 pb-10">
+                  <TypingAnimation
+                    text={episode.content}
+                    speed={15}
+                    className="text-zinc-300 whitespace-pre-wrap mb-4"
+                    onTyping={scrollToBottom}
+                  />
                   {status === 'refining' && refinementType === 'human' && (
-                    <div>
+                    <div className='mt-4'>
                       <div className="flex items-center mb-2">
                         <PenLine className="w-4 h-4 text-zinc-400 mr-2" />
                         <label className="text-sm text-zinc-400">Feedback (optional)</label>
@@ -279,6 +296,7 @@ export const Refinement: React.FC<RefinementProps> = ({
                   )}
                 </div>
               ))}
+              <div ref={episodesEndRef} />
             </div>
           )}
           
@@ -327,3 +345,4 @@ export const Refinement: React.FC<RefinementProps> = ({
     </div>
   );
 };
+

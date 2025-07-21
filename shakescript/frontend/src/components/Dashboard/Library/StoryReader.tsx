@@ -1,11 +1,11 @@
 import { ChevronLeft, ChevronRight, ArrowLeft, Download } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { generatePDF } from "../utils/PDFGenerator";
+import { generatePDF } from "../../utils/PDFGenerator";
 import { X } from "lucide-react";
 import { StoryCache } from "@/types/story";
 import axios from "axios";
-import ConfirmModal from "../utils/ConfirmModal";
+import ConfirmModal from "../../utils/ConfirmModal";
 
 interface Episode {
   id: number;

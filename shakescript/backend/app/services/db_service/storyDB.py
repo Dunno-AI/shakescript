@@ -151,3 +151,7 @@ class StoryDB:
             raise ValueError(f"Story with ID {story_id} not found")
 
         self.supabase.table("stories").delete().eq("id", story_id).execute()
+
+    def set_story_completed(self, story_id: int, completed: bool = True):
+        """Set the is_completed field for a story."""
+        self.supabase.table("stories").update({"is_completed": completed}).eq("id", story_id).execute()

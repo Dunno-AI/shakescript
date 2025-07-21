@@ -14,9 +14,7 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/#start-building" },
-    { name: "Statistics", href: "/stats" },
-    { name: "Enterprise", href: "/enterprise" },
-    { name: "Blog", href: "/blog" },
+    { name: "Statistics", href: "/stats" }
   ];
 
   const smoothScroll = useSmoothScroll();

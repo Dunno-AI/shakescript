@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { StoryPrompt } from './StoryPrompt';
 
 
@@ -59,7 +59,7 @@ export const Sidebar = () => {
                 {!isCollapsed && 'Home'}
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to="/discover"
                 className={({ isActive }) =>
@@ -70,6 +70,19 @@ export const Sidebar = () => {
               >
                 <Compass size={16} />
                 {!isCollapsed && 'Discover'}
+              </NavLink>
+            </li> */}
+            <li>
+              <NavLink
+                to="/dashboard/continue"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 text-sm ${
+                    isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                  } rounded-md ${isCollapsed ? 'justify-center' : ''}`
+                }
+              >
+                <History size={16} />
+                {!isCollapsed && 'Continue'}
               </NavLink>
             </li>
             <li>
