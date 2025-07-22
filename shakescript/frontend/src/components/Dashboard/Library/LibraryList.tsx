@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter } from "lucide-react";
 import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
 import { StoryDetails, StoryCache, Story } from "@/types/story";
+import { useAuthFetch } from '../../../lib/utils';
 
 interface LibraryListProps {
   onSelectStory: (story: StoryDetails) => void;
@@ -28,6 +28,7 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   const [allGenres, setAllGenres] = useState<string[]>([]);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
   console.log(BASE_URL)
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
     if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
@@ -46,9 +47,10 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
 
   const fetchStories = async () => {
     try {
-      const res = await axios.get(BASE_URL+"/api/v1/stories/all");
+      const res = await authFetch(BASE_URL+"/api/v1/stories/all");
+      const data = await res.json();
       // Only show completed stories in the library
-      const completedStories = res.data.stories.filter((s: any) => s.is_completed);
+      const completedStories = data.stories.filter((s: any) => s.is_completed);
       setStories(completedStories);
       setCache({ data: completedStories, timestamp: Date.now() });
       // Set genres
@@ -74,8 +76,9 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   const confirmDelete = async () => {
     try {
       if (deleteTarget !== null) {
-        await axios.delete(
+        await authFetch(
           `${BASE_URL}/api/v1/stories/${deleteTarget}`,
+          { method: 'DELETE' }
         );
         setStories(stories.filter((s) => s.story_id !== deleteTarget));
         setCache((prev) =>

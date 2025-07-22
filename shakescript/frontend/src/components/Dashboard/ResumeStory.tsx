@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuthFetch } from '../../lib/utils';
 import { Refinement } from './Refinement';
 import { Loader2, AlertTriangle, PlayCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -37,13 +37,15 @@ export const ResumeStory: React.FC = () => {
     const [selectedStory, setSelectedStory] = useState<SelectedStory | null>(null);
     const navigate = useNavigate();
     const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+    const authFetch = useAuthFetch();
 
     const fetchIncompleteStories = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get<{ stories: StorySummary[] }>(`${BASE_URL}/api/v1/stories/all`);
-            const incomplete = response.data.stories.filter(story => !story.is_completed);
+            const res = await authFetch(`${BASE_URL}/api/v1/stories/all`);
+            const response = await res.json();
+            const incomplete = response.stories.filter((story: any) => !story.is_completed);
             setIncompleteStories(incomplete);
         } catch (err) {
             setError('Failed to fetch stories. Please try again later.');
@@ -59,8 +61,9 @@ export const ResumeStory: React.FC = () => {
 
     const handleResume = async (storyId: number) => {
         try {
-            const detailResponse = await axios.get<{ story: StoryDetail }>(`${BASE_URL}/api/v1/stories/${storyId}`);
-            const story = detailResponse.data.story;
+            const res = await authFetch(`${BASE_URL}/api/v1/stories/${storyId}`);
+            const detailResponse = await res.json();
+            const story = detailResponse.story;
             // Calculate initial batch: (validated_episodes / batch_size) + 1
             const initialBatch = Math.floor((story.validated_episodes || 0) / (story.batch_size || 1)) + 1;
             setSelectedStory({

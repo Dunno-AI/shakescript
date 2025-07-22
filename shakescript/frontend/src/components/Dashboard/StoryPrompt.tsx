@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ChevronUp, ChevronDown, X } from 'lucide-react';
-import axios from 'axios';
+import { useAuthFetch } from '../../lib/utils';
 import { Refinement } from './Refinement';
 
 interface StoryPromptProps {
@@ -43,6 +43,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [displayStoryData, setDisplayStoryData] = useState<any>(null);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  const authFetch = useAuthFetch();
 
   // Auto-resize textarea when content changes
   useEffect(() => {
@@ -60,15 +61,20 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
 
     try {
       // First, create the story metadata
-      const storyResponse = await axios.post(`${BASE_URL}/api/v1/stories/`, {
-        prompt,
-        num_episodes: episodes,
-        batch_size: 1, // Always 1
-        refinement: refineMethod === "ai" ? "AI": "HUMAN",
+      const res = await authFetch(`${BASE_URL}/api/v1/stories/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          num_episodes: episodes,
+          batch_size: 1, // Always 1
+          refinement: refineMethod === "ai" ? "AI": "HUMAN",
+        })
       });
+      const storyResponse = await res.json();
       
-      if (storyResponse.data.story && storyResponse.data.story.story_id) {
-        const newStoryId = storyResponse.data.story.story_id;
+      if (storyResponse.story && storyResponse.story.story_id) {
+        const newStoryId = storyResponse.story.story_id;
         setStoryId(newStoryId);
         setShowRefinement(true);
       } else {
@@ -87,9 +93,10 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
     if (storyId) {
       // Fetch the full story by id
       try {
-        const response = await axios.get(`${BASE_URL}/api/v1/stories/${storyId}`);
-        if (response.data && response.data.story) {
-          setDisplayStoryData(response.data.story);
+        const res = await authFetch(`${BASE_URL}/api/v1/stories/${storyId}`);
+        const response = await res.json();
+        if (response && response.story) {
+          setDisplayStoryData(response.story);
         }
       } catch (error) {
         alert('Failed to load story for display.');

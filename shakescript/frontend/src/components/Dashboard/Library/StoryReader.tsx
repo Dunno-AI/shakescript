@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { generatePDF } from "../../utils/PDFGenerator";
 import { X } from "lucide-react";
 import { StoryCache } from "@/types/story";
-import axios from "axios";
+import { useAuthFetch } from '../../../lib/utils';
 import ConfirmModal from "../../utils/ConfirmModal";
 
 interface Episode {
@@ -34,6 +34,7 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
   const [deleting, setDeleting] = useState(false);
   const [cache, setCache] = useState<StoryCache | null>(null);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  const authFetch = useAuthFetch();
 
   const handleDelete = (id: number) => {
     setDeleteTarget(id);
@@ -42,7 +43,7 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
   const confirmDelete = async () => {
     try {
       if (deleteTarget !== null) {
-        await axios.delete(`${BASE_URL}/api/v1/stories/${deleteTarget}`);
+        await authFetch(`${BASE_URL}/api/v1/stories/${deleteTarget}`, { method: 'DELETE' });
         setCache(prev => prev ? { ...prev, data: prev.data.filter(s => s.story_id !== deleteTarget) } : null);
       }
       onBack();

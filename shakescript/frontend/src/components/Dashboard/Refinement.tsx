@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { useAuthFetch } from '../../lib/utils';
 import { X, Check, PenLine, Loader2, ArrowRight } from 'lucide-react';
 import { TypingAnimation } from '../utils/TypingAnimation';
 
@@ -43,6 +43,7 @@ export const Refinement: React.FC<RefinementProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  const authFetch = useAuthFetch();
 
   // Calculate progress
   const progress = Math.min(
@@ -59,59 +60,44 @@ export const Refinement: React.FC<RefinementProps> = ({
   }, [storyId]);
 
   const generateBatch = async () => {
-    console.log("Generating batch for storyId:", storyId);
     setStatus('loading');
     setErrorMessage('');
-    
     try {
-      console.log('With params:', {
-        batch_size: batchSize,
-        hinglish: isHinglish,
+      const params = new URLSearchParams({
+        batch_size: batchSize.toString(),
+        hinglish: isHinglish.toString(),
         refinement_type: refinementType
       });
-      
-      const response = await axios.post(
-        `${BASE_URL}/api/v1/episodes/${storyId}/generate-batch`,
-        {},
+      const response = await authFetch(
+        `${BASE_URL}/api/v1/episodes/${storyId}/generate-batch?${params.toString()}`,
         {
-          params: {
-            batch_size: batchSize,
-            hinglish: isHinglish,
-            refinement_type: refinementType
-          }
+          method: 'POST',
         }
       );
-
-      if (response.data.status === 'success') {
-        // Map API response to only include episode_content as content
-        const mappedEpisodes = response.data.episodes.map((ep: any) => ({
+      const data = await response.json();
+      if (data.status === 'success') {
+        const mappedEpisodes = data.episodes.map((ep: any) => ({
           episode_number: ep.episode_number,
           content: ep.episode_content,
         }));
         setEpisodes(mappedEpisodes);
-        // If AI refinement, move directly to ready state
-        // If human refinement, prepare for human input
         setStatus(refinementType === 'ai' ? 'ready' : 'refining');
-        // Initialize feedback object
         const initialFeedback: { [key: number]: string } = {};
         mappedEpisodes.forEach((ep: any) => {
           initialFeedback[ep.episode_number] = '';
         });
         setFeedback(initialFeedback);
       } else {
-        if (response.data.message && response.data.message.includes("All episodes generated")) {
-          console.log('Story generation complete');
+        if (data.message && data.message.includes("All episodes generated")) {
           setStatus('complete');
           onComplete();
         } else {
-          console.log('Error in response:', response.data.message);
-          setErrorMessage(response.data.message || 'Failed to generate episodes');
+          setErrorMessage(data.message || 'Failed to generate episodes');
         }
       }
     } catch (error: any) {
-      console.error('Error generating batch:', error);
       setErrorMessage(
-        `Failed to connect to the server: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to connect to the server: ${error.message || 'Unknown error'}. Please try again.`
       );
     }
   };
@@ -124,50 +110,37 @@ export const Refinement: React.FC<RefinementProps> = ({
   };
 
   const submitFeedback = async () => {
-    console.log('Submitting feedback for storyId:', storyId);
     setIsSubmitting(true);
-    
     try {
-      // Only submit feedback for episodes that have feedback text
       const feedbackToSubmit: Feedback[] = Object.entries(feedback)
         .filter(([_, text]) => text.trim().length > 0)
         .map(([episodeNumber, text]) => ({
           episode_number: parseInt(episodeNumber),
           feedback: text
         }));
-
-      console.log('Feedback to submit:', feedbackToSubmit);
-
       if (feedbackToSubmit.length > 0) {
-        console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/refine-batch`);
-        const response = await axios.post(
+        const response = await authFetch(
           `${BASE_URL}/api/v1/episodes/${storyId}/refine-batch`,
-          feedbackToSubmit
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackToSubmit),
+          }
         );
-
-        console.log('Refine batch response:', response.data);
-
-        if (response.data.status === 'pending' || response.data.episodes) {
-          console.log('Refined episodes received:', response.data.episodes.length);
-          setEpisodes(response.data.episodes);
-          
-          // Reset feedback after refinement
+        const data = await response.json();
+        if (data.status === 'pending' || data.episodes) {
+          setEpisodes(data.episodes);
           const newFeedback: { [key: number]: string } = {};
-          response.data.episodes.forEach((ep: Episode) => {
+          data.episodes.forEach((ep: Episode) => {
             newFeedback[ep.episode_number] = '';
           });
           setFeedback(newFeedback);
         }
-      } else {
-        console.log('No feedback to submit, moving directly to ready state');
       }
-      
-      // Move to ready state after feedback processing
       setStatus('ready');
     } catch (error: any) {
-      console.error('Error submitting feedback:', error);
       setErrorMessage(
-        `Failed to submit feedback: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to submit feedback: ${error.message || 'Unknown error'}. Please try again.`
       );
     } finally {
       setIsSubmitting(false);
@@ -175,40 +148,30 @@ export const Refinement: React.FC<RefinementProps> = ({
   };
 
   const validateBatch = async () => {
-    console.log('Validating batch for storyId:', storyId);
     setIsSubmitting(true);
-    
     try {
-      console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/validate-batch`);
-      const response = await axios.post(
-        `${BASE_URL}/api/v1/episodes/${storyId}/validate-batch`
+      const response = await authFetch(
+        `${BASE_URL}/api/v1/episodes/${storyId}/validate-batch`,
+        { method: 'POST' }
       );
-
-      console.log('Validate batch response:', response.data);
-
-      if (response.data.status === 'success') {
-        if (response.data.message && response.data.message.includes('Story complete')) {
-          console.log('Story generation complete');
-          // Mark story as completed in backend
-          await axios.post(`${BASE_URL}/api/v1/stories/${storyId}/complete`);
+      const data = await response.json();
+      if (data.status === 'success') {
+        if (data.message && data.message.includes('Story complete')) {
+          await authFetch(`${BASE_URL}/api/v1/stories/${storyId}/complete`, { method: 'POST' });
           setStatus('complete');
           onComplete();
         } else {
-          console.log('Moving to next batch');
-          // Increment batch counter and generate the next batch
           setCurrentBatch(prev => prev + 1);
           setTimeout(() => {
             generateBatch();
-          }, 500); // Small delay to ensure UI updates properly
+          }, 500);
         }
       } else {
-        console.log('Error in validation response:', response.data);
-        setErrorMessage(response.data.message || 'Failed to validate episodes');
+        setErrorMessage(data.message || 'Failed to validate episodes');
       }
     } catch (error: any) {
-      console.error('Error validating batch:', error);
       setErrorMessage(
-        `Failed to validate batch: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to validate batch: ${error.message || 'Unknown error'}. Please try again.`
       );
     } finally {
       setIsSubmitting(false);
