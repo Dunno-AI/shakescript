@@ -1,4 +1,6 @@
-def regenerate_batch(self, story_id, episodes, prev_episodes, metadata, feedback_list):
+def regenerate_batch(
+    self, story_id, episodes, prev_episodes, metadata, feedback_list, auth_id
+):
     """
     Regenerate episodes with feedback while preserving core narrative elements
     and ensuring continuity between episodes within the current batch,
@@ -23,7 +25,6 @@ def regenerate_batch(self, story_id, episodes, prev_episodes, metadata, feedback
             if prev_in_batch:
                 prev_context = f"PREVIOUS EPISODE IN BATCH (#{prev_in_batch.get('episode_number')}): {prev_in_batch.get('episode_content')}"
             elif prev_episodes and episode_number > 1:
-
                 for prev_ep in reversed(prev_episodes):
                     prev_ep_num = prev_ep.get("episode_number", 0)
                     if prev_ep_num == episode_number - 1:
@@ -31,7 +32,6 @@ def regenerate_batch(self, story_id, episodes, prev_episodes, metadata, feedback
                         break
 
             if episode_number == 1:
-
                 characters = metadata.get("characters", [])
                 character_names = []
                 for char in characters:

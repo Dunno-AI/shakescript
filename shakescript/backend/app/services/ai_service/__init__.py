@@ -39,11 +39,13 @@ class AIService:
         return first_response.text
 
     def extract_metadata(
-        self, user_prompt: str, num_episodes: int, hinglish: bool = False
+        self,
+        user_prompt: str,
+        num_episodes: int,
+        hinglish: bool = False,
+        auth_id: str = None,
     ) -> Dict:
-        return extract_metadata(
-            self, user_prompt, num_episodes, hinglish 
-        )
+        return extract_metadata(self, user_prompt, num_episodes, hinglish, auth_id)
 
     def generate_episode_helper(
         self,
@@ -55,6 +57,7 @@ class AIService:
         prev_episodes: List = [],
         hinglish: bool = False,
         feedback: Optional[str] = None,
+        auth_id: str = None,
     ) -> Dict:
         return self.generation.generate_episode_helper(
             num_episodes,
@@ -64,6 +67,7 @@ class AIService:
             story_id,
             prev_episodes,
             hinglish,
+            auth_id,
         )
 
     def validate_batch(
@@ -72,8 +76,11 @@ class AIService:
         current_episodes: List[Dict],
         prev_episodes: List[Dict],
         metadata: Dict,
+        auth_id: str,
     ) -> Dict[str, Any]:
-        return validate_batch(self, story_id, current_episodes, prev_episodes, metadata)
+        return validate_batch(
+            self, story_id, current_episodes, prev_episodes, metadata, auth_id
+        )
 
     def regenerate_batch(
         self,
@@ -82,9 +89,10 @@ class AIService:
         prev_episodes: List[Dict],
         metadata: Dict,
         feedback: List[Dict],
+        auth_id: str,
     ) -> List[Dict]:
         return regenerate_batch(
-            self, story_id, current_episodes, prev_episodes, metadata, feedback
+            self, story_id, current_episodes, prev_episodes, metadata, feedback, auth_id
         )
 
     def is_consistent_with_previous(

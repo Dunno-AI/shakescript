@@ -22,17 +22,21 @@ class StoryService:
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
-        self, prompt: str, num_episodes: int, hinglish: bool = False
+        self,
+        prompt: str,
+        num_episodes: int,
+        hinglish: bool = False,
+        auth_id: str = None,
     ) -> Dict[str, Any]:
         return await story_generator_core.create_story(
-            self, prompt, num_episodes, hinglish
+            self, prompt, num_episodes, hinglish, auth_id
         )
 
-    def get_story_info(self, story_id: int) -> Dict[str, Any]:
-        return utils_core.get_story_info(self, story_id)
+    def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
+        return utils_core.get_story_info(self, story_id, auth_id)
 
-    def get_all_stories(self) -> List[StoryListItem]:
-        return utils_core.get_all_stories(self)
+    def get_all_stories(self, auth_id: str) -> List[StoryListItem]:
+        return utils_core.get_all_stories(self, auth_id)
 
     def generate_multiple_episodes(
         self,
@@ -40,45 +44,59 @@ class StoryService:
         num_episodes: int,
         hinglish: bool = False,
         batch_size: int = 1,
+        auth_id: str = None,
     ) -> List[Dict[str, Any]]:
         return story_generator_core.generate_multiple_episodes(
-            self, story_id, num_episodes, hinglish, batch_size
+            self, story_id, num_episodes, hinglish, batch_size, auth_id
         )
 
-    def update_story_summary(self, story_id: int) -> Dict[str, Any]:
-        return utils_core.update_story_summary(self, story_id)
+    def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
+        return utils_core.update_story_summary(self, story_id, auth_id)
 
     def store_validated_episodes(
-        self, story_id: int, episodes: List[Dict[str, Any]]
+        self, story_id: int, episodes: List[Dict[str, Any]], auth_id: str
     ) -> None:
-        return utils_core.store_validated_episodes(self, story_id, episodes)
+        return utils_core.store_validated_episodes(self, story_id, episodes, auth_id)
 
     def generate_and_refine_batch(
-        self, story_id: int, batch_size: int, hinglish: bool, refinement_type: str
+        self,
+        story_id: int,
+        batch_size: int,
+        hinglish: bool,
+        refinement_type: str,
+        auth_id: str,
     ):
         return generate_and_refine_batch(
-            self, story_id, batch_size, hinglish, refinement_type
+            self, story_id, batch_size, hinglish, refinement_type, auth_id
         )
 
-    def update_current_episodes_content(self, story_id: int, episodes: List[Dict]):
-        self.db_service.update_story_current_episodes_content(story_id, episodes)
+    def update_current_episodes_content(
+        self, story_id: int, episodes: List[Dict], auth_id: str
+    ):
+        self.db_service.update_story_current_episodes_content(
+            story_id, episodes, auth_id
+        )
 
-    def get_refined_episodes(self, story_id: int) -> List[Dict]:
+    def get_refined_episodes(self, story_id: int, auth_id: str) -> List[Dict]:
         # Get any refined episodes that haven't been validated yet
-        return self.db_service.get_refined_episodes(story_id)
+        return self.db_service.get_refined_episodes(story_id, auth_id)
 
-    def clear_current_episodes_content(self, story_id: int):
+    def clear_current_episodes_content(self, story_id: int, auth_id: str):
         # Clear the current episodes after they've been validated and stored
-        self.db_service.clear_current_episodes_content(story_id)
+        self.db_service.clear_current_episodes_content(story_id, auth_id)
 
-    def delete_story(self, story_id: int) -> None:
-        self.db_service.delete_story(story_id)
+    def delete_story(self, story_id: int, auth_id: str) -> None:
+        self.db_service.delete_story(story_id, auth_id)
 
-    def refine_episode_batch(self, story_id: int, feedback: List[Feedback]):
-        return human_refinement_core.refine_episode_batch(self, story_id, feedback)
+    def refine_episode_batch(
+        self, story_id: int, feedback: List[Feedback], auth_id: str
+    ):
+        return human_refinement_core.refine_episode_batch(
+            self, story_id, feedback, auth_id
+        )
 
-    def validate_episode_batch(self, story_id: int):
-        return human_refinement_core.validate_episode_batch(self, story_id)
+    def validate_episode_batch(self, story_id: int, auth_id: str):
+        return human_refinement_core.validate_episode_batch(self, story_id, auth_id)
 
     def refine_batch_by_ai(
         self,
@@ -91,6 +109,7 @@ class StoryService:
         batch_size,
         refinement_type,
         hinglish,
+        auth_id: str,
     ):
         return ai_refinement_core.refine_batch_by_ai(
             self,
@@ -103,4 +122,5 @@ class StoryService:
             batch_size,
             refinement_type,
             hinglish,
+            auth_id,
         )

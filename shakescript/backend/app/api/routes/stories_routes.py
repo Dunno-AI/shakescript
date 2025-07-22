@@ -6,7 +6,7 @@ from ...models.schemas import (
     ErrorResponse,
 )
 from app.services.core_service import StoryService
-from app.api.dependencies import get_story_service
+from app.api.dependencies import get_story_service, get_current_user
 from typing import Annotated, Union, Dict, Any, List
 from app.utils import parse_user_prompt
 
@@ -18,11 +18,15 @@ router = APIRouter(prefix="/stories", tags=["stories"])
     response_model=Union[StoryListResponse, ErrorResponse],
     summary="Retrieve all stories",
 )
-def get_all_stories(service: StoryService = Depends(get_story_service)):
+def get_all_stories(
+    service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
+):
     """
-    Retrieve a list of all stories with a structured response.
+    Retrieve a list of all stories with a structured response for the authenticated user.
     """
-    stories = service.get_all_stories()
+    auth_id = user.get("id")
+    stories = service.get_all_stories(auth_id)
     return (
         {"status": "success", "stories": stories}
         if stories
@@ -46,13 +50,15 @@ async def create_story(
         "AI", description="Refinement method: 'AI' or 'Human'", regex="^(AI|HUMAN)$"
     ),
     hinglish: bool = Body(False, description="Generate in Hinglish if true"),
+    user: dict = Depends(get_current_user),
 ):
     prompt = parse_user_prompt(prompt)
-    result = await service.create_story(prompt, num_episodes, hinglish)
+    auth_id = user.get("id")
+    result = await service.create_story(prompt, num_episodes, hinglish, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
 
-    story_info = service.get_story_info(result["story_id"])
+    story_info = service.get_story_info(result["story_id"], auth_id)
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
 
@@ -85,11 +91,16 @@ async def create_story(
     response_model=Union[Dict[str, Any], ErrorResponse],
     summary="Retrieve a specific story",
 )
-def get_story(story_id: int, service: StoryService = Depends(get_story_service)):
+def get_story(
+    story_id: int,
+    service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
+):
     """
-    Retrieve detailed information about a story with a structured response.
+    Retrieve detailed information about a story with a structured response for the authenticated user.
     """
-    story_info = service.get_story_info(story_id)
+    auth_id = user.get("id")
+    story_info = service.get_story_info(story_id, auth_id)
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
 
@@ -120,12 +131,15 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
     summary="Update story summary",
 )
 def update_story_summary(
-    story_id: int, service: Annotated[StoryService, Depends(get_story_service)]
+    story_id: int,
+    service: Annotated[StoryService, Depends(get_story_service)],
+    user: dict = Depends(get_current_user),
 ):
     """
     Update the summary of a story based on its episodes with a structured response.
     """
-    result = service.update_story_summary(story_id)
+    auth_id = user.get("id")
+    result = service.update_story_summary(story_id, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
     return {"status": "success", **result, "message": "Summary updated successfully"}
@@ -136,9 +150,14 @@ def update_story_summary(
     response_model=Dict[str, str],
     summary="Delete a story and all associated data",
 )
-def delete_story(story_id: int, service: StoryService = Depends(get_story_service)):
+def delete_story(
+    story_id: int,
+    service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
+):
     try:
-        service.delete_story(story_id)
+        auth_id = user.get("id")
+        service.delete_story(story_id, auth_id)
         return {
             "message": f"Story {story_id} and all associated data deleted successfully"
         }

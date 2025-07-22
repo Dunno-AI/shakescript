@@ -21,6 +21,7 @@ class AIGeneration:
         story_id: int,
         prev_episodes: List[Dict[str, Any]] = [],
         hinglish: bool = False,
+        auth_id: str = None,
     ) -> Dict[str, Any]:
         settings_data = (
             "\n".join(
@@ -152,8 +153,8 @@ class AIGeneration:
 
     def hinglish_conversion(self, ep_content, ep_title) -> Dict[str, Any]:
         instruction = self.prompts.HINGLISH_PROMPT(ep_title, ep_content)
-        reposne = self.model.generate_content(instruction)
-        return self.utils._parse_episode_response(reposne.text, {})
+        response = self.model.generate_content(instruction)
+        return self.utils._parse_episode_response(response.text, {})
 
     def _summarize_key_events(
         self, key_events: List[str], characters: List[Dict[str, Any]], episode_info: str

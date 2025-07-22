@@ -2,11 +2,11 @@ from typing import Dict, List, Any
 from app.models.schemas import StoryListItem
 
 
-def get_story_info(self, story_id: int) -> Dict[str, Any]:
-    return self.db_service.get_story_info(story_id)
+def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
+    return self.db_service.get_story_info(story_id, auth_id)
 
 
-def get_all_stories(self) -> List[StoryListItem]:
+def get_all_stories(self, auth_id: str) -> List[StoryListItem]:
     return [
         StoryListItem(
             story_id=story["id"],
@@ -14,11 +14,13 @@ def get_all_stories(self) -> List[StoryListItem]:
             genre=story["genre"],
             is_completed=story["is_completed"],
         )
-        for story in self.db_service.get_all_stories()
+        for story in self.db_service.get_all_stories(auth_id)
     ]
 
 
-def _update_story_memory(self, story_id: int, episode_data: Dict, story_memory: Dict):
+def _update_story_memory(
+    self, story_id: int, episode_data: Dict, story_memory: Dict, auth_id: str
+):
     if story_id not in story_memory:
         story_memory[story_id] = {
             "characters": {},
@@ -40,8 +42,8 @@ def _update_story_memory(self, story_id: int, episode_data: Dict, story_memory: 
     )
 
 
-def update_story_summary(self, story_id: int) -> Dict[str, Any]:
-    story_data = self.get_story_info(story_id)
+def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
+    story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
         return {"error": story_data["error"]}
     episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
@@ -49,12 +51,12 @@ def update_story_summary(self, story_id: int) -> Dict[str, Any]:
     summary = self.ai_service.model.generate_content(instruction).text.strip()
     self.db_service.supabase.table("stories").update({"summary": summary}).eq(
         "id", story_id
-    ).execute()
+    ).eq("auth_id", auth_id).execute()
     return {"status": "success", "summary": summary}
 
 
 def store_validated_episodes(
-    self, story_id: int, episodes: List[Dict[str, Any]]
+    self, story_id: int, episodes: List[Dict[str, Any]], auth_id: str
 ) -> None:
     """
     Store the validated episodes in the episodes table and update the story's current_episode.
@@ -71,7 +73,9 @@ def store_validated_episodes(
             continue
 
         # Store episode in database
-        episode_id = self.db_service.store_episode(story_id, episode, episode_number)
+        episode_id = self.db_service.store_episode(
+            story_id, episode, episode_number, auth_id
+        )
 
         # Process for embedding/chunking if needed
         character_names = (
@@ -96,8 +100,8 @@ def store_validated_episodes(
     if max_episode_num > 0:
         self.db_service.supabase.table("stories").update(
             {"current_episode": max_episode_num + 1}
-        ).eq("id", story_id).execute()
+        ).eq("id", story_id).eq("auth_id", auth_id).execute()
         print(f"Updated story current_episode to {max_episode_num + 1}")
 
     # Clear the current_episodes field after validation
-    self.clear_current_episodes_content(story_id)
+    self.clear_current_episodes_content(story_id, auth_id)

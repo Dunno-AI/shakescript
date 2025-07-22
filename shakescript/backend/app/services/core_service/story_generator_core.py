@@ -3,14 +3,15 @@ import json
 
 
 async def create_story(
-    self, prompt: str, num_episodes: int, hinglish: bool = False
+    self, prompt: str, num_episodes: int, hinglish: bool = False, auth_id: str = ""
 ) -> Dict[str, Any]:
     full_prompt = f"{prompt} number of episodes = {num_episodes}"
     metadata = self.ai_service.extract_metadata(full_prompt, num_episodes, hinglish)
     if "error" in metadata:
         return metadata
-    story_id = self.db_service.store_story_metadata(metadata, num_episodes)
+    story_id = self.db_service.store_story_metadata(metadata, num_episodes, auth_id)
     return {"story_id": story_id, "title": metadata.get("Title", "Untitled Story")}
+
 
 def generate_multiple_episodes(
     self,
@@ -18,17 +19,18 @@ def generate_multiple_episodes(
     start_episode: int,
     num_episodes: int = 1,
     hinglish: bool = False,
+    auth_id: str = "",
 ) -> List[Dict[str, Any]]:
     """
     Generate one or multiple episodes for a story.
     """
 
-    story_data = self.db_service.get_story_info(story_id)
+    story_data = self.db_service.get_story_info(story_id, auth_id)
     if "error" in story_data:
         return [story_data]
 
     # Determine starting episode number
-    current_episode = start_episode 
+    current_episode = start_episode
 
     story_metadata = {
         "title": story_data["title"],
@@ -74,7 +76,7 @@ def generate_multiple_episodes(
             return episodes + [error_result]
 
         episode_id = self.db_service.store_episode(
-            story_id, episode_data, episode_number
+            story_id, episode_data, episode_number, auth_id
         )
 
         if episode_data.get("episode_content"):
@@ -106,4 +108,3 @@ def generate_multiple_episodes(
         episodes.append(episode_result)
 
     return episodes
-

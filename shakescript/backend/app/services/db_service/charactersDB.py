@@ -10,7 +10,9 @@ class CharactersDB:
             settings.SUPABASE_URL, settings.SUPABASE_KEY
         )
 
-    def update_character_state(self, story_id: int, character_data: List[Dict]) -> None:
+    def update_character_state(
+        self, story_id: int, character_data: List[Dict], auth_id: str
+    ) -> None:
         # Separate existing characters and new characters
         for char in character_data:
             # Query for existing character
@@ -18,6 +20,7 @@ class CharactersDB:
                 self.supabase.table("characters")
                 .select("*")
                 .eq("story_id", story_id)
+                .eq("auth_id", auth_id)
                 .eq("name", char["Name"])
                 .execute()
                 .data
@@ -58,7 +61,7 @@ class CharactersDB:
                         "milestones": json.dumps(milestones[-5:]),
                         "last_episode": current.get("last_episode", 0) + 1,
                     }
-                ).eq("id", current["id"]).execute()
+                ).eq("id", current["id"]).eq("auth_id", auth_id).execute()
             else:
                 # New character: Insert without ID
                 new_emotional = char.get("Emotional_State", "neutral")
@@ -73,5 +76,6 @@ class CharactersDB:
                         "emotional_state": new_emotional,
                         "milestones": json.dumps([]),
                         "last_episode": 1,
+                        "auth_id": auth_id,
                     }
                 ).execute()

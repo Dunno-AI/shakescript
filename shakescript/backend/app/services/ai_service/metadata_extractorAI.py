@@ -3,16 +3,15 @@ import json
 from typing import Dict
 import re
 
+
 def extract_metadata(
-    self, user_prompt: str, num_episodes: int, hinglish: bool 
+    self, user_prompt: str, num_episodes: int, hinglish: bool, auth_id: str = None
 ) -> Dict:
     cleaned_prompt = parse_user_prompt(user_prompt)
     metadata_template = {
         "Title": "string",
         "Settings": {"Place": "NOT YET INTRODUCED"},
-        "Protagonist": [
-            {"Name": "string", "Motivation": "string", "Fear": "string"}
-        ],
+        "Protagonist": [{"Name": "string", "Motivation": "string", "Fear": "string"}],
         "Characters": [
             {
                 "Name": "string (Give proper name not examples, only name)",
@@ -31,7 +30,9 @@ def extract_metadata(
         ],
         "Special Instructions": "string (include tone: e.g., suspenseful)",
     }
-    instruction = self.prompts.METADATA_EXTRACTOR_PROMPT(cleaned_prompt, num_episodes, metadata_template)
+    instruction = self.prompts.METADATA_EXTRACTOR_PROMPT(
+        cleaned_prompt, num_episodes, metadata_template
+    )
 
     response = self.call_llm(instruction, max_tokens=500, temperature=0.7)
     raw_text = response

@@ -13,7 +13,7 @@ class EpisodesDB:
         self.CharactersDB = CharactersDB()
 
     def store_episode(
-        self, story_id: int, episode_data: Dict, current_episode: int
+        self, story_id: int, episode_data: Dict, current_episode: int, auth_id: str
     ) -> int:
         episode_result = (
             self.supabase.table("episodes")
@@ -30,6 +30,7 @@ class EpisodesDB:
                     "emotional_state": episode_data.get(
                         "episode_emotional_state", "neutral"
                     ),
+                    "auth_id": auth_id,
                 },
                 on_conflict="story_id,episode_number",
             )
@@ -38,13 +39,14 @@ class EpisodesDB:
         episode_id = episode_result.data[0]["id"]
 
         self.CharactersDB.update_character_state(
-            story_id, episode_data.get("characters_featured", [])
+            story_id, episode_data.get("characters_featured", []), auth_id
         )
 
         story_data = (
             self.supabase.table("stories")
             .select("key_events, setting, timeline")
             .eq("id", story_id)
+            .eq("auth_id", auth_id)
             .execute()
             .data[0]
         )
@@ -77,16 +79,17 @@ class EpisodesDB:
                 ),
                 "timeline": json.dumps(current_timeline + new_timeline),
             }
-        ).eq("id", story_id).execute()
+        ).eq("id", story_id).eq("auth_id", auth_id).execute()
         return episode_id
 
     def get_previous_episodes(
-        self, story_id: int, current_episode: int, limit: int = 3
+        self, story_id: int, current_episode: int, limit: int = 3, auth_id: str
     ) -> List[Dict]:
         result = (
             self.supabase.table("episodes")
             .select("*")
             .eq("story_id", story_id)
+            .eq("auth_id", auth_id)
             .lt("episode_number", current_episode)
             .order("episode_number", desc=True)
             .limit(limit)
@@ -104,7 +107,7 @@ class EpisodesDB:
         ]
 
     def get_episodes_by_range(
-        self, story_id: int, start_episode: int, end_episode: int
+        self, story_id: int, start_episode: int, end_episode: int, auth_id: str
     ) -> List[Dict[str, Any]]:
         """
         Get episodes for a story within a specific range.
@@ -114,6 +117,7 @@ class EpisodesDB:
                 self.supabase.table("episodes")
                 .select("*")
                 .eq("story_id", story_id)
+                .eq("auth_id", auth_id)
                 .gte("episode_number", start_episode)
                 .lte("episode_number", end_episode)
                 .order("episode_number")
@@ -127,7 +131,7 @@ class EpisodesDB:
             print(f"Error fetching episodes: {e}")
             return []
 
-    def get_all_episodes(self, story_id: int) -> List[Dict[str, Any]]:
+    def get_all_episodes(self, story_id: int, auth_id: str) -> List[Dict[str, Any]]:
         """
         Get all stored episodes for a story.
         """
@@ -136,6 +140,7 @@ class EpisodesDB:
                 self.supabase.table("episodes")
                 .select("*")
                 .eq("story_id", story_id)
+                .eq("auth_id", auth_id)
                 .order("episode_number")
                 .execute()
             )

@@ -5,11 +5,12 @@ def refine_batch_by_ai(
     batch_size,
     refinement_type,
     hinglish,
+    auth_id: str,
 ):
     max_attempts = 3
     attempt = 0
     validation_result = {}
-    story_data = self.get_story_info(story_id)
+    story_data = self.get_story_info(story_id, auth_id)
     current_episode = story_data.get("current_episode", 1)
     metadata = {
         "title": story_data["title"],
@@ -30,7 +31,7 @@ def refine_batch_by_ai(
         prev_batch_end = current_episode - 1
         prev_batch_start = max(1, prev_batch_end - 2)  # Get up to 2 previous episodes
         prev_episodes = self.db_service.get_episodes_by_range(
-            story_id, prev_batch_start, prev_batch_end
+            story_id, prev_batch_start, prev_batch_end, auth_id
         )
         prev_episodes = [
             {
@@ -66,24 +67,24 @@ def refine_batch_by_ai(
             f"AI refinement warning: Failed to refine after {max_attempts} attempts, proceeding anyway"
         )
 
-    self.store_validated_episodes(story_id, episodes)
+    self.store_validated_episodes(story_id, episodes, auth_id)
 
     # Update current_episode
     new_current_episode = current_episode + len(episodes)
     self.db_service.supabase.table("stories").update(
         {"current_episode": new_current_episode}
-    ).eq("id", story_id).execute()
+    ).eq("id", story_id).eq("auth_id", auth_id).execute()
 
-    self.clear_current_episodes_content(story_id)
+    self.clear_current_episodes_content(story_id, auth_id)
 
     # Check if we need to process more batches
     if new_current_episode <= story_data["num_episodes"]:
         print(f"Moving to next batch starting at episode {new_current_episode}")
         # Recursively process the next batch
         next_batch = self.generate_and_refine_batch(
-            story_id, batch_size, hinglish, refinement_type
+            story_id, batch_size, hinglish, refinement_type, auth_id
         )
         return episodes + next_batch
 
     print(f"All episodes completed: total {new_current_episode-1} episodes")
-    return self.get_all_episodes(story_id)
+    return self.get_all_episodes(story_id, auth_id)

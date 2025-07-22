@@ -1,5 +1,4 @@
-
-def validate_batch(self, story_id, episodes, prev_episodes, metadata):
+def validate_batch(self, story_id, episodes, prev_episodes, metadata, auth_id):
     """
     Validate a batch of episodes for narrative consistency and quality.
     """
@@ -47,7 +46,9 @@ def is_consistent_with_previous(self, current_episode, previous_episode):
     Check if the current episode is consistent with the previous episode.
     This uses AI to analyze narrative continuity between episodes.
     """
-    consistency_prompt = self.prompts.EPISODE_CONSISTENCY_CHECK_PROMPT(previous_episode, current_episode) 
+    consistency_prompt = self.prompts.EPISODE_CONSISTENCY_CHECK_PROMPT(
+        previous_episode, current_episode
+    )
     response = self.call_llm(consistency_prompt, max_tokens=10, temperature=0.1)
     return "TRUE" in response.upper()
 
@@ -58,8 +59,6 @@ def check_episode_quality(self, episode, metadata):
     Returns feedback if quality issues are found, otherwise returns None.
     """
 
-    quality_prompt = self.prompts.EPISODE_QUALITY_CHECK_PROMPT(metadata, episode) 
+    quality_prompt = self.prompts.EPISODE_QUALITY_CHECK_PROMPT(metadata, episode)
     response = self.call_llm(quality_prompt, max_tokens=100, temperature=0.3)
     return None if "GOOD" in response.upper() else response.strip()
-
-

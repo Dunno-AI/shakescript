@@ -5,7 +5,7 @@ from ...models.schemas import (
     ErrorResponse,
     EpisodeBatchResponse,
 )
-from app.api.dependencies import get_story_service
+from app.api.dependencies import get_story_service, get_current_user
 from app.services.core_service import StoryService
 from typing import Union, List
 
@@ -24,8 +24,10 @@ async def generate_batch(
     hinglish: bool = Query(False),
     refinement_type: str = Query("AI", enum=["AI", "HUMAN"]),
     service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
 ):
-    story_data = service.get_story_info(story_id)
+    auth_id = user.get("id")
+    story_data = service.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
 
@@ -34,7 +36,7 @@ async def generate_batch(
         return {"error": "All episodes generated", "episodes": []}
 
     episodes = service.generate_and_refine_batch(
-        story_id, batch_size, hinglish, refinement_type
+        story_id, batch_size, hinglish, refinement_type, auth_id
     )
 
     if refinement_type == "AI":
@@ -58,8 +60,11 @@ async def generate_batch(
 async def validate_batch(
     story_id: int,
     service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
 ):
-    return service.validate_episode_batch(story_id)
+    auth_id = user.get("id")
+    return service.validate_episode_batch(story_id, auth_id)
+
 
 @router.post(
     "/{story_id}/refine-batch",
@@ -70,5 +75,7 @@ async def refine_batch(
     story_id: int,
     feedback: List[Feedback] = Body(...),
     service: StoryService = Depends(get_story_service),
+    user: dict = Depends(get_current_user),
 ):
-    return service.refine_episode_batch(story_id, feedback)
+    auth_id = user.get("id")
+    return service.refine_episode_batch(story_id, feedback, auth_id)

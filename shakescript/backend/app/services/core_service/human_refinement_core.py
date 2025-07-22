@@ -3,12 +3,11 @@ from fastapi import HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
 from app.models.schemas import Feedback
 
+
 def refine_episode_batch(
-    self,
-    story_id: int,
-    feedback: List[Feedback],
+    self, story_id: int, feedback: List[Feedback], auth_id: str
 ) -> Dict:
-    story_data = self.get_story_info(story_id)
+    story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
 
@@ -36,27 +35,29 @@ def refine_episode_batch(
     prev_episodes = []
     if prev_batch_end >= prev_batch_start:
         prev_episodes = self.db_service.get_episodes_by_range(
-            story_id, prev_batch_start, prev_batch_end
+            story_id, prev_batch_start, prev_batch_end, auth_id
         )
         prev_episodes = [
             {
                 "episode_number": ep["episode_number"],
-                "content": ep["content"], 
+                "content": ep["content"],
                 "title": ep["title"],
             }
             for ep in prev_episodes
         ]
-
 
     refined_episodes = self.ai_service.regenerate_batch(
         story_id,
         current_episodes_content,
         prev_episodes,
         metadata,
-        [{"episode_number": fb.episode_number, "feedback": fb.feedback} for fb in feedback],
+        [
+            {"episode_number": fb.episode_number, "feedback": fb.feedback}
+            for fb in feedback
+        ],
     )
 
-    self.update_current_episodes_content(story_id, refined_episodes)
+    self.update_current_episodes_content(story_id, refined_episodes, auth_id)
 
     return {
         "status": "pending",
@@ -65,11 +66,8 @@ def refine_episode_batch(
     }
 
 
-def validate_episode_batch(
-    self,
-    story_id: int
-) -> Dict:
-    story_data = self.get_story_info(story_id)
+def validate_episode_batch(self, story_id: int, auth_id: str) -> Dict:
+    story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
 
@@ -79,9 +77,11 @@ def validate_episode_batch(
             status_code=HTTP_404_NOT_FOUND, detail="No batch found to validate"
         )
 
-    self.store_validated_episodes(story_id, current_episodes_content)
+    self.store_validated_episodes(story_id, current_episodes_content, auth_id)
 
-    max_episode = max([ep.get("episode_number", 0) for ep in current_episodes_content], default=0)
+    max_episode = max(
+        [ep.get("episode_number", 0) for ep in current_episodes_content], default=0
+    )
     next_episode = max_episode + 1
 
     if next_episode <= story_data.get("num_episodes", 0):

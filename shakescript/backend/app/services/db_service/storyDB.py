@@ -10,17 +10,22 @@ class StoryDB:
             settings.SUPABASE_URL, settings.SUPABASE_KEY
         )
 
-    def get_all_stories(self) -> List[Dict[str, Any]]:
+    def get_all_stories(self, auth_id: str) -> List[Dict[str, Any]]:
         result = (
             self.supabase.table("stories")
             .select("id, title, genre, is_completed")
+            .eq("auth_id", auth_id)
             .execute()
         )
         return result.data if result.data else []
 
-    def get_story_info(self, story_id: int) -> Dict:
+    def get_story_info(self, story_id: int, auth_id: str) -> Dict:
         story_result = (
-            self.supabase.table("stories").select("*").eq("id", story_id).execute()
+            self.supabase.table("stories")
+            .select("*")
+            .eq("id", story_id)
+            .eq("auth_id", auth_id)
+            .execute()
         )
         if not story_result.data:
             return {"error": "Story not found"}
@@ -81,10 +86,12 @@ class StoryDB:
             "timeline": json.loads(story_row["timeline"] or "[]"),
             "current_episodes_content": json.loads(
                 story_row.get("current_episodes_content", "[]") or "[]"
-            ),  # Add current_episodes_content
+            ),
         }
 
-    def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
+    def store_story_metadata(
+        self, metadata: Dict, num_episodes: int, auth_id: str
+    ) -> int:
         result = (
             self.supabase.table("stories")
             .insert(
@@ -98,9 +105,8 @@ class StoryDB:
                     "story_outline": json.dumps(metadata.get("Story Outline", [])),
                     "current_episode": 1,
                     "num_episodes": num_episodes,
-                    "current_episodes_content": json.dumps(
-                        []
-                    ),  # Initialize current_episodes_content
+                    "current_episodes_content": json.dumps([]),
+                    "auth_id": auth_id,
                 }
             )
             .execute()
@@ -125,28 +131,36 @@ class StoryDB:
         return story_id
 
     def update_story_current_episodes_content(
-        self, story_id: int, episodes: List[Dict]
+        self, story_id: int, episodes: List[Dict], auth_id: str
     ):
         """Update the current_episodes_content field in the stories table with refined episodes."""
         self.supabase.table("stories").update(
             {"current_episodes_content": json.dumps(episodes)}
-        ).eq("id", story_id).execute()
+        ).eq("id", story_id).eq("auth_id", auth_id).execute()
 
-    def get_refined_episodes(self, story_id: int) -> List[Dict]:
+    def get_refined_episodes(self, story_id: int, auth_id: str) -> List[Dict]:
         """Retrieve the refined episodes from current_episodes_content if they exist."""
-        story_data = self.get_story_info(story_id)
+        story_data = self.get_story_info(story_id, auth_id)
         return story_data.get("current_episodes_content", [])
 
-    def clear_current_episodes_content(self, story_id: int):
+    def clear_current_episodes_content(self, story_id: int, auth_id: str):
         """Clear the current_episodes_content field after validation."""
         self.supabase.table("stories").update(
             {"current_episodes_content": json.dumps([])}
-        ).eq("id", story_id).execute()
+        ).eq("id", story_id).eq("auth_id", auth_id).execute()
 
-    def delete_story(self, story_id: int) -> None:
+    def delete_story(self, story_id: int, auth_id: str) -> None:
         """Delete a story from the database."""
-        story = self.supabase.table("stories").select("id").eq("id", story_id).execute()
+        story = (
+            self.supabase.table("stories")
+            .select("id")
+            .eq("id", story_id)
+            .eq("auth_id", auth_id)
+            .execute()
+        )
         if not story.data:
             raise ValueError(f"Story with ID {story_id} not found")
 
-        self.supabase.table("stories").delete().eq("id", story_id).execute()
+        self.supabase.table("stories").delete().eq("id", story_id).eq(
+            "auth_id", auth_id
+        ).execute()
