@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History, User } from 'lucide-react';
+import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History, User, LogOut } from 'lucide-react';
 import { StoryPrompt } from './StoryPrompt';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showStoryPrompt, setShowStoryPrompt] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -105,23 +107,33 @@ export const Sidebar = () => {
               </NavLink>
             </li>
           </ul>
-          <div className="mt-auto mb-2">
-            <NavLink
-              to="/dashboard/userstats"
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 text-sm ${
-                  isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                } rounded-md ${isCollapsed ? 'justify-center' : ''}`
-              }
+          <div className="mt-auto mb-2 space-y-2">
+            {user && (
+              <NavLink
+                to="/dashboard/userstats"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 text-sm ${
+                    isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                  } rounded-md ${isCollapsed ? 'justify-center' : ''}`
+                }
+              >
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="avatar"
+                  className="w-6 h-6 rounded-full border border-emerald-500 object-cover"
+                />
+                {!isCollapsed && <span className="font-medium">{user.user_metadata.full_name}</span>}
+              </NavLink>
+            )}
+            <button
+              onClick={signOut}
+              className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-md ${
+                isCollapsed ? 'justify-center' : ''
+              }`}
             >
-              <img
-                src={dummyUser.avatar_url}
-                alt="avatar"
-                className="w-6 h-6 rounded-full border border-emerald-500 object-cover"
-              />
-              {!isCollapsed && <span className="font-medium">{dummyUser.name}</span>}
-              <User size={16} className="ml-auto text-zinc-400" />
-            </NavLink>
+              <LogOut size={16} />
+              {!isCollapsed && 'Logout'}
+            </button>
           </div>
         </nav>
 

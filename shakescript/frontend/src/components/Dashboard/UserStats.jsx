@@ -25,42 +25,41 @@
  * @property {Array} recent_stories
  * @property {boolean} premium_status
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pencil } from 'lucide-react';
-
-// Dummy data based on UserDashboard, UserResponse, UserStats
-const dummyUserDashboard = {
-  user: {
-    id: 1,
-    auth_id: 'auth123',
-    email: 'user@example.com',
-    name: 'User',
-    is_premium: true,
-    avatar_url: 'https://i.pravatar.cc/100?img=1',
-    created_at: '2023-01-15T12:00:00Z',
-  },
-  stats: {
-    total_stories: 12,
-    total_episodes: 87,
-    episodes_day_count: 3,
-    episodes_month_count: 20,
-    completed_stories: 8,
-    in_progress_stories: 4,
-    account_age_days: 400,
-    last_active: '2024-06-01T10:00:00Z',
-  },
-  recent_stories: [],
-  premium_status: true,
-};
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function UserStats() {
+  const { user } = useAuth();
   const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState(dummyUserDashboard.user.name);
-  const [avatarUrl, setAvatarUrl] = useState(dummyUserDashboard.user.avatar_url);
+  const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setName(user.user_metadata?.full_name || 'User');
+      setAvatarUrl(user.user_metadata?.avatar_url || `https://i.pravatar.cc/100?u=${user.id}`);
+    }
+    // In a real app, you would fetch UserDashboard data from your backend here
+  }, [user]);
 
   const handleSave = () => {
     setEditMode(false);
     // Here you would call the API to update user info
+    // e.g., supabase.from('users').update({ name, avatar_url }).eq('id', user.id)
+  };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+  
+  // Dummy data for stats - replace with real data from your backend
+  const dummyStats = {
+    total_stories: 12,
+    total_episodes: 87,
+    episodes_day_count: 3,
+    episodes_month_count: 20,
+    in_progress_stories: 4,
   };
 
   return (
@@ -87,10 +86,9 @@ export default function UserStats() {
             </h2>
           )}
           <div className="text-zinc-400 text-sm mt-1">
-            {dummyUserDashboard.user.is_premium && (
-              <span className="bg-emerald-700 text-white px-2 py-0.5 rounded mr-2 text-xs">Premium</span>
-            )}
-            Joined Since: {new Date(dummyUserDashboard.user.created_at).toLocaleDateString()}
+            {/* is_premium would come from your backend user table */}
+            <span className="bg-emerald-700 text-white px-2 py-0.5 rounded mr-2 text-xs">Premium</span>
+            Joined Since: {new Date(user.created_at).toLocaleDateString()}
           </div>
         </div>
       </div>
@@ -110,18 +108,17 @@ export default function UserStats() {
           </button>
         </div>
       )}
-      {/* Usage Table */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
         <div className="bg-zinc-900 rounded-lg p-6 flex flex-col items-center border border-zinc-800">
-          <span className="text-3xl font-bold text-emerald-400">{dummyUserDashboard.stats.total_stories}</span>
+          <span className="text-3xl font-bold text-emerald-400">{dummyStats.total_stories}</span>
           <span className="text-zinc-400 mt-1 text-sm">Stories Generated</span>
         </div>
         <div className="bg-zinc-900 rounded-lg p-6 flex flex-col items-center border border-zinc-800">
-          <span className="text-3xl font-bold text-emerald-400">{dummyUserDashboard.stats.total_episodes}</span>
+          <span className="text-3xl font-bold text-emerald-400">{dummyStats.total_episodes}</span>
           <span className="text-zinc-400 mt-1 text-sm">Total Episodes Generated</span>
         </div>
         <div className="bg-zinc-900 rounded-lg p-6 flex flex-col items-center border border-zinc-800">
-          <span className="text-3xl font-bold text-emerald-400">{dummyUserDashboard.stats.in_progress_stories}</span>
+          <span className="text-3xl font-bold text-emerald-400">{dummyStats.in_progress_stories}</span>
           <span className="text-zinc-400 mt-1 text-sm">Incomplete Stories</span>
         </div>
       </div>
@@ -141,10 +138,10 @@ export default function UserStats() {
               <tr className="border-t border-zinc-700 text-base">
                 <td className="py-3 text-zinc-300">You</td>
                 <td className="py-3 text-center">
-                  {dummyUserDashboard.stats.episodes_day_count} <span className="text-zinc-400">/ 5</span>
+                  {dummyStats.episodes_day_count || 0} <span className="text-zinc-400">/ 5</span>
                 </td>
                 <td className="py-3 text-center">
-                  {dummyUserDashboard.stats.episodes_month_count} <span className="text-zinc-400">/ 30</span>
+                  {dummyStats.episodes_month_count || 0} <span className="text-zinc-400">/ 30</span>
                 </td>
               </tr>
             </tbody>
