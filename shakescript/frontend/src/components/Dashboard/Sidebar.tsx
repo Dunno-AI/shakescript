@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History } from 'lucide-react';
+import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History, User } from 'lucide-react';
 import { StoryPrompt } from './StoryPrompt';
 
 
@@ -10,6 +10,12 @@ export const Sidebar = () => {
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  // Dummy user for sidebar button
+  const dummyUser = {
+    name: 'User',
+    avatar_url: 'https://i.pravatar.cc/100?img=1',
   };
 
   return (
@@ -44,8 +50,8 @@ export const Sidebar = () => {
           </button>
         </div>
 
-        <nav className="flex-1 px-4">
-          <ul className="space-y-1">
+        <nav className="flex-1 px-4 flex flex-col">
+          <ul className="space-y-1 flex-1">
             <li>
               <NavLink
                 to="/"
@@ -99,6 +105,24 @@ export const Sidebar = () => {
               </NavLink>
             </li>
           </ul>
+          <div className="mt-auto mb-2">
+            <NavLink
+              to="/dashboard/userstats"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 text-sm ${
+                  isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                } rounded-md ${isCollapsed ? 'justify-center' : ''}`
+              }
+            >
+              <img
+                src={dummyUser.avatar_url}
+                alt="avatar"
+                className="w-6 h-6 rounded-full border border-emerald-500 object-cover"
+              />
+              {!isCollapsed && <span className="font-medium">{dummyUser.name}</span>}
+              <User size={16} className="ml-auto text-zinc-400" />
+            </NavLink>
+          </div>
         </nav>
 
         {/* Collapse button */}
@@ -116,6 +140,9 @@ export const Sidebar = () => {
           onClose={() => setShowStoryPrompt(false)}
         />
       )}
+
+      {/* User Button at Bottom */}
+      {/* Remove the old absolute user button at the bottom */}
     </>
   );
 };

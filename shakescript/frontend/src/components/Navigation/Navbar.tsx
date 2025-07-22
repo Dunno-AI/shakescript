@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -49,13 +51,23 @@ export const Navbar: React.FC = () => {
                     key={item.name}
                     to={item.href}
                     className="text-gray-300 hover:text-white px-5 py-2 rounded-md text-m font-medium"
-                    onClick={e => {
+                    onClick={async e => {
                       if (item.name === "About") {
                         e.preventDefault();
-                        smoothScroll("start-building");
+                        if (location.pathname !== "/") {
+                          navigate("/");
+                          setTimeout(() => smoothScroll("start-building"), 50);
+                        } else {
+                          smoothScroll("start-building");
+                        }
                       } else if (item.name === "Home") {
                         e.preventDefault();
-                        smoothScroll();
+                        if (location.pathname !== "/") {
+                          navigate("/");
+                          setTimeout(() => smoothScroll(), 50);
+                        } else {
+                          smoothScroll();
+                        }
                       }
                     }}
                   >
@@ -102,13 +114,23 @@ export const Navbar: React.FC = () => {
               key={item.name}
               to={item.href}
               className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={e => {
+              onClick={async e => {
                 if (item.name === "About") {
                   e.preventDefault();
-                  smoothScroll("start-building");
+                  if (location.pathname !== "/") {
+                    navigate("/");
+                    setTimeout(() => smoothScroll("start-building"), 50);
+                  } else {
+                    smoothScroll("start-building");
+                  }
                 } else if (item.name === "Home") {
                   e.preventDefault();
-                  smoothScroll();
+                  if (location.pathname !== "/") {
+                    navigate("/");
+                    setTimeout(() => smoothScroll(), 50);
+                  } else {
+                    smoothScroll();
+                  }
                 }
               }}
             >
