@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Story } from './Story';
 import { Library } from './Library/Library';
+import { ResumeStory } from './ResumeStory';
+import UserStats from './UserStats';
 
 export const Layout = () => {
   const location = useLocation();
@@ -21,6 +23,8 @@ export const Layout = () => {
           <Route path="/discover" element={<div>Discover Page</div>} />
           <Route path="/spaces" element={<div>Spaces Page</div>} />
           <Route path="/library" element={<Library />} />
+          <Route path="/continue" element={<ResumeStory />} />
+          <Route path="/userstats" element={<UserStats />} />
         </Routes>
       </main>
     </div>

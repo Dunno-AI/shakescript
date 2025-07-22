@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import axios from "axios";
 import { useState } from "react";
 import { StoryDetails } from "@/types/story";
+import { useAuthFetch } from '../../../lib/utils';
 
 interface Story {
   story_id: number;
@@ -27,14 +27,16 @@ const StoryCard = ({
   const common = "absolute flex w-full h-full [backface-visibility:hidden]";
   const [isLoading, setIsLoading] = useState(false);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  const authFetch = useAuthFetch();
 
   const handleClick = async () => {
     if (story.story_id) {
       setIsLoading(true)
       try {
-        const response = await axios.get(`${BASE_URL}api/v1/stories/${story.story_id}`);
-        if (response.data && response.data.story) {
-          onSelectStory(response.data.story);
+        const res = await authFetch(`${BASE_URL}api/v1/stories/${story.story_id}`);
+        const response = await res.json();
+        if (response && response.story) {
+          onSelectStory(response.story);
         }
       } catch (error) {
         alert('Failed to load story for display.');

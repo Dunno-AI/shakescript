@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, X, LogIn, LogOut } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
+import { useAuth } from "../../contexts/AuthContext";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { session, signOut } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,9 +18,7 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/#start-building" },
-    { name: "Statistics", href: "/stats" },
-    { name: "Enterprise", href: "/enterprise" },
-    { name: "Blog", href: "/blog" },
+    { name: "Statistics", href: "/stats" }
   ];
 
   const smoothScroll = useSmoothScroll();
@@ -51,13 +53,23 @@ export const Navbar: React.FC = () => {
                     key={item.name}
                     to={item.href}
                     className="text-gray-300 hover:text-white px-5 py-2 rounded-md text-m font-medium"
-                    onClick={e => {
+                    onClick={async e => {
                       if (item.name === "About") {
                         e.preventDefault();
-                        smoothScroll("start-building");
+                        if (location.pathname !== "/") {
+                          navigate("/");
+                          setTimeout(() => smoothScroll("start-building"), 50);
+                        } else {
+                          smoothScroll("start-building");
+                        }
                       } else if (item.name === "Home") {
                         e.preventDefault();
-                        smoothScroll();
+                        if (location.pathname !== "/") {
+                          navigate("/");
+                          setTimeout(() => smoothScroll(), 50);
+                        } else {
+                          smoothScroll();
+                        }
                       }
                     }}
                   >
@@ -68,13 +80,33 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
           <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
-              <Link
-                to="/dashboard"
-                className="ml-4 px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                Start your project
-              </Link>
+            <div className="ml-4 flex items-center md:ml-6 gap-2">
+              {session ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+                  >
+                    Start your project
+                  </Link>
+                  <button
+                    onClick={signOut}
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 text-white hover:bg-zinc-800 flex items-center gap-2"
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
+                >
+                  <LogIn size={16} />
+                  Login
+                </Link>
+              )}
             </div>
           </div>
           <div className="-mr-2 flex md:hidden">
@@ -104,13 +136,23 @@ export const Navbar: React.FC = () => {
               key={item.name}
               to={item.href}
               className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={e => {
+              onClick={async e => {
                 if (item.name === "About") {
                   e.preventDefault();
-                  smoothScroll("start-building");
+                  if (location.pathname !== "/") {
+                    navigate("/");
+                    setTimeout(() => smoothScroll("start-building"), 50);
+                  } else {
+                    smoothScroll("start-building");
+                  }
                 } else if (item.name === "Home") {
                   e.preventDefault();
-                  smoothScroll();
+                  if (location.pathname !== "/") {
+                    navigate("/");
+                    setTimeout(() => smoothScroll(), 50);
+                  } else {
+                    smoothScroll();
+                  }
                 }
               }}
             >
@@ -120,15 +162,21 @@ export const Navbar: React.FC = () => {
         </div>
         <div className="pt-4 pb-3 border-t border-gray-700">
           <div className="flex items-center px-5">
-            <Link to="/signin" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white">
-              Sign in
-            </Link>
-            <Link
-              to="/start"
-              className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Start your project
-            </Link>
+            {session ? (
+              <Link
+                to="/dashboard"
+                className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                Start your project
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
