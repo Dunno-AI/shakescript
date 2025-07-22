@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Story } from './Story';
-import { Library } from './Library';
+import { Library } from './Library/Library';
 
 export const Layout = () => {
   const location = useLocation();

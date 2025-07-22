@@ -36,9 +36,7 @@ const ScrollbarStyles = () => {
 export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   const [prompt, setPrompt] = useState("");
   const [episodes, setEpisodes] = useState(5);
-  const [isHinglish, setIsHinglish] = useState(false);
   const [refineMethod, setRefineMethod] = useState<'human' | 'ai'>('human');
-  const [batchSize, setBatchSize] = useState(2);
   const [storyId, setStoryId] = useState<number | null>(null);
   const [showRefinement, setShowRefinement] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
@@ -65,9 +63,8 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
       const storyResponse = await axios.post(`${BASE_URL}/api/v1/stories/`, {
         prompt,
         num_episodes: episodes,
-        batch_size: batchSize,
+        batch_size: 1, // Always 1
         refinement: refineMethod === "ai" ? "AI": "HUMAN",
-        hinglish: isHinglish
       });
       
       if (storyResponse.data.story && storyResponse.data.story.story_id) {
@@ -110,14 +107,6 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
     setEpisodes((prev) => Math.max(prev - 1, 1));
   };
 
-  const incrementBatchSize = () => {
-    setBatchSize((prev) => Math.min(prev + 1, episodes));
-  };
-
-  const decrementBatchSize = () => {
-    setBatchSize((prev) => Math.max(prev - 1, 1));
-  };
-
   return (
     <>
       {!showRefinement && (
@@ -153,135 +142,82 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
                     />
                   </div>
                 </div>
-               
-                <div className="space-y-4 mb-8">
-                  {/* Episodes Counter */}
-                  <div className="flex items-center">
-                    <label className="text-zinc-400 text-sm w-32">Episodes:</label>
-                    <div className="relative flex items-center">
-                      <input
-                        type="number"
-                        value={episodes}
-                        onChange={(e) => setEpisodes(Number.parseInt(e.target.value) || 1)}
-                        min="1"
-                        max="50"
-                        className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
-                        disabled={isCreatingStory}
-                      />
-                      <div className="absolute right-0 top-0 bottom-0 flex flex-col">
-                        <button
-                          type="button"
-                          onClick={incrementEpisodes}
-                          className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
-                          disabled={isCreatingStory || episodes >= 50}
-                        >
-                          <ChevronUp size={12} className="text-zinc-400" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={decrementEpisodes}
-                          className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
-                          disabled={isCreatingStory || episodes <= 1}
-                        >
-                          <ChevronDown size={12} className="text-zinc-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Batch Size Counter */}
-                  <div className="flex items-center">
-                    <label className="text-zinc-400 text-sm w-32">Batch Size:</label>
-                    <div className="relative flex items-center">
-                      <input
-                        type="number"
-                        value={batchSize}
-                        onChange={(e) => setBatchSize(Number.parseInt(e.target.value) || 1)}
-                        min="1"
-                        max={episodes}
-                        className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
-                        disabled={isCreatingStory}
-                      />
-                      <div className="absolute right-0 top-0 bottom-0 flex flex-col">
-                        <button
-                          type="button"
-                          onClick={incrementBatchSize}
-                          className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
-                          disabled={isCreatingStory || batchSize >= episodes}
-                        >
-                          <ChevronUp size={12} className="text-zinc-400" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={decrementBatchSize}
-                          className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
-                          disabled={isCreatingStory || batchSize <= 1}
-                        >
-                          <ChevronDown size={12} className="text-zinc-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <label className="text-zinc-400 text-sm w-32">Refinement:</label>
-                    <select
-                      id="refine-method"
-                      value={refineMethod}
-                      onChange={(e) => setRefineMethod(e.target.value as 'human' | 'ai')}
-                      className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm"
-                      disabled={isCreatingStory}
-                    >
-                      <option value="ai">AI</option>
-                      <option value="human">Human</option>
-                    </select>
-                  </div>
-
-                  <div className="border-t border-zinc-800"></div>
-
-                  <div className="flex items-center justify-end">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-400 text-sm">English</span>
-                        <div className="relative inline-block w-10 align-middle">
-                          <input
-                            type="checkbox"
-                            checked={isHinglish}
-                            onChange={(e) => setIsHinglish(e.target.checked)}
-                            className="sr-only"
-                            id="hinglish-toggle"
-                            disabled={isCreatingStory}
-                          />
-                          <label
-                            htmlFor="hinglish-toggle"
-                            className="block overflow-hidden h-5 rounded-full bg-zinc-800 cursor-pointer"
+                {/* New layout: episodes on top, refinement below, button on right */}
+                <div className="flex flex-row items-end justify-between gap-4">
+                  <div className="flex flex-col gap-2 w-full max-w-xs">
+                    <div className="flex items-center">
+                      <label className="text-zinc-400 text-sm w-32">Episodes:</label>
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          value={episodes}
+                          onChange={(e) => setEpisodes(Number.parseInt(e.target.value) || 1)}
+                          min="1"
+                          max="50"
+                          className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
+                          disabled={isCreatingStory}
+                        />
+                        <div className="absolute right-0 top-0 bottom-0 flex flex-col">
+                          <button
+                            type="button"
+                            onClick={incrementEpisodes}
+                            className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-zinc-700 rounded-tr-md hover:bg-zinc-700"
+                            disabled={isCreatingStory || episodes >= 50}
                           >
-                            <span
-                              className={`block h-4 w-4 ml-0.5 mt-0.5 rounded-full bg-zinc-400 transform transition-transform duration-200 ease-in ${
-                                isHinglish ? 'translate-x-5 bg-zinc-300' : ''
-                              }`}
-                            ></span>
-                          </label>
+                            <ChevronUp size={12} className="text-zinc-400" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={decrementEpisodes}
+                            className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
+                            disabled={isCreatingStory || episodes <= 1}
+                          >
+                            <ChevronDown size={12} className="text-zinc-400" />
+                          </button>
                         </div>
-                        <span className="text-zinc-400 text-sm">Hinglish</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <label className="text-zinc-400 text-sm w-32">Refinement:</label>
+                      <div className="relative w-36">
+                        <select
+                          id="refine-method"
+                          value={refineMethod}
+                          onChange={(e) => setRefineMethod(e.target.value as 'human' | 'ai')}
+                          className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm"
+                          disabled={isCreatingStory}
+                        >
+                          <option value="ai" disabled title="Upgrade to Premium to unlock">AI</option>
+                          <option value="human">Human</option>
+                        </select>
+                        {/* Tooltip for AI option */}
+                        <div
+                          className="pointer-events-none absolute left-0 top-0 w-full h-full flex items-center"
+                          style={{ zIndex: 10 }}
+                        >
+                          {refineMethod === 'ai' && (
+                            <div className="absolute left-0 top-10 w-44 bg-zinc-900 text-zinc-100 text-xs rounded shadow-lg px-3 py-2 border border-zinc-700" style={{display: 'block'}}>
+                              Upgrade to Premium to unlock
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-               
-                <div className="flex justify-end gap-3">
-                  {isCreatingStory ? (
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500"></div>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={!prompt.trim()}
-                      className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Generate Story</span>
-                    </button>
-                  )}
+                  <div className="flex flex-col items-end w-full max-w-[140px]">
+                    {isCreatingStory ? (
+                      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500"></div>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={!prompt.trim()}
+                        className="px-3 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-[120px]"
+                      >
+                        <Send className="w-4 h-4" />
+                        <span className="text-sm font-medium">Generate</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </form>
             </div>
@@ -292,9 +228,9 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
         <Refinement
           storyId={storyId}
           totalEpisodes={episodes}
-          batchSize={batchSize}
+          batchSize={1} // Always 1
           refinementType={refineMethod}
-          isHinglish={isHinglish}
+          isHinglish={false}
           onComplete={handleRefinementComplete}
           onClose={() => {
             setShowRefinement(false);
