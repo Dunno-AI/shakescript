@@ -124,3 +124,6 @@ class StoryService:
             hinglish,
             auth_id,
         )
+
+    def set_story_completed(self, story_id: int, completed: bool = True):
+        return self.db_service.set_story_completed(story_id, completed)

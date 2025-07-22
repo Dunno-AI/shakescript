@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuthFetch } from '../../lib/utils';
 import { X, Check, PenLine, Loader2, ArrowRight } from 'lucide-react';
+import { TypingAnimation } from '../utils/TypingAnimation';
 
 interface RefinementProps {
   storyId: number;
@@ -10,6 +11,7 @@ interface RefinementProps {
   isHinglish: boolean;
   onComplete: () => void;
   onClose: () => void;
+  initialBatch?: number;
 }
 
 interface Episode {
@@ -31,15 +33,17 @@ export const Refinement: React.FC<RefinementProps> = ({
   refinementType,
   isHinglish,
   onComplete,
-  onClose
+  onClose,
+  initialBatch
 }) => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [status, setStatus] = useState<'loading' | 'refining' | 'ready' | 'complete'>('loading');
-  const [currentBatch, setCurrentBatch] = useState<number>(1);
+  const [currentBatch, setCurrentBatch] = useState<number>(initialBatch || 1);
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
+  const authFetch = useAuthFetch();
 
   // Calculate progress
   const progress = Math.min(
@@ -56,59 +60,44 @@ export const Refinement: React.FC<RefinementProps> = ({
   }, [storyId]);
 
   const generateBatch = async () => {
-    console.log("Generating batch for storyId:", storyId);
     setStatus('loading');
     setErrorMessage('');
-    
     try {
-      console.log('With params:', {
-        batch_size: batchSize,
-        hinglish: isHinglish,
+      const params = new URLSearchParams({
+        batch_size: batchSize.toString(),
+        hinglish: isHinglish.toString(),
         refinement_type: refinementType
       });
-      
-      const response = await axios.post(
-        `${BASE_URL}/api/v1/episodes/${storyId}/generate-batch`,
-        {},
+      const response = await authFetch(
+        `${BASE_URL}/api/v1/episodes/${storyId}/generate-batch?${params.toString()}`,
         {
-          params: {
-            batch_size: batchSize,
-            hinglish: isHinglish,
-            refinement_type: refinementType
-          }
+          method: 'POST',
         }
       );
-
-      if (response.data.status === 'success') {
-        // Map API response to only include episode_content as content
-        const mappedEpisodes = response.data.episodes.map((ep: any) => ({
+      const data = await response.json();
+      if (data.status === 'success') {
+        const mappedEpisodes = data.episodes.map((ep: any) => ({
           episode_number: ep.episode_number,
           content: ep.episode_content,
         }));
         setEpisodes(mappedEpisodes);
-        // If AI refinement, move directly to ready state
-        // If human refinement, prepare for human input
         setStatus(refinementType === 'ai' ? 'ready' : 'refining');
-        // Initialize feedback object
         const initialFeedback: { [key: number]: string } = {};
         mappedEpisodes.forEach((ep: any) => {
           initialFeedback[ep.episode_number] = '';
         });
         setFeedback(initialFeedback);
       } else {
-        if (response.data.message && response.data.message.includes("All episodes generated")) {
-          console.log('Story generation complete');
+        if (data.message && data.message.includes("All episodes generated")) {
           setStatus('complete');
           onComplete();
         } else {
-          console.log('Error in response:', response.data.message);
-          setErrorMessage(response.data.message || 'Failed to generate episodes');
+          setErrorMessage(data.message || 'Failed to generate episodes');
         }
       }
     } catch (error: any) {
-      console.error('Error generating batch:', error);
       setErrorMessage(
-        `Failed to connect to the server: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to connect to the server: ${error.message || 'Unknown error'}. Please try again.`
       );
     }
   };
@@ -121,50 +110,37 @@ export const Refinement: React.FC<RefinementProps> = ({
   };
 
   const submitFeedback = async () => {
-    console.log('Submitting feedback for storyId:', storyId);
     setIsSubmitting(true);
-    
     try {
-      // Only submit feedback for episodes that have feedback text
       const feedbackToSubmit: Feedback[] = Object.entries(feedback)
         .filter(([_, text]) => text.trim().length > 0)
         .map(([episodeNumber, text]) => ({
           episode_number: parseInt(episodeNumber),
           feedback: text
         }));
-
-      console.log('Feedback to submit:', feedbackToSubmit);
-
       if (feedbackToSubmit.length > 0) {
-        console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/refine-batch`);
-        const response = await axios.post(
+        const response = await authFetch(
           `${BASE_URL}/api/v1/episodes/${storyId}/refine-batch`,
-          feedbackToSubmit
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackToSubmit),
+          }
         );
-
-        console.log('Refine batch response:', response.data);
-
-        if (response.data.status === 'pending' || response.data.episodes) {
-          console.log('Refined episodes received:', response.data.episodes.length);
-          setEpisodes(response.data.episodes);
-          
-          // Reset feedback after refinement
+        const data = await response.json();
+        if (data.status === 'pending' || data.episodes) {
+          setEpisodes(data.episodes);
           const newFeedback: { [key: number]: string } = {};
-          response.data.episodes.forEach((ep: Episode) => {
+          data.episodes.forEach((ep: Episode) => {
             newFeedback[ep.episode_number] = '';
           });
           setFeedback(newFeedback);
         }
-      } else {
-        console.log('No feedback to submit, moving directly to ready state');
       }
-      
-      // Move to ready state after feedback processing
       setStatus('ready');
     } catch (error: any) {
-      console.error('Error submitting feedback:', error);
       setErrorMessage(
-        `Failed to submit feedback: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to submit feedback: ${error.message || 'Unknown error'}. Please try again.`
       );
     } finally {
       setIsSubmitting(false);
@@ -172,41 +148,40 @@ export const Refinement: React.FC<RefinementProps> = ({
   };
 
   const validateBatch = async () => {
-    console.log('Validating batch for storyId:', storyId);
     setIsSubmitting(true);
-    
     try {
-      console.log(`Calling API: POST http://localhost:8000/api/v1/episodes/${storyId}/validate-batch`);
-      const response = await axios.post(
-        `${BASE_URL}/api/v1/episodes/${storyId}/validate-batch`
+      const response = await authFetch(
+        `${BASE_URL}/api/v1/episodes/${storyId}/validate-batch`,
+        { method: 'POST' }
       );
-
-      console.log('Validate batch response:', response.data);
-
-      if (response.data.status === 'success') {
-        if (response.data.message && response.data.message.includes('Story complete')) {
-          console.log('Story generation complete');
+      const data = await response.json();
+      if (data.status === 'success') {
+        if (data.message && data.message.includes('Story complete')) {
+          await authFetch(`${BASE_URL}/api/v1/stories/${storyId}/complete`, { method: 'POST' });
           setStatus('complete');
           onComplete();
         } else {
-          console.log('Moving to next batch');
-          // Increment batch counter and generate the next batch
           setCurrentBatch(prev => prev + 1);
           setTimeout(() => {
             generateBatch();
-          }, 500); // Small delay to ensure UI updates properly
+          }, 500);
         }
       } else {
-        console.log('Error in validation response:', response.data);
-        setErrorMessage(response.data.message || 'Failed to validate episodes');
+        setErrorMessage(data.message || 'Failed to validate episodes');
       }
     } catch (error: any) {
-      console.error('Error validating batch:', error);
       setErrorMessage(
-        `Failed to validate batch: ${error.response?.data?.detail || error.message || 'Unknown error'}. Please try again.`
+        `Failed to validate batch: ${error.message || 'Unknown error'}. Please try again.`
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const episodesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollToBottom = () => {
+    if (episodesEndRef.current) {
+      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -245,8 +220,8 @@ export const Refinement: React.FC<RefinementProps> = ({
         <div className="overflow-y-auto flex-1 p-5">
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-              <p className="text-zinc-300">Generating episodes...</p>
+              {/* <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" /> */}
+              <TypingAnimation text="Generating episodes..." speed={30} className="text-zinc-300 text-lg mb-4" />
             </div>
           )}
           
@@ -259,12 +234,17 @@ export const Refinement: React.FC<RefinementProps> = ({
           )}
           
           {(status === 'refining' || status === 'ready') && episodes.length > 0 && (
-            <div className="space-y-6">
+            <div className="space-y-6" style={{ position: 'relative' }}>
               {episodes.map((episode) => (
-                <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
-                  <div className="text-zinc-300 whitespace-pre-wrap mb-4">{episode.content}</div>
+                <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 pb-10">
+                  <TypingAnimation
+                    text={episode.content}
+                    speed={15}
+                    className="text-zinc-300 whitespace-pre-wrap mb-4"
+                    onTyping={scrollToBottom}
+                  />
                   {status === 'refining' && refinementType === 'human' && (
-                    <div>
+                    <div className='mt-4'>
                       <div className="flex items-center mb-2">
                         <PenLine className="w-4 h-4 text-zinc-400 mr-2" />
                         <label className="text-sm text-zinc-400">Feedback (optional)</label>
@@ -279,6 +259,7 @@ export const Refinement: React.FC<RefinementProps> = ({
                   )}
                 </div>
               ))}
+              <div ref={episodesEndRef} />
             </div>
           )}
           
@@ -327,3 +308,4 @@ export const Refinement: React.FC<RefinementProps> = ({
     </div>
   );
 };
+

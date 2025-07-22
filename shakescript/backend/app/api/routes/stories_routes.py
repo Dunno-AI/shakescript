@@ -165,3 +165,13 @@ def delete_story(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete story: {str(e)}")
+
+
+@router.post(
+    "/{story_id}/complete",
+    response_model=Dict[str, str],
+    summary="Mark a story as completed",
+)
+def complete_story(story_id: int, service: StoryService = Depends(get_story_service)):
+    service.set_story_completed(story_id, True)
+    return {"status": "success", "message": f"Story {story_id} marked as completed."}
