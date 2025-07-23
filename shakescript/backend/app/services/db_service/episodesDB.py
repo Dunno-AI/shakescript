@@ -83,7 +83,7 @@ class EpisodesDB:
         return episode_id
 
     def get_previous_episodes(
-        self, story_id: int, current_episode: int, limit: int = 3, auth_id: str
+        self, story_id: int, current_episode: int, auth_id: str, limit: int = 3
     ) -> List[Dict]:
         result = (
             self.supabase.table("episodes")

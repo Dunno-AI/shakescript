@@ -7,7 +7,7 @@ import json
 class StoryDB:
     def __init__(self):
         self.supabase: Client = create_client(
-            settings.SUPABASE_URL, settings.SUPABASE_KEY
+            settings.SUPABASE_URL, settings.SUPABASE_KEY,
         )
 
     def get_all_stories(self, auth_id: str) -> List[Dict[str, Any]]:
@@ -123,6 +123,7 @@ class StoryDB:
                 "emotional_state": char.get("Emotional_State", "neutral"),
                 "is_active": True,
                 "milestones": json.dumps([]),
+                "auth_id": auth_id,
             }
             for char in metadata.get("Characters", [])
         ]

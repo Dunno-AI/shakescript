@@ -26,6 +26,7 @@ def get_all_stories(
     Retrieve a list of all stories with a structured response for the authenticated user.
     """
     auth_id = user.get("id")
+    print(auth_id)
     stories = service.get_all_stories(auth_id)
     return (
         {"status": "success", "stories": stories}
@@ -54,6 +55,7 @@ async def create_story(
 ):
     prompt = parse_user_prompt(prompt)
     auth_id = user.get("id")
+    print(auth_id)
     result = await service.create_story(prompt, num_episodes, hinglish, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])

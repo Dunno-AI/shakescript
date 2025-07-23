@@ -13,31 +13,35 @@ def get_story_service() -> StoryService:
 
 
 # Authenticated user dependency
+
+
+# dependencies.py
 async def get_current_user(authorization: str = Header(...)) -> dict:
-    """
-    Retrieves the current authenticated user from Supabase using the Bearer token.
-    Returns a dictionary with user ID and email.
-    """
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header format",
+        )
+
+    token = authorization.split("Bearer ")[1]
+
     try:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authorization header format",
-            )
-
-        token = authorization.split("Bearer ")[1]
-        user_response = supabase.auth.get_user(token)
-
+        # Correct usage: Pass as JWT
+        user_response = supabase.auth.get_user(jwt=token)
         if user_response and user_response.user:
-            return {"id": user_response.user.id, "email": user_response.user.email}
-
+            return {
+                "id": user_response.user.id,
+                "email": user_response.user.email,
+            }
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
-
     except Exception as e:
+        import logging
+
+        logging.error(f"Authentication error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed",
+            detail=f"Authentication failed: {str(e)}",
         )

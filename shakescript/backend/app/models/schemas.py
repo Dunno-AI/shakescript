@@ -62,7 +62,7 @@ class StoryListItem(BaseModel):
     story_id: int
     title: str
     is_completed: bool = False
-    genre: str
+    genre: Optional[str]
 
 
 class StoryListResponse(BaseModel):

@@ -44,3 +44,9 @@ def logout_user(user: dict = Depends(get_current_user)):
         return {"status": "success", "message": "Successfully logged out"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/debug-token")
+def debug_token(user: dict = Depends(get_current_user)):
+    session = supabase.auth.get_session()
+    return {"token": session.access_token, "auth_id": user["id"]}
