@@ -20,8 +20,8 @@ class DBService:
     def get_story_info(self, story_id: int):
         return self.stories.get_story_info(story_id)
 
-    def store_story_metadata(self, metadata, num_episodes):
-        return self.stories.store_story_metadata(metadata, num_episodes)
+    def store_story_metadata(self, metadata, num_episodes, refinement_method):
+        return self.stories.store_story_metadata(metadata, num_episodes, refinement_method)
 
     def update_story_current_episodes_content(self, story_id, episodes):
         return self.stories.update_story_current_episodes_content(story_id, episodes)

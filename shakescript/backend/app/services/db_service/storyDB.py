@@ -81,10 +81,11 @@ class StoryDB:
             "timeline": json.loads(story_row["timeline"] or "[]"),
             "current_episodes_content": json.loads(
                 story_row.get("current_episodes_content", "[]") or "[]"
-            ),  # Add current_episodes_content
+            ),  
+            "refinement_method": story_row["refinement_method"],
         }
 
-    def store_story_metadata(self, metadata: Dict, num_episodes: int) -> int:
+    def store_story_metadata(self, metadata: Dict, num_episodes: int, refinement_method: str) -> int:
         result = (
             self.supabase.table("stories")
             .insert(
@@ -102,6 +103,7 @@ class StoryDB:
                     "current_episodes_content": json.dumps(
                         []
                     ), 
+                    "refinement_method": refinement_method
                 }
             )
             .execute()
@@ -150,6 +152,9 @@ class StoryDB:
         if not story.data:
             raise ValueError(f"Story with ID {story_id} not found")
 
+        self.supabase.table("characters").delete().eq("story_id", story_id).execute()
+        self.supabase.table("episodes").delete().eq("story_id", story_id).execute()
+        self.supabase.table("chunks").delete().eq("story_id", story_id).execute()
         self.supabase.table("stories").delete().eq("id", story_id).execute()
 
     def set_story_completed(self, story_id: int, completed: bool = True):

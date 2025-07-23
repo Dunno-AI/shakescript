@@ -48,7 +48,7 @@ async def create_story(
     hinglish: bool = Body(False, description="Generate in Hinglish if true"),
 ):
     prompt = parse_user_prompt(prompt)
-    result = await service.create_story(prompt, num_episodes, hinglish)
+    result = await service.create_story(prompt, num_episodes, refinement, hinglish)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
 
@@ -75,6 +75,7 @@ async def create_story(
             timeline=story_info["timeline"],
             batch_size=batch_size,
             refinement_method=refinement,
+            total_episodes=story_info["num_episodes"],
         ),
         "message": "Story created successfully",
     }
@@ -90,6 +91,7 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
     Retrieve detailed information about a story with a structured response.
     """
     story_info = service.get_story_info(story_id)
+    print(story_info["refinement_method"])
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
 
@@ -109,6 +111,7 @@ def get_story(story_id: int, service: StoryService = Depends(get_story_service))
             timeline=story_info["timeline"],
             batch_size=story_info.get("batch_size", 2),
             refinement_method=story_info.get("refinement_method", "AI"),
+            total_episodes=story_info.get("num_episodes", 0)
         ),
         "message": "Story retrieved successfully",
     }

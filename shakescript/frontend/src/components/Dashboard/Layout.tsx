@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Story } from './Story';
 import { Library } from './Library/Library';
 import { ResumeStory } from './ResumeStory';
+import { RefinementRoute } from './RefinementRoute';
 
 export const Layout = () => {
   const location = useLocation();
@@ -23,6 +24,7 @@ export const Layout = () => {
           <Route path="/spaces" element={<div>Spaces Page</div>} />
           <Route path="/library" element={<Library />} />
           <Route path="/continue" element={<ResumeStory />} />
+          <Route path="/:storyId/refinement" element={<RefinementRoute />} />
         </Routes>
       </main>
     </div>

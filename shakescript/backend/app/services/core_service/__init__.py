@@ -22,10 +22,10 @@ class StoryService:
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
-        self, prompt: str, num_episodes: int, hinglish: bool = False
+        self, prompt: str, num_episodes: int, refinement_method: str, hinglish: bool = False
     ) -> Dict[str, Any]:
         return await story_generator_core.create_story(
-            self, prompt, num_episodes, hinglish
+            self, prompt, num_episodes, refinement_method, hinglish
         )
 
     def get_story_info(self, story_id: int) -> Dict[str, Any]:

@@ -31,8 +31,9 @@ const StoryCard = ({
   const handleClick = async () => {
     if (story.story_id) {
       setIsLoading(true)
+      console.log("Clicked on:", story.story_id);
       try {
-        const response = await axios.get(`${BASE_URL}api/v1/stories/${story.story_id}`);
+        const response = await axios.get(`${BASE_URL}/api/v1/stories/${story.story_id}`);
         if (response.data && response.data.story) {
           onSelectStory(response.data.story);
         }

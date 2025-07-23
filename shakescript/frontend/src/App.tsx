@@ -5,6 +5,7 @@ import { StartBuildingSection } from "./components/Home/StartBuilding";
 import Footer from "./components/Navigation/Footer";
 import { Navbar } from "./components/Navigation/Navbar";
 import { Layout } from "./components/Dashboard/Layout";
+import { RefinementRoute } from "./components/Dashboard/RefinementRoute";
 import StatsDashboard from "./components/Statistics/StatsDashboard";
 
 // Wrapper component to conditionally render Navbar and Footer

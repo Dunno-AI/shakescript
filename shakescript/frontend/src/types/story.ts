@@ -4,9 +4,6 @@ export interface Episode {
   episode_title: string;
   episode_content: string;
   episode_summary: string;
-  characters_featured: Record<string, any>;
-  key_events: string[];
-  settings: string[];
 }
 
 export interface StoryResponse {
@@ -26,30 +23,15 @@ export interface Story {
   genre: string;
 }
 
-export interface Character {
-  Name: string;
-  Role: string;
-  Description: string;
-  Relationship: Record<string, any>;
-  role_active: boolean;
-}
-
 export interface StoryDetails {
   story_id: number;
   title: string;
-  setting: string[];
-  characters: Record<string, Character>;
-  special_instructions: string;
-  story_outline: Record<string, string>;
   current_episode: number;
-  episodes: {
-  id: number;
-  number: number;
-  title: string;
-  content: string;
+  total_episodes: number;
+  episodes: Episode[];
   summary: string;
-}[];
-  summary: string;
+  batch_size: number;
+  refinement_method: "AI" | "HUMAN";
 }
 
 export interface StoryCache {
