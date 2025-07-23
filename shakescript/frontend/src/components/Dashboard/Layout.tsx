@@ -5,7 +5,7 @@ import { Library } from './Library/Library';
 import { ResumeStory } from './ResumeStory';
 import { RefinementRoute } from './RefinementRoute';
 
-export const Layout = () => {
+const Layout = () => {
   const location = useLocation();
   const path = location.pathname;
   const isMainDashboard = path === '/dashboard' || path === '/dashboard/';
@@ -30,3 +30,5 @@ export const Layout = () => {
     </div>
   );
 };
+
+export default Layout;
