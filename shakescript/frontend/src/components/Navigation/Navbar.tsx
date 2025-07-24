@@ -4,15 +4,32 @@ import { Menu, X, LogIn, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
 import { useAuth } from "../../contexts/AuthContext";
+import { supabase } from "../../lib/supabaseClient";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { session, signOut } = useAuth();
+  const smoothScroll = useSmoothScroll();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut(navigate);
+  };
+
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) console.error('Login error:', error.message);
   };
 
   const navItems = [
@@ -20,8 +37,6 @@ export const Navbar: React.FC = () => {
     { name: "About", href: "/#start-building" },
     { name: "Statistics", href: "/stats" }
   ];
-
-  const smoothScroll = useSmoothScroll();
 
   return (
     <motion.nav
@@ -90,7 +105,7 @@ export const Navbar: React.FC = () => {
                     Start your project
                   </Link>
                   <button
-                    onClick={signOut}
+                    onClick={handleSignOut}
                     className="px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 text-white hover:bg-zinc-800 flex items-center gap-2"
                     style={{ marginLeft: '0.5rem' }}
                   >
@@ -99,13 +114,13 @@ export const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <Link
-                  to="/login"
+                <button
+                  onClick={handleLogin}
                   className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
                 >
                   <LogIn size={16} />
                   Login
-                </Link>
+                </button>
               )}
             </div>
           </div>
@@ -170,12 +185,12 @@ export const Navbar: React.FC = () => {
                 Start your project
               </Link>
             ) : (
-              <Link
-                to="/login"
+              <button
+                onClick={handleLogin}
                 className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
               >
                 Login
-              </Link>
+              </button>
             )}
           </div>
         </div>

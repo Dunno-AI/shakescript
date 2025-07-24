@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Compass, FolderKanban, Library, ChevronLeft, ChevronRight, History, User, LogOut } from 'lucide-react';
 import { StoryPrompt } from './StoryPrompt';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,20 +9,19 @@ export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showStoryPrompt, setShowStoryPrompt] = useState(false);
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut(navigate);
+  };
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  // Dummy user for sidebar button
-  const dummyUser = {
-    name: 'User',
-    avatar_url: 'https://i.pravatar.cc/100?img=1',
-  };
-
   return (
     <>
-      <div 
+      <div
         className={`relative bg-[#111111] border-r border-zinc-800 flex flex-col transition-all duration-300 ${
           isCollapsed ? 'w-[80px]' : 'w-[240px]'
         }`}
@@ -40,7 +39,7 @@ export const Sidebar = () => {
         </div>
         
         <div className={`p-2 ${isCollapsed ? 'px-2' : ''}`}>
-          <button 
+          <button
             onClick={() => setShowStoryPrompt(true)}
             className={`w-full flex items-center gap-2 px-3 py-2 text-sm bg-zinc-900 text-zinc-100 rounded-md hover:bg-zinc-800 transition-colors ${
               isCollapsed ? 'justify-center' : ''
@@ -57,6 +56,7 @@ export const Sidebar = () => {
             <li>
               <NavLink
                 to="/"
+                end
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 text-sm ${
                     isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
@@ -67,19 +67,6 @@ export const Sidebar = () => {
                 {!isCollapsed && 'Home'}
               </NavLink>
             </li>
-            {/* <li>
-              <NavLink
-                to="/discover"
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 text-sm ${
-                    isActive ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                  } rounded-md ${isCollapsed ? 'justify-center' : ''}`
-                }
-              >
-                <Compass size={16} />
-                {!isCollapsed && 'Discover'}
-              </NavLink>
-            </li> */}
             <li>
               <NavLink
                 to="/dashboard/continue"
@@ -126,7 +113,7 @@ export const Sidebar = () => {
               </NavLink>
             )}
             <button
-              onClick={signOut}
+              onClick={handleSignOut}
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-md ${
                 isCollapsed ? 'justify-center' : ''
               }`}
@@ -146,15 +133,11 @@ export const Sidebar = () => {
         </button>
       </div>
 
-      {/* Story Prompt Modal */}
       {showStoryPrompt && (
         <StoryPrompt
           onClose={() => setShowStoryPrompt(false)}
         />
       )}
-
-      {/* User Button at Bottom */}
-      {/* Remove the old absolute user button at the bottom */}
     </>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface TypingAnimationProps {
   text: string;
@@ -19,51 +19,56 @@ const CursorSVG: React.FC = () => (
   </svg>
 );
 
-export const TypingAnimation: React.FC<TypingAnimationProps> = ({ 
-  text, 
-  speed = 20, 
-  className, 
-  onTyping, 
-  onComplete 
-}) => {
-  const [displayed, setDisplayed] = useState('');
-  const [completed, setCompleted] = useState(false);
+// Store animation start times outside the component to persist across re-mounts
+const animationStore = new Map<string, { startTime: number }>();
+
+export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 20, className, onTyping }) => {
+  // Set the start time only once for each unique text
+  if (!animationStore.has(text)) {
+    animationStore.set(text, { startTime: Date.now() });
+  }
+  const startTime = animationStore.get(text)!.startTime;
+
+  const [displayedText, setDisplayedText] = useState('');
+  const animationFrameId = useRef<number | null>(null);
+  const lastTypedLength = useRef(0);
 
   useEffect(() => {
-    setDisplayed('');
-    setCompleted(false);
-    let i = 0;
-    
-    const intervalId = setInterval(() => {
-      setDisplayed(text.slice(0, i));
-      if (onTyping) onTyping();
-      i++;
-      
-      if (i > text.length) {
-        clearInterval(intervalId);
-        setCompleted(true);
-        if (onComplete) onComplete();
-      }
-    }, speed);
+    const animate = () => {
+      const elapsedTime = Date.now() - startTime;
+      const charsToShow = Math.min(Math.floor(elapsedTime / speed), text.length);
 
-    return () => clearInterval(intervalId);
-  }, [text, speed, onTyping, onComplete]);
+      setDisplayedText(text.slice(0, charsToShow));
+
+      // Trigger the callback if new characters have been "typed"
+      if (onTyping && charsToShow > lastTypedLength.current) {
+        onTyping();
+        lastTypedLength.current = charsToShow;
+      }
+
+      // Continue the animation until the text is fully displayed
+      if (charsToShow < text.length) {
+        animationFrameId.current = requestAnimationFrame(animate);
+      }
+    };
+
+    // Start the animation
+    animationFrameId.current = requestAnimationFrame(animate);
+
+    // Cleanup function to cancel the animation frame on unmount
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+  }, [text, speed, onTyping, startTime]);
+
+  const isCompleted = displayedText.length === text.length;
 
   return (
     <span className={className} style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-      {displayed}
-      {!completed && <CursorSVG />}
+      {displayedText}
+      {!isCompleted && <CursorSVG />}
     </span>
   );
 };
-
-// CSS for cursor animation
-// Add this to your global CSS or import in your component
-// .cursor {
-//   animation: flicker 0.5s infinite;
-// }
-// @keyframes flicker {
-//   0% { opacity: 0; }
-//   50% { opacity: 1; }
-//   100% { opacity: 0; }
-// } 

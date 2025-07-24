@@ -1,10 +1,22 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export const HeroSection: React.FC = () => {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  const handleStartProject = () => {
+    if (session) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-black via-zinc-900 to-black">
       {/* Animated Grid Background */}
@@ -77,15 +89,14 @@ export const HeroSection: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex items-center justify-center gap-4"
         >
-          <Link to="/dashboard">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-300"
-            >
-              Start your project
-            </motion.button>
-          </Link>
+          <motion.button 
+            onClick={handleStartProject}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-300"
+          >
+            Start your project
+          </motion.button>
         </motion.div>
       </div>
 
