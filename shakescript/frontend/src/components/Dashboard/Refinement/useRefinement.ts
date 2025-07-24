@@ -27,6 +27,8 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     [key: number]: boolean;
   }>({});
   const [latestEpisode, setLatestEpisode] = useState<Episode | null>(null);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const episodesEndRef = useRef<HTMLDivElement | null>(null);
   const authFetch = useAuthFetch();
 
@@ -44,7 +46,34 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
         )
       : null;
   };
-  
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const atBottom = scrollHeight - scrollTop <= clientHeight + 1;
+        setUserHasScrolled(!atBottom);
+      };
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [scrollContainerRef.current]);
+
+
+  const scrollToBottom = () => {
+    if (episodesEndRef.current && !userHasScrolled) {
+      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const manualScrollToBottom = () => {
+    if (episodesEndRef.current) {
+        episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        setUserHasScrolled(false);
+    }
+  };
+
   const generateBatch = async () => {
     setStatus("loading");
     setErrorMessage("");
@@ -233,10 +262,6 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     }
   };
 
-  const scrollToBottom = () => {
-    episodesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return {
     status,
     currentBatch,
@@ -248,10 +273,13 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     feedback,
     typingCompleted,
     episodesEndRef,
+    scrollContainerRef,
+    userHasScrolled,
     handleFeedbackChange,
     handleTypingComplete,
     submitFeedback,
     validateAndContinue,
     scrollToBottom,
+    manualScrollToBottom,
   };
 };

@@ -5,6 +5,7 @@ import { RefinementHeader } from "./RefinementHeader";
 import { StatusDisplay } from "./StatusDisplay";
 import { EpisodeViewer } from "./EpisodeViewer";
 import { ActionButtons } from "./ActionButtons";
+import { ChevronDown } from "lucide-react";
 
 interface RefinementProps {
   story: StoryDetails;
@@ -26,11 +27,14 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
     feedback,
     typingCompleted,
     episodesEndRef,
+    scrollContainerRef,
+    userHasScrolled,
     handleFeedbackChange,
     handleTypingComplete,
     submitFeedback,
     validateAndContinue,
     scrollToBottom,
+    manualScrollToBottom,
   } = useRefinement(props);
 
   const isReviewing = status === "human-review" || status === "ai-ready";
@@ -49,13 +53,13 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
         storyTitle={props.story.title}
       />
 
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative">
         <div className="max-w-4xl mx-auto px-6 py-8">
           {isLoadingState && <StatusDisplay status={status} />}
 
           {isReviewing && (
             <EpisodeViewer
-              previousEpisodes={episodes} // Pass the validated episodes here
+              previousEpisodes={episodes}
               latestEpisode={latestEpisode}
               refinementType={props.story.refinement_method}
               feedback={feedback}
@@ -77,13 +81,24 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
       </div>
 
       {isReviewing && latestEpisode && (
-        <ActionButtons
-          status={status}
-          refinementType={props.story.refinement_method}
-          isSubmitting={isSubmitting}
-          onValidateAndContinue={validateAndContinue}
-          onSubmitFeedback={submitFeedback}
-        />
+        <div className="p-5 border-t border-zinc-800 flex justify-end gap-3 items-center">
+            {userHasScrolled && (
+                <button
+                    onClick={manualScrollToBottom}
+                    title="Scroll to bottom"
+                    className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 flex items-center justify-center"
+                >
+                    <ChevronDown className="w-5 h-5" />
+                </button>
+            )}
+            <ActionButtons
+                status={status}
+                refinementType={props.story.refinement_method}
+                isSubmitting={isSubmitting}
+                onValidateAndContinue={validateAndContinue}
+                onSubmitFeedback={submitFeedback}
+            />
+        </div>
       )}
     </div>
   );
