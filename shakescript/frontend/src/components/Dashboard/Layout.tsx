@@ -18,7 +18,7 @@ export const Layout = () => {
   }, [user, loading, navigate]);
 
   if (loading || !user) {
-    return <div>Loading...</div>; // Or a more sophisticated loading spinner
+    return <div>Loading...</div>; 
   }
 
   return (
