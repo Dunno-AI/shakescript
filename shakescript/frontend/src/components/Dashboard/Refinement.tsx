@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuthFetch } from '../../lib/utils';
-import { X, Check, PenLine, Loader2, ArrowRight } from 'lucide-react';
+import { X, Check, PenLine, Loader2, ArrowRight, ChevronDown } from 'lucide-react';
 import { TypingAnimation } from '../utils/TypingAnimation';
 
 interface RefinementProps {
@@ -42,6 +42,9 @@ export const Refinement: React.FC<RefinementProps> = ({
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const episodesEndRef = useRef<HTMLDivElement | null>(null);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL
   const authFetch = useAuthFetch();
 
@@ -50,7 +53,39 @@ export const Refinement: React.FC<RefinementProps> = ({
     ((currentBatch - 1) * batchSize + episodes.length) / totalEpisodes * 100,
     100
   );
-  
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        // A threshold to determine if the user is at the bottom
+        const atBottom = scrollHeight - scrollTop <= clientHeight + 1;
+        if (!atBottom) {
+          setUserHasScrolled(true);
+        } else {
+            setUserHasScrolled(false)
+        }
+      };
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+
+  const scrollToBottom = () => {
+    if (episodesEndRef.current && !userHasScrolled) {
+      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const manualScrollToBottom = () => {
+    if (episodesEndRef.current) {
+        episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        setUserHasScrolled(false);
+    }
+  };
+
   // Generate initial batch on component mount
   useEffect(() => {
     console.log("Refinement component mounted with storyId:", storyId);
@@ -178,21 +213,14 @@ export const Refinement: React.FC<RefinementProps> = ({
     }
   };
 
-  const episodesEndRef = useRef<HTMLDivElement | null>(null);
-  const scrollToBottom = () => {
-    if (episodesEndRef.current) {
-      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
-      
+
       <div className="bg-[#111111] rounded-xl border border-[#2a2a2a] shadow-lg w-full max-w-4xl mx-3 max-h-[90vh] flex flex-col">
         <div className="p-5 border-b border-zinc-800 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-zinc-100">
-            {status === 'complete' 
-              ? 'Story Generation Complete!' 
+            {status === 'complete'
+              ? 'Story Generation Complete!'
               : `Generating Episodes (Batch ${currentBatch})`}
           </h2>
           <button
@@ -202,12 +230,12 @@ export const Refinement: React.FC<RefinementProps> = ({
             <X className="w-5 h-5 text-zinc-400" />
           </button>
         </div>
-        
+
         {/* Progress bar */}
         <div className="px-5 py-3 border-b border-zinc-800">
           <div className="w-full bg-zinc-800 rounded-full h-2.5">
-            <div 
-              className="bg-emerald-500 h-2.5 rounded-full" 
+            <div
+              className="bg-emerald-500 h-2.5 rounded-full"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -216,15 +244,14 @@ export const Refinement: React.FC<RefinementProps> = ({
             <span>{Math.round(progress)}%</span>
           </div>
         </div>
-        
-        <div className="overflow-y-auto flex-1 p-5">
+
+        <div ref={scrollContainerRef} className="overflow-y-auto flex-1 p-5 relative">
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center h-64">
-              {/* <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" /> */}
               <TypingAnimation text="Generating episodes..." speed={30} className="text-zinc-300 text-lg mb-4" />
             </div>
           )}
-          
+
           {status === 'complete' && (
             <div className="flex flex-col items-center justify-center h-64">
               <Check className="w-12 h-12 text-emerald-500 mb-4" />
@@ -232,9 +259,9 @@ export const Refinement: React.FC<RefinementProps> = ({
               <p className="text-zinc-400">You can now read your complete story.</p>
             </div>
           )}
-          
+
           {(status === 'refining' || status === 'ready') && episodes.length > 0 && (
-            <div className="space-y-6" style={{ position: 'relative' }}>
+            <div className="space-y-6">
               {episodes.map((episode) => (
                 <div key={episode.episode_number} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 pb-10">
                   <TypingAnimation
@@ -262,50 +289,55 @@ export const Refinement: React.FC<RefinementProps> = ({
               <div ref={episodesEndRef} />
             </div>
           )}
-          
           {errorMessage && (
             <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-md text-red-200">
               {errorMessage}
             </div>
           )}
         </div>
-        
+
         <div className="p-5 border-t border-zinc-800 flex justify-end gap-3">
-          {status === 'refining' && (
-            <>
-              <button
+            {userHasScrolled && (
+                <button
+                    onClick={manualScrollToBottom}
+                    title="Scroll to bottom"
+                    className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 flex items-center justify-center"
+                >
+                    <ChevronDown className="w-5 h-5" />
+                </button>
+            )}
+            {status === 'refining' && (
+                <>
+                <button
+                    onClick={validateBatch}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>Validate Batch</span>
+                </button>
+                <button
+                    onClick={submitFeedback}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenLine className="w-4 h-4" />}
+                    <span>Submit Feedback</span>
+                </button>
+                </>
+            )}
+            {status === 'ready' && (
+                <button
                 onClick={validateBatch}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                <span>Validate Batch</span>
-              </button>
-              <button
-                onClick={submitFeedback}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenLine className="w-4 h-4" />}
-                <span>Submit Feedback</span>
-              </button>
-            </>
-          )}
-          
-          {status === 'ready' && (
-            <button
-              onClick={validateBatch}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-              <span>Continue</span>
-            </button>
-          )}
-          
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                <span>Continue</span>
+                </button>
+            )}
         </div>
       </div>
     </div>
   );
 };
-
