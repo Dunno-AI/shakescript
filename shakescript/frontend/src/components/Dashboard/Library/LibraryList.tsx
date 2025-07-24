@@ -3,70 +3,43 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter } from "lucide-react";
 import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
-import { StoryDetails, StoryCache, Story } from "@/types/story";
 import { useAuthFetch } from '../../../lib/utils';
+import { useStoryContext } from "@/contexts/StoryListContext";
+import { Story, StoryDetails } from "@/types/story";
 
 interface LibraryListProps {
   onSelectStory: (story: StoryDetails) => void;
+  Stories: Story[]
 }
 
-const CACHE_DURATION = 6 * 60 * 1000;
-const ClassicLoader = () => {
-  return (
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
-  );
-};
-const LibraryList = ({ onSelectStory }: LibraryListProps) => {
-  const [stories, setStories] = useState<Story[]>([]);
+const ClassicLoader = () => (
+  <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
+);
+
+const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
+  const {
+    deleteStory,
+    loading,
+  } = useStoryContext();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [cache, setCache] = useState<StoryCache | null>(null);
-  const [genreFilter, setGenreFilter] = useState<string>('All');
+  const [genreFilter, setGenreFilter] = useState<string>("All");
   const [allGenres, setAllGenres] = useState<string[]>([]);
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL
-  console.log(BASE_URL)
-  const authFetch = useAuthFetch();
 
   useEffect(() => {
-    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
-      setStories(cache.data);
-      setLoading(false);
-      // Set genres from cache
-      const genres = Array.from(
-        new Set(
-          (cache.data.map((s: any) => typeof s.genre === 'string' ? s.genre : '') as string[])
-            .filter((g: string): g is string => !!g)
-        )
-      );
-      setAllGenres(['All', ...genres]);
-    } else fetchStories();
-  }, []);
-
-  const fetchStories = async () => {
-    try {
-      const res = await authFetch(BASE_URL+"/api/v1/stories/all");
-      const data = await res.json();
-      // Only show completed stories in the library
-      const completedStories = data.stories.filter((s: any) => s.is_completed);
-      setStories(completedStories);
-      setCache({ data: completedStories, timestamp: Date.now() });
-      // Set genres
-      const genres = Array.from(
-        new Set(
-          (completedStories.map((s: any) => typeof s.genre === 'string' ? s.genre : '') as string[])
-            .filter((g: string): g is string => !!g)
-        )
-      );
-      setAllGenres(['All', ...genres]);
-    } catch (err) {
-      console.error("Failed fetching stories", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Generate genre list from current stories
+    const genres = Array.from(
+      new Set(
+        Stories
+          .map((s) => (typeof s.genre === "string" ? s.genre : ""))
+          .filter((g): g is string => !!g)
+      )
+    );
+    setAllGenres(["All", ...genres]);
+  }, [Stories]);
 
   const handleDelete = (id: number) => {
     setDeleteTarget(id);
@@ -76,21 +49,10 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   const confirmDelete = async () => {
     try {
       if (deleteTarget !== null) {
-        await authFetch(
-          `${BASE_URL}/api/v1/stories/${deleteTarget}`,
-          { method: 'DELETE' }
-        );
-        setStories(stories.filter((s) => s.story_id !== deleteTarget));
-        setCache((prev) =>
-          prev
-            ? {
-                ...prev,
-                data: prev.data.filter((s) => s.story_id !== deleteTarget),
-              }
-            : null,
-        );
+        setDeleting(true);
+        await deleteStory(deleteTarget); 
       }
-    } catch {
+    } catch (err) {
       alert("Failed to delete.");
     } finally {
       setShowConfirm(false);
@@ -100,9 +62,10 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
   };
 
   // Filter by search and genre
-  const filtered = stories.filter((s) =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (genreFilter === 'All' || s.genre === genreFilter)
+  const filtered = Stories.filter(
+    (s) =>
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (genreFilter === "All" || s.genre === genreFilter)
   );
 
   return (
@@ -133,16 +96,24 @@ const LibraryList = ({ onSelectStory }: LibraryListProps) => {
           <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5 pointer-events-none" />
           <select
             value={genreFilter}
-            onChange={e => setGenreFilter(e.target.value)}
+            onChange={(e) => setGenreFilter(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-[#111111] text-zinc-400 rounded-lg border border-zinc-800 focus:outline-none focus:border-zinc-600 text-base appearance-none"
             style={{ height: 48 }}
           >
-            <option value="All" className="text-zinc-400 rounded-lg">All</option>
-            {allGenres.filter(g => g !== 'All').map((genre) => (
-              <option key={genre} value={genre} className="text-zinc-400 ">{genre}</option>
-            ))}
+            <option value="All" className="text-zinc-400 rounded-lg">
+              All
+            </option>
+            {allGenres
+              .filter((g) => g !== "All")
+              .map((genre) => (
+                <option key={genre} value={genre} className="text-zinc-400">
+                  {genre}
+                </option>
+              ))}
           </select>
-          <span className="pointer-events-none absolute right-4 top-1/2 transform -translate-y-1/2 text-zinc-400">▼</span>
+          <span className="pointer-events-none absolute right-4 top-1/2 transform -translate-y-1/2 text-zinc-400">
+            ▼
+          </span>
         </div>
       </div>
 

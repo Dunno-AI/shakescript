@@ -34,6 +34,7 @@ class StoryResponse(BaseModel):
     timeline: List[Dict[str, Any]]
     batch_size: int
     refinement_method: str
+    total_episodes: int
 
 
 class EpisodeResponse(BaseModel):
@@ -72,4 +73,4 @@ class StoryListResponse(BaseModel):
 class EpisodeBatchResponse(BaseModel):
     status: str
     episodes: List[Dict[str, Any]]
-    message: Optional[str] = None  # ✅ Added to avoid ResponseValidationError
+    message: Optional[str] = None  

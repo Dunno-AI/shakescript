@@ -5,6 +5,7 @@ import { Story } from './Story';
 import { Library } from './Library/Library';
 import { ResumeStory } from './ResumeStory';
 import UserStats from './UserStats';
+import { RefinementRoute } from './RefinementRoute';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Layout = () => {
@@ -32,8 +33,11 @@ export const Layout = () => {
           <Route path="/library" element={<Library />} />
           <Route path="/continue" element={<ResumeStory />} />
           <Route path="/userstats" element={<UserStats />} />
+          <Route path="/:storyId/refinement" element={<RefinementRoute />} />
         </Routes>
       </main>
     </div>
   );
 };
+
+export default Layout;

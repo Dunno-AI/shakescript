@@ -5,6 +5,7 @@ interface TypingAnimationProps {
   speed?: number; // ms per character
   className?: string;
   onTyping?: () => void; // called on every character typed
+  onComplete?: () => void;
 }
 
 const CursorSVG: React.FC = () => (
