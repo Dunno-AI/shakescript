@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from ...models.schemas import (
     StoryListResponse,
@@ -25,8 +25,13 @@ def get_all_stories(
     """
     Retrieve a list of all stories with a structured response for the authenticated user.
     """
-    auth_id = user.get("id")
-    print(auth_id)
+    # --- FIX ---
+    auth_id = user.get("auth_id")
+    if not auth_id:
+        raise HTTPException(
+            status_code=403, detail="Could not identify user from token."
+        )
+
     stories = service.get_all_stories(auth_id)
     return (
         {"status": "success", "stories": stories}
@@ -54,8 +59,13 @@ async def create_story(
     user: dict = Depends(get_current_user),
 ):
     prompt = parse_user_prompt(prompt)
-    auth_id = user.get("id")
-    print(auth_id)
+    # --- FIX ---
+    auth_id = user.get("auth_id")
+    if not auth_id:
+        raise HTTPException(
+            status_code=403, detail="Could not identify user from token."
+        )
+
     result = await service.create_story(prompt, num_episodes, hinglish, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
@@ -101,7 +111,13 @@ def get_story(
     """
     Retrieve detailed information about a story with a structured response for the authenticated user.
     """
-    auth_id = user.get("id")
+    # --- FIX ---
+    auth_id = user.get("auth_id")
+    if not auth_id:
+        raise HTTPException(
+            status_code=403, detail="Could not identify user from token."
+        )
+
     story_info = service.get_story_info(story_id, auth_id)
     if "error" in story_info:
         raise HTTPException(HTTP_404_NOT_FOUND, detail=story_info["error"])
@@ -140,7 +156,13 @@ def update_story_summary(
     """
     Update the summary of a story based on its episodes with a structured response.
     """
-    auth_id = user.get("id")
+    # --- FIX ---
+    auth_id = user.get("auth_id")
+    if not auth_id:
+        raise HTTPException(
+            status_code=403, detail="Could not identify user from token."
+        )
+
     result = service.update_story_summary(story_id, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
@@ -158,7 +180,13 @@ def delete_story(
     user: dict = Depends(get_current_user),
 ):
     try:
-        auth_id = user.get("id")
+        # --- FIX ---
+        auth_id = user.get("auth_id")
+        if not auth_id:
+            raise HTTPException(
+                status_code=403, detail="Could not identify user from token."
+            )
+
         service.delete_story(story_id, auth_id)
         return {
             "message": f"Story {story_id} and all associated data deleted successfully"
@@ -175,5 +203,7 @@ def delete_story(
     summary="Mark a story as completed",
 )
 def complete_story(story_id: int, service: StoryService = Depends(get_story_service)):
+    # Note: This endpoint does not have user dependency, so it cannot enforce RLS.
+    # You might want to add `user: dict = Depends(get_current_user)` here as well.
     service.set_story_completed(story_id, True)
     return {"status": "success", "message": f"Story {story_id} marked as completed."}

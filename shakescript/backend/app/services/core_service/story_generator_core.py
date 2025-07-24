@@ -65,6 +65,7 @@ def generate_multiple_episodes(
             story_id,
             prev_episodes,
             hinglish,
+            auth_id=auth_id,
         )
 
         if "error" in episode_data or not episode_data.get("episode_content"):
@@ -89,6 +90,7 @@ def generate_multiple_episodes(
                 episode_number,
                 episode_data["episode_content"],
                 character_names,
+                auth_id = auth_id
             )
             print(f"Chunking completed for episode {episode_number}")
         else:

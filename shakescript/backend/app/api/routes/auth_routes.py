@@ -1,35 +1,33 @@
-from supabase import create_client, Client
-from app.core.config import settings
-from fastapi import APIRouter, HTTPException, Depends
-from app.api.dependencies import get_current_user
+# app/api/routes/auth_routes.py
 
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+from fastapi import APIRouter, HTTPException, Depends
+from supabase import Client
+from app.api.dependencies import (
+    get_current_user,
+    get_user_client,
+    supabase_client,
+)  # Import the base client
+
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 @router.get("/login", summary="End point for google login")
 def login_with_google():
     try:
-        auth_response = supabase.auth.sign_in_with_oauth(
+        # Use the imported base client for the unauthenticated sign-in flow
+        auth_response = supabase_client.auth.sign_in_with_oauth(
             {
                 "provider": "google",
                 "options": {"redirect_to": "http://localhost:3000/auth/callback"},
             }
         )
 
-        if auth_response and isinstance(auth_response, dict):
-            if "url" in auth_response:
-                return {
-                    "status": "success",
-                    "provider": "google",
-                    "auth_url": auth_response["url"],
-                }
-            elif "data" in auth_response and "url" in auth_response["data"]:
-                return {
-                    "status": "success",
-                    "provider": "google",
-                    "auth_url": auth_response["data"]["url"],
-                }
+        if auth_response and hasattr(auth_response, "url"):
+            return {
+                "status": "success",
+                "provider": "google",
+                "auth_url": auth_response.url,
+            }
 
         return {"status": "error", "message": "Failed to generate OAuth URL"}
 
@@ -38,15 +36,21 @@ def login_with_google():
 
 
 @router.get("/logout", summary="End point for logout")
-def logout_user(user: dict = Depends(get_current_user)):
+def logout_user(client: Client = Depends(get_user_client)):
     try:
-        supabase.auth.sign_out()
+        # This uses the authenticated client passed by the dependency
+        client.auth.sign_out()
         return {"status": "success", "message": "Successfully logged out"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/debug-token")
-def debug_token(user: dict = Depends(get_current_user)):
-    session = supabase.auth.get_session()
-    return {"token": session.access_token, "auth_id": user["id"]}
+def debug_token(
+    user: dict = Depends(get_current_user), client: Client = Depends(get_user_client)
+):
+    # This uses the authenticated client to get the session
+    session = client.auth.get_session()
+    if session:
+        return {"token": session.access_token, "auth_id": user["id"]}
+    raise HTTPException(status_code=404, detail="No active session found.")

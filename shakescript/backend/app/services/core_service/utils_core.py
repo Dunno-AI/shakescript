@@ -49,9 +49,9 @@ def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
     episode_summaries = "\n".join(ep["summary"] for ep in story_data["episodes"])
     instruction = f"Create a 150-200 word audio teaser summary for '{story_data['title']}' based on: {episode_summaries}. Use vivid, short sentences. End with a hook."
     summary = self.ai_service.model.generate_content(instruction).text.strip()
-    self.db_service.supabase.table("stories").update({"summary": summary}).eq(
-        "id", story_id
-    ).eq("auth_id", auth_id).execute()
+    self.client.table("stories").update({"summary": summary}).eq("id", story_id).eq(
+        "auth_id", auth_id
+    ).execute()
     return {"status": "success", "summary": summary}
 
 
@@ -98,7 +98,7 @@ def store_validated_episodes(
 
     max_episode_num = max([ep.get("episode_number", 0) for ep in episodes], default=0)
     if max_episode_num > 0:
-        self.db_service.supabase.table("stories").update(
+        self.client.table("stories").update(
             {"current_episode": max_episode_num + 1}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
         print(f"Updated story current_episode to {max_episode_num + 1}")

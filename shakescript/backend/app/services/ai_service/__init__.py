@@ -1,32 +1,42 @@
+# app/services/ai_service/__init__.py
+
 import google.generativeai as genai
 from openai import OpenAI
 from app.core.config import settings
-from app.services.ai_service.metadata_extractorAI import extract_metadata
-from app.services.ai_service.episode_generatorAI import AIGeneration
-from app.services.ai_service.utilsAI import AIUtils
-from app.services.ai_service.prompts import AIPrompts
-from app.services.ai_service.ai_refinementAI import (
+from .metadata_extractorAI import extract_metadata
+from .episode_generatorAI import AIGeneration
+from .utilsAI import AIUtils
+from .prompts import AIPrompts
+from .ai_refinementAI import (
     validate_batch,
     is_consistent_with_previous,
     check_episode_quality,
 )
-from app.services.ai_service.human_refinementAI import (
+from .human_refinementAI import (
     regenerate_batch,
     generate_episode_title,
 )
 from app.services.embedding_service import EmbeddingService
+from supabase import Client
 from typing import Dict, List, Any, Optional
 
 
 class AIService:
-    def __init__(self):
+    def __init__(self, client: Client):
+        """
+        KEY CHANGE: Accepts the authenticated Supabase client and passes
+        it to services like EmbeddingService that need it.
+        """
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel("gemini-2.0-flash")
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.embedding_service = EmbeddingService()
+
+        # KEY CHANGE: Pass the client to EmbeddingService during initialization
+        self.embedding_service = EmbeddingService(client)
         self.generation = AIGeneration(self.model, self.embedding_service)
         self.utils = AIUtils()
         self.prompts = AIPrompts()
+        self.client = client  # Store client for any potential direct use
 
     def call_llm(
         self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
@@ -56,8 +66,7 @@ class AIService:
         story_id: int,
         prev_episodes: List = [],
         hinglish: bool = False,
-        feedback: Optional[str] = None,
-        auth_id: str = None,
+        auth_id: str = None,  # Added auth_id
     ) -> Dict:
         return self.generation.generate_episode_helper(
             num_episodes,
@@ -98,19 +107,10 @@ class AIService:
     def is_consistent_with_previous(
         self, current_episode: Dict, previous_episode: Dict
     ) -> bool:
-        """
-        Check if the current episode is consistent with the previous episode.
-        """
         return is_consistent_with_previous(self, current_episode, previous_episode)
 
     def check_episode_quality(self, episode: Dict, metadata: Dict) -> Optional[str]:
-        """
-        Check the quality of an episode based on story metadata.
-        """
         return check_episode_quality(self, episode, metadata)
 
     def generate_episode_title(self, episode_content: str) -> str:
-        """
-        Generate a title for an episode based on its content.
-        """
         return generate_episode_title(self, episode_content)

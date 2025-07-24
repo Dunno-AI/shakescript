@@ -1,3 +1,5 @@
+# app/services/ai_service/episode_generatorAI.py
+
 import json
 from typing import Dict, List, Any
 from app.services.ai_service.utilsAI import AIUtils
@@ -7,6 +9,10 @@ from app.services.ai_service.prompts import AIPrompts
 
 class AIGeneration:
     def __init__(self, model, embedding_service: EmbeddingService):
+        """
+        KEY CHANGE: This class no longer creates its own EmbeddingService.
+        It receives a pre-initialized, authenticated one from the AIService.
+        """
         self.model = model
         self.embedding_service = embedding_service
         self.utils = AIUtils()
@@ -33,17 +39,18 @@ class AIGeneration:
 
         prev_episodes_text = (
             "\n\n".join(
-                f"EPISODE {ep.get('episode_number', 'N/A')}\nCONTENT: {ep.get(
-                    'content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
+                f"EPISODE {ep.get('episode_number', 'N/A')}\nCONTENT: {ep.get('content', 'No content')}\nTITLE: {ep.get('title', 'No title')}"
                 for ep in prev_episodes[-3:]
             )
             or "First Episode"
         )
+
+        # KEY CHANGE: Pass the auth_id to the embedding service call
         chunks_text = (
             "\n\n".join(
                 f"RELEVANT CONTEXT: {chunk['content']}"
                 for chunk in self.embedding_service.retrieve_relevant_chunks(
-                    story_id, prev_episodes_text or char_text, k=5
+                    story_id, prev_episodes_text or char_text, k=5, auth_id=auth_id
                 )
             )
             or ""
@@ -58,10 +65,8 @@ class AIGeneration:
 
         char_snapshot = (
             "\n".join(
-                f"Name: {char.get('Name')}, Role: {
-                    char.get('Role', 'Unknown')}, "
-                f"Description: {
-                    char.get('Description', 'No description available')}, "
+                f"Name: {char.get('Name')}, Role: {char.get('Role', 'Unknown')}, "
+                f"Description: {char.get('Description', 'No description available')}, "
                 f"Relationships: {json.dumps(char.get('Relationship', {}))}, "
                 f"Active: {'Yes' if char.get('role_active', True) else 'No'}, "
                 f"Emotional State: {char.get('Emotional_State', 'Unknown')}"
@@ -89,12 +94,9 @@ class AIGeneration:
                 break
 
         transition_guide = f"""
-        This is the last episode of this phase So we have to smoothly transit to the next phase:
-        {(
-            self.utils._get_phase_transition_guide(current_phase, next_phase)
-            if next_phase
-            else ""
-        )}"""
+        This is the last episode of this phase so we have to smoothly transit to the next phase:
+        {(self.utils._get_phase_transition_guide(current_phase, next_phase) if next_phase else "")}"""
+
         phase_description = f"""Things you can follow in this phase:
         {self._get_phase_description(current_phase)}"""
 
@@ -127,6 +129,7 @@ class AIGeneration:
         title_content_data = self.utils._parse_episode_response(
             first_response.text, metadata
         )
+
         if hinglish:
             title_content_data = self.hinglish_conversion(
                 title_content_data["episode_content"],
@@ -147,9 +150,7 @@ class AIGeneration:
             "episode_content": title_content_data["episode_content"],
             **details_data,
         }
-        return self.utils._parse_episode_response(
-            json.dumps(complete_episode), metadata
-        )
+        return json.loads(json.dumps(complete_episode))
 
     def hinglish_conversion(self, ep_content, ep_title) -> Dict[str, Any]:
         instruction = self.prompts.HINGLISH_PROMPT(ep_title, ep_content)
@@ -161,26 +162,25 @@ class AIGeneration:
     ) -> str:
         character_names = [char.get("Name", "") for char in characters]
         episode_info_parts = episode_info.lower().split()
-        filtered_events = []
-        foundational_events = []
+        filtered_events, foundational_events = [], []
         for event in key_events:
             if any(
                 marker in event.lower() for marker in ["crucial", "major", "important"]
             ):
                 foundational_events.append(event)
-                continue
-            if any(char_name.lower() in event.lower() for char_name in character_names):
+            elif any(
+                char_name.lower() in event.lower() for char_name in character_names
+            ):
                 filtered_events.append(event)
-                continue
-            if any(term in event.lower() for term in episode_info_parts):
+            elif any(term in event.lower() for term in episode_info_parts):
                 filtered_events.append(event)
-                continue
+
         important_events = (
             foundational_events
             + filtered_events[: max(0, 10 - len(foundational_events))]
         )
         return (
-            "Key Story Events: " + "; ".join(important_events)
+            f"Key Story Events: {'; '.join(important_events)}"
             if important_events
             else "No key events yet."
         )

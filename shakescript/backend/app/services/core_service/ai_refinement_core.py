@@ -2,6 +2,10 @@ def refine_batch_by_ai(
     self,
     story_id,
     episodes,
+    prev_episodes,
+    metadata,
+    story_data,
+    current_episode,
     batch_size,
     refinement_type,
     hinglish,
@@ -10,24 +14,11 @@ def refine_batch_by_ai(
     max_attempts = 3
     attempt = 0
     validation_result = {}
-    story_data = self.get_story_info(story_id, auth_id)
-    current_episode = story_data.get("current_episode", 1)
-    metadata = {
-        "title": story_data["title"],
-        "setting": story_data["setting"],
-        "key_events": story_data["key_events"],
-        "special_instructions": story_data["special_instructions"],
-        "story_outline": story_data["story_outline"],
-        "current_episode": current_episode,
-        "num_episodes": story_data["num_episodes"],
-        "story_id": story_id,
-        "characters": story_data["characters"],
-        "hinglish": hinglish,
-    }
+    # current_episode = story_data.get("current_episode", 1)  # Already provided
+    # metadata = { ... }  # Already provided
 
     # Get previous episodes for context (last 2 episodes before current batch)
-    prev_episodes = []
-    if current_episode > 1:
+    if not prev_episodes and current_episode > 1:
         prev_batch_end = current_episode - 1
         prev_batch_start = max(1, prev_batch_end - 2)  # Get up to 2 previous episodes
         prev_episodes = self.db_service.get_episodes_by_range(
@@ -71,9 +62,9 @@ def refine_batch_by_ai(
 
     # Update current_episode
     new_current_episode = current_episode + len(episodes)
-    self.db_service.supabase.table("stories").update(
-        {"current_episode": new_current_episode}
-    ).eq("id", story_id).eq("auth_id", auth_id).execute()
+    self.client.table("stories").update({"current_episode": new_current_episode}).eq(
+        "id", story_id
+    ).eq("auth_id", auth_id).execute()
 
     self.clear_current_episodes_content(story_id, auth_id)
 

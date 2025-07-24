@@ -32,7 +32,16 @@ def generate_and_refine_batch(
     # Apply AI refinement internally if requested
     if refinement_type == "AI":
         return self.refine_batch_by_ai(
-            self, story_id, episodes, batch_size, refinement_type, hinglish, auth_id
+            story_id,
+            episodes,
+            None,  # prev_episodes
+            None,  # metadata
+            story_data,
+            current_episode,
+            batch_size,
+            refinement_type,
+            hinglish,
+            auth_id,
         )
 
     return episodes

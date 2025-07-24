@@ -1,6 +1,12 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  ReactNode,
+} from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabaseClient";
 
 interface AuthContextType {
   session: Session | null;
@@ -11,55 +17,64 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error("Error getting session:", error);
-      } finally {
-        setLoading(false);
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error.message);
+      } else {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        console.log("Fetched session:", data.session?.access_token);
       }
+      setLoading(false);
     };
 
-    getSession();
+    fetchSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.access_token);
+        setSession(session);
+        setUser(session?.user ?? null);
+      },
+    );
 
     return () => {
-      authListener.subscription.unsubscribe();
+      listener.subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      localStorage.clear(); // Clear cached tokens/sessions
+      setSession(null);
+      setUser(null);
+      console.log("Signed out and cleared session");
+    } catch (err) {
+      console.error("Sign-out error:", err);
+    }
   };
 
-  const value = {
-    session,
-    user,
-    loading,
-    signOut,
-  };
+  const value = { session, user, loading, signOut };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
-}; 
+};

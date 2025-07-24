@@ -1,3 +1,5 @@
+# app/services/core_service/__init__.py
+
 from typing import Dict, List, Any
 from app.models.schemas import Feedback, StoryListItem
 from app.services.db_service import DBService
@@ -12,13 +14,19 @@ from app.services.core_service import (
 from app.services.core_service.refinement_generation_core import (
     generate_and_refine_batch,
 )
+from supabase import Client
 
 
 class StoryService:
-    def __init__(self):
-        self.ai_service = AIService()
-        self.db_service = DBService()
-        self.embedding_service = EmbeddingService()
+    def __init__(self, client: Client):
+        """
+        KEY CHANGE: The authenticated client from dependencies is received here
+        and passed down to every sub-service that is initialized.
+        """
+        self.ai_service = AIService(client)
+        self.db_service = DBService(client)
+        self.embedding_service = EmbeddingService(client)
+        self.client = client  # Store client for direct use if needed
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
@@ -41,13 +49,13 @@ class StoryService:
     def generate_multiple_episodes(
         self,
         story_id: int,
-        num_episodes: int,
+        start_episode: int,  # Corrected parameter name
+        num_episodes: int = 1,
         hinglish: bool = False,
-        batch_size: int = 1,
         auth_id: str = None,
     ) -> List[Dict[str, Any]]:
         return story_generator_core.generate_multiple_episodes(
-            self, story_id, num_episodes, hinglish, batch_size, auth_id
+            self, story_id, start_episode, num_episodes, hinglish, auth_id
         )
 
     def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
@@ -78,11 +86,9 @@ class StoryService:
         )
 
     def get_refined_episodes(self, story_id: int, auth_id: str) -> List[Dict]:
-        # Get any refined episodes that haven't been validated yet
         return self.db_service.get_refined_episodes(story_id, auth_id)
 
     def clear_current_episodes_content(self, story_id: int, auth_id: str):
-        # Clear the current episodes after they've been validated and stored
         self.db_service.clear_current_episodes_content(story_id, auth_id)
 
     def delete_story(self, story_id: int, auth_id: str) -> None:

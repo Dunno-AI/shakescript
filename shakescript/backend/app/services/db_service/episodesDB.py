@@ -1,22 +1,25 @@
-from supabase import create_client, Client
+# app/services/db_service/episodesDB.py
+
+from supabase import Client
 from app.services.db_service.charactersDB import CharactersDB
-from app.core.config import settings
 from typing import Dict, List, Any
 import json
 
 
 class EpisodesDB:
-    def __init__(self):
-        self.supabase: Client = create_client(
-            settings.SUPABASE_URL, settings.SUPABASE_KEY
-        )
-        self.CharactersDB = CharactersDB()
+    def __init__(self, client: Client):
+        """
+        KEY CHANGE: Accept the authenticated client.
+        """
+        self.client = client
+        # KEY CHANGE: Pass the client down to the next service.
+        self.CharactersDB = CharactersDB(client)
 
     def store_episode(
         self, story_id: int, episode_data: Dict, current_episode: int, auth_id: str
     ) -> int:
         episode_result = (
-            self.supabase.table("episodes")
+            self.client.table("episodes")
             .upsert(
                 {
                     "story_id": story_id,
@@ -36,41 +39,46 @@ class EpisodesDB:
             )
             .execute()
         )
+        if not episode_result.data:
+            raise Exception(f"Failed to store episode {current_episode}")
         episode_id = episode_result.data[0]["id"]
 
         self.CharactersDB.update_character_state(
             story_id, episode_data.get("characters_featured", []), auth_id
         )
 
-        story_data = (
-            self.supabase.table("stories")
+        story_data_res = (
+            self.client.table("stories")
             .select("key_events, setting, timeline")
             .eq("id", story_id)
             .eq("auth_id", auth_id)
             .execute()
-            .data[0]
         )
-        current_key_events = json.loads(story_data["key_events"] or "[]")
-        current_timeline = json.loads(story_data["timeline"] or "[]")
+        if not story_data_res.data:
+            raise Exception("Failed to retrieve story data for update")
+        story_data = story_data_res.data[0]
+
+        current_key_events = json.loads(story_data.get("key_events", "[]") or "[]")
+        current_timeline = json.loads(story_data.get("timeline", "[]") or "[]")
         new_key_events = [
             event["event"]
             for event in episode_data.get("Key Events", [])
-            if event["tier"] in ["foundational", "character-defining"]
+            if event.get("tier") in ["foundational", "character-defining"]
         ]
         new_timeline = [
             {
                 "event": e["event"],
                 "episode": current_episode,
-                "resolved": e["tier"] in ["foundational", "character-defining"],
+                "resolved": e.get("tier") in ["foundational", "character-defining"],
             }
             for e in episode_data.get("Key Events", [])
         ]
-        self.supabase.table("stories").update(
+        self.client.table("stories").update(
             {
                 "current_episode": current_episode + 1,
                 "setting": json.dumps(
                     {
-                        **json.loads(story_data["setting"]),
+                        **json.loads(story_data.get("setting", "{}") or "{}"),
                         **episode_data.get("Settings", {}),
                     }
                 ),
@@ -86,7 +94,7 @@ class EpisodesDB:
         self, story_id: int, current_episode: int, auth_id: str, limit: int = 3
     ) -> List[Dict]:
         result = (
-            self.supabase.table("episodes")
+            self.client.table("episodes")
             .select("*")
             .eq("story_id", story_id)
             .eq("auth_id", auth_id)
@@ -98,10 +106,10 @@ class EpisodesDB:
         return [
             {
                 "episode_number": ep["episode_number"],
-                "content": ep["content"],  
+                "content": ep["content"],
                 "title": ep["title"],
                 "emotional_state": ep["emotional_state"],
-                "key_events": json.loads(ep["key_events"] or "[]"),
+                "key_events": json.loads(ep.get("key_events", "[]") or "[]"),
             }
             for ep in result.data or []
         ]
@@ -109,12 +117,9 @@ class EpisodesDB:
     def get_episodes_by_range(
         self, story_id: int, start_episode: int, end_episode: int, auth_id: str
     ) -> List[Dict[str, Any]]:
-        """
-        Get episodes for a story within a specific range.
-        """
         try:
             result = (
-                self.supabase.table("episodes")
+                self.client.table("episodes")
                 .select("*")
                 .eq("story_id", story_id)
                 .eq("auth_id", auth_id)
@@ -123,31 +128,22 @@ class EpisodesDB:
                 .order("episode_number")
                 .execute()
             )
-            # Check if the response contains data
-            if hasattr(result, "data"):
-                return result.data
-            return []
+            return result.data if hasattr(result, "data") else []
         except Exception as e:
             print(f"Error fetching episodes: {e}")
             return []
 
     def get_all_episodes(self, story_id: int, auth_id: str) -> List[Dict[str, Any]]:
-        """
-        Get all stored episodes for a story.
-        """
         try:
             result = (
-                self.supabase.table("episodes")
+                self.client.table("episodes")
                 .select("*")
                 .eq("story_id", story_id)
                 .eq("auth_id", auth_id)
                 .order("episode_number")
                 .execute()
             )
-            # Check if the response contains data
-            if hasattr(result, "data"):
-                return result.data
-            return []
+            return result.data if hasattr(result, "data") else []
         except Exception as e:
             print(f"Error fetching all episodes: {e}")
             return []

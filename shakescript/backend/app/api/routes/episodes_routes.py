@@ -11,7 +11,6 @@ from typing import Union, List
 
 router = APIRouter(prefix="/episodes", tags=["episodes"])
 
-
 # Generate batch endpoint
 @router.post(
     "/{story_id}/generate-batch",
@@ -26,7 +25,7 @@ async def generate_batch(
     service: StoryService = Depends(get_story_service),
     user: dict = Depends(get_current_user),
 ):
-    auth_id = user.get("id")
+    auth_id = user.get("auth_id")
     story_data = service.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
@@ -50,7 +49,6 @@ async def generate_batch(
         "message": message,
     }
 
-
 # Validate batch endpoint
 @router.post(
     "/{story_id}/validate-batch",
@@ -62,9 +60,8 @@ async def validate_batch(
     service: StoryService = Depends(get_story_service),
     user: dict = Depends(get_current_user),
 ):
-    auth_id = user.get("id")
+    auth_id = user.get("auth_id")
     return service.validate_episode_batch(story_id, auth_id)
-
 
 @router.post(
     "/{story_id}/refine-batch",
@@ -77,5 +74,5 @@ async def refine_batch(
     service: StoryService = Depends(get_story_service),
     user: dict = Depends(get_current_user),
 ):
-    auth_id = user.get("id")
+    auth_id = user.get("auth_id")
     return service.refine_episode_batch(story_id, feedback, auth_id)

@@ -1,38 +1,40 @@
-from supabase import create_client, Client
-from app.core.config import settings
+# app/services/db_service/charactersDB.py
+
+from supabase import Client
 from typing import Dict, List
 import json
 
 
 class CharactersDB:
-    def __init__(self):
-        self.supabase: Client = create_client(
-            settings.SUPABASE_URL, settings.SUPABASE_KEY
-        )
+    def __init__(self, client: Client):
+        """
+        KEY CHANGE: Accept the authenticated client.
+        """
+        self.client = client
 
     def update_character_state(
         self, story_id: int, character_data: List[Dict], auth_id: str
     ) -> None:
-        # Separate existing characters and new characters
+        if not character_data:
+            return
+
         for char in character_data:
-            # Query for existing character
-            current_char = (
-                self.supabase.table("characters")
+            current_char_res = (
+                self.client.table("characters")
                 .select("*")
                 .eq("story_id", story_id)
                 .eq("auth_id", auth_id)
                 .eq("name", char["Name"])
                 .execute()
-                .data
             )
+            current_char_list = current_char_res.data
 
-            if current_char:
-                # Existing character: Update by ID
-                current = current_char[0]
+            if current_char_list:
+                current = current_char_list[0]
                 new_emotional = char.get(
                     "Emotional_State", current.get("emotional_state", "neutral")
                 )
-                milestones = json.loads(current.get("milestones", "[]"))
+                milestones = json.loads(current.get("milestones", "[]") or "[]")
                 if new_emotional != current.get("emotional_state"):
                     milestones.append(
                         {
@@ -41,8 +43,7 @@ class CharactersDB:
                         }
                     )
 
-                # Update existing character by ID
-                self.supabase.table("characters").update(
+                self.client.table("characters").update(
                     {
                         "role": char.get("Role", current.get("role", "Unknown")),
                         "description": char.get(
@@ -50,7 +51,7 @@ class CharactersDB:
                         ),
                         "relationship": json.dumps(
                             {
-                                **json.loads(current.get("relationship", "{}")),
+                                **json.loads(current.get("relationship", "{}") or "{}"),
                                 **char.get("Relationship", {}),
                             }
                         ),
@@ -63,9 +64,8 @@ class CharactersDB:
                     }
                 ).eq("id", current["id"]).eq("auth_id", auth_id).execute()
             else:
-                # New character: Insert without ID
                 new_emotional = char.get("Emotional_State", "neutral")
-                self.supabase.table("characters").insert(
+                self.client.table("characters").insert(
                     {
                         "story_id": story_id,
                         "name": char["Name"],
