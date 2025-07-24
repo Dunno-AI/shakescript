@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { StoryDetails, Episode } from "@/types/story";
+import { useAuthFetch } from "@/lib/utils";
 
 interface RefinementHookProps {
   story: StoryDetails;
@@ -15,7 +15,6 @@ interface Feedback {
 }
 
 export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: RefinementHookProps) => {
-  // 'episodes' now holds the list of *validated* past episodes for context
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [status, setStatus] = useState<
     "loading" | "human-review" | "ai-ready" | "refining" | "complete"
@@ -27,9 +26,9 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
   const [typingCompleted, setTypingCompleted] = useState<{
     [key: number]: boolean;
   }>({});
-  // 'latestEpisode' now holds the newly generated episode that is pending review
   const [latestEpisode, setLatestEpisode] = useState<Episode | null>(null);
   const episodesEndRef = useRef<HTMLDivElement | null>(null);
+  const authFetch = useAuthFetch();
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -46,28 +45,29 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
       : null;
   };
   
-  // This function now specifically generates the *next* batch of episodes
   const generateBatch = async () => {
     setStatus("loading");
     setErrorMessage("");
     setTypingCompleted({});
-    setLatestEpisode(null); // Clear the previous "latest" episode
+    setLatestEpisode(null);
 
     try {
-      const response = await axios.post(
+      const response = await authFetch(
         `${BASE_URL}/api/v1/episodes/${story.story_id}/generate-batch`,
-        {},
         {
-          params: {
+          method: 'POST',
+          body: JSON.stringify({
             batch_size: story.batch_size,
             hinglish: isHinglish,
             refinement_type: story.refinement_method,
-          },
+          }),
         },
       );
 
-      if (response.data.status === "success") {
-        const mappedEpisodes: Episode[] = response.data.episodes.map(
+      const data = await response.json();
+
+      if (data.status === "success") {
+        const mappedEpisodes: Episode[] = data.episodes.map(
           (ep: any) => ({
             episode_id: ep.episode_id,
             episode_number: ep.episode_number,
@@ -87,18 +87,17 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
           });
           setFeedback(initialFeedback);
         }
-        // Set the new episode(s) as the "latest" for review
         setLatestEpisode(findLatestEpisodeInBatch(mappedEpisodes));
       } else {
         if (
-          response.data.message &&
-          response.data.message.includes("All episodes generated")
+          data.message &&
+          data.message.includes("All episodes generated")
         ) {
           setStatus("complete");
           onComplete();
         } else {
           setErrorMessage(
-            response.data.message || "Failed to generate episodes",
+            data.message || "Failed to generate episodes",
           );
         }
       }
@@ -112,7 +111,6 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
   };
 
   useEffect(() => {
-    // Initial setup when the component loads
     const initialEpisodes: Episode[] = story.episodes.map((ep: any) => ({
       episode_id: ep.id,
       episode_number: ep.number,
@@ -123,12 +121,9 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     setEpisodes(initialEpisodes);
 
     if (story.story_id) {
-        // If there are no episodes yet, generate the first batch.
         if (initialEpisodes.length === 0) {
             generateBatch();
         } else {
-            // If there are existing episodes, it means we are resuming.
-            // We need to generate the *next* batch.
             generateBatch();
         }
     }
@@ -156,13 +151,17 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
         }));
 
       if (feedbackToSubmit.length > 0) {
-        const response = await axios.post(
+        const response = await authFetch(
           `${BASE_URL}/api/v1/episodes/${story.story_id}/refine-batch`,
-          feedbackToSubmit,
+          {
+            method: 'POST',
+            body: JSON.stringify(feedbackToSubmit),
+          }
         );
+        const data = await response.json();
 
-        if (response.data.status === "pending" && response.data.episodes) {
-          const refinedEpisodes: Episode[] = response.data.episodes.map(
+        if (data.status === "pending" && data.episodes) {
+          const refinedEpisodes: Episode[] = data.episodes.map(
             (ep: any) => ({
               episode_id: ep.episode_id,
               episode_number: ep.episode_number,
@@ -174,11 +173,10 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
 
           setLatestEpisode(findLatestEpisodeInBatch(refinedEpisodes));
           setTypingCompleted({});
-          setFeedback({}); // Reset feedback
+          setFeedback({});
           setStatus("human-review");
         }
       } else {
-        // If no feedback is submitted, just go back to the review state.
         setStatus("human-review");
       }
     } catch (error: any) {
@@ -187,7 +185,7 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
           error.response?.data?.detail || error.message || "Unknown error"
         }. Please try again.`,
       );
-      setStatus("human-review"); // Revert status on error
+      setStatus("human-review");
     } finally {
       setIsSubmitting(false);
     }
@@ -198,30 +196,30 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     setErrorMessage("");
 
     try {
-      const response = await axios.post(
+      const response = await authFetch(
         `${BASE_URL}/api/v1/episodes/${story.story_id}/validate-batch`,
+        { method: 'POST' }
       );
+      const data = await response.json();
 
-      if (response.data.status === "success") {
-        // Add the validated episode to the main list
+      if (data.status === "success") {
         if (latestEpisode) {
           setEpisodes((prev) => [...prev, latestEpisode]);
         }
         
         if (
-          response.data.message &&
-          response.data.message.includes("Story complete")
+          data.message &&
+          data.message.includes("Story complete")
         ) {
           setStatus("complete");
           onComplete();
         } else {
           setCurrentBatch((prev) => prev + 1);
-          // Generate the next batch after a short delay
           setTimeout(() => generateBatch(), 500); 
         }
       } else {
         setErrorMessage(
-          response.data.message || "Failed to validate episodes",
+          data.message || "Failed to validate episodes",
         );
       }
     } catch (error: any) {

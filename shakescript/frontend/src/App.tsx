@@ -1,6 +1,5 @@
-import { AuthProvider } from './contexts/AuthContext';
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import { Suspense, lazy } from 'react';
+import { Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Navigation/Footer";
 import { Navbar } from "./components/Navigation/Navbar";
 import LoginPage from './pages/LoginPage';
@@ -41,13 +40,7 @@ const AppLayout = () => {
 }
 
 function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <AppLayout />
-      </AuthProvider>
-    </Router>
-  );
+  return <AppLayout />;
 }
 
 export default App;

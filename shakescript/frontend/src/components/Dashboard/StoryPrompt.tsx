@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { useAuthFetch } from '../../lib/utils';
-import { Refinement } from './Refinement';
 import { useNavigate } from 'react-router-dom'; // Add this import
-import axios from 'axios';
 import { useStoryContext } from '@/contexts/StoryListContext';
 import { StoryDetails } from '@/types/story';
 
@@ -75,9 +73,9 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
       });
       const storyResponse = await res.json();
       
-      if (storyResponse.data.story && storyResponse.data.story.story_id) {
-        const newStoryId = storyResponse.data.story.story_id;
-        addStory(storyResponse.data.story);
+      if (storyResponse.story && storyResponse.story.story_id) {
+        const newStoryId = storyResponse.story.story_id;
+        addStory(storyResponse.story);
         const story : StoryDetails = {
           story_id: newStoryId,
           batch_size: 1,
@@ -85,7 +83,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
           total_episodes: episodes,
           current_episode: 1,
           summary: "",
-          title: storyResponse.data.story.title,
+          title: storyResponse.story.title,
           episodes: [],
         }
 

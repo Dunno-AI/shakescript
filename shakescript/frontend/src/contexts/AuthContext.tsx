@@ -32,7 +32,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else {
         setSession(data.session);
         setUser(data.session?.user ?? null);
-        console.log("Fetched session:", data.session?.access_token);
       }
       setLoading(false);
     };
@@ -40,8 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     fetchSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.access_token);
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
       },
@@ -55,10 +53,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      localStorage.clear(); // Clear cached tokens/sessions
       setSession(null);
       setUser(null);
-      console.log("Signed out and cleared session");
     } catch (err) {
       console.error("Sign-out error:", err);
     }

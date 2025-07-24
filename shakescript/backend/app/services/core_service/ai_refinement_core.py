@@ -33,7 +33,7 @@ def refine_batch_by_ai(
 
     while attempt < max_attempts:
         validation_result = self.ai_service.validate_batch(
-            story_id, episodes, prev_episodes, metadata
+            story_id, episodes, prev_episodes, metadata, auth_id
         )
         if validation_result.get("status") == "success":
             print(f"Batch validated successfully on attempt {attempt+1}")

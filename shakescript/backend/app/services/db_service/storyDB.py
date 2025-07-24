@@ -56,6 +56,7 @@ class StoryDB:
         story_row["current_episodes_content"] = _safe_json_loads(
             story_row.get("current_episodes_content"), list
         )
+        story_row["refinement_method"] = story_row["refinement_method"]
 
         episodes_result = (
             self.client.table("episodes")

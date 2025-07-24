@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
 import { Story } from "@/types/story";
+import { useAuthFetch } from "@/lib/utils";
 
 const CACHE_DURATION = 6 * 60 * 1000;
 
@@ -24,12 +24,14 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const authFetch = useAuthFetch();
 
   const fetchStories = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(BASE_URL + "/api/v1/stories/all");
-      const allStories = res.data.stories;
+      const res = await authFetch(BASE_URL + "/api/v1/stories/all");
+      const data = await res.json();
+      const allStories = data.stories;
       const completed = allStories.filter((s: any) => s.is_completed);
       const incomplete = allStories.filter((s: any) => !s.is_completed);
       setCompletedStories(completed);
@@ -65,7 +67,7 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const deleteStory = async (storyId: number) => {
     try {
-      await fetch(`${BASE_URL}/api/v1/stories/${storyId}`, {
+      await authFetch(`${BASE_URL}/api/v1/stories/${storyId}`, {
         method: "DELETE",
       });
       setCompletedStories((prev) => prev.filter((s) => s.story_id !== storyId));
@@ -77,11 +79,7 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
-      setLoading(false);
-    } else {
-      fetchStories();
-    }
+    fetchStories();
   }, []);
 
   return (

@@ -91,6 +91,7 @@ def store_validated_episodes(
                 episode_number,
                 episode["episode_content"],
                 character_names,
+                auth_id
             )
             print(f"Chunking completed for validated episode {episode_number}")
         else:

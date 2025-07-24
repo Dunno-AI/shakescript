@@ -1,13 +1,8 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { StoryDetails } from "@/types/story";
+import { Story, StoryDetails } from "@/types/story";
 import { useAuthFetch } from '../../../lib/utils';
-
-interface Story {
-  story_id: number;
-  title: string;
-}
 
 const ClassicLoader = () => {
   return (
@@ -31,10 +26,9 @@ const StoryCard = ({
 
   const handleClick = async () => {
     if (story.story_id) {
-      setIsLoading(true)
-      console.log("Clicked on:", story.story_id);
+      setIsLoading(true);
       try {
-        const res = await authFetch(`${BASE_URL}api/v1/stories/${story.story_id}`);
+        const res = await authFetch(`${BASE_URL}/api/v1/stories/${story.story_id}`);
         const response = await res.json();
         if (response && response.story) {
           onSelectStory(response.story);
