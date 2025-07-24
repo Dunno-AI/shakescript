@@ -81,7 +81,7 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
       </div>
 
       {isReviewing && latestEpisode && (
-        <div className="p-5 border-t border-zinc-800 flex justify-end gap-3 items-center">
+        <div className="bg-[#111111] border-t border-zinc-800 p-6 sticky bottom-0 flex justify-end items-center gap-4">
             {userHasScrolled && (
                 <button
                     onClick={manualScrollToBottom}
