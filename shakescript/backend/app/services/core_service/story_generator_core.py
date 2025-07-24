@@ -3,13 +3,13 @@ import json
 
 
 async def create_story(
-    self, prompt: str, num_episodes: int, hinglish: bool = False, auth_id: str = ""
+    self, prompt: str, num_episodes: int, refinement_method: str, hinglish: bool = False, auth_id: str = ""
 ) -> Dict[str, Any]:
     full_prompt = f"{prompt} number of episodes = {num_episodes}"
     metadata = self.ai_service.extract_metadata(full_prompt, num_episodes, hinglish)
     if "error" in metadata:
         return metadata
-    story_id = self.db_service.store_story_metadata(metadata, num_episodes, auth_id)
+    story_id = self.db_service.store_story_metadata(metadata, num_episodes, refinement_method, auth_id)
     return {"story_id": story_id, "title": metadata.get("Title", "Untitled Story")}
 
 

@@ -14,8 +14,6 @@ def refine_batch_by_ai(
     max_attempts = 3
     attempt = 0
     validation_result = {}
-    # current_episode = story_data.get("current_episode", 1)  # Already provided
-    # metadata = { ... }  # Already provided
 
     # Get previous episodes for context (last 2 episodes before current batch)
     if not prev_episodes and current_episode > 1:
@@ -58,7 +56,7 @@ def refine_batch_by_ai(
             f"AI refinement warning: Failed to refine after {max_attempts} attempts, proceeding anyway"
         )
 
-    self.store_validated_episodes(story_id, episodes, auth_id)
+    self.store_validated_episodes(story_id, episodes, metadata["num_episodes"], auth_id)
 
     # Update current_episode
     new_current_episode = current_episode + len(episodes)

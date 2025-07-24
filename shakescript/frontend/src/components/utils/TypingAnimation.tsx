@@ -5,6 +5,7 @@ interface TypingAnimationProps {
   speed?: number; // ms per character
   className?: string;
   onTyping?: () => void; // called on every character typed
+  onComplete?: () => void;
 }
 
 const CursorSVG: React.FC = () => (
@@ -18,7 +19,13 @@ const CursorSVG: React.FC = () => (
   </svg>
 );
 
-export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 20, className, onTyping }) => {
+export const TypingAnimation: React.FC<TypingAnimationProps> = ({ 
+  text, 
+  speed = 20, 
+  className, 
+  onTyping, 
+  onComplete 
+}) => {
   const [displayed, setDisplayed] = useState('');
   const [completed, setCompleted] = useState(false);
 
@@ -26,17 +33,21 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 
     setDisplayed('');
     setCompleted(false);
     let i = 0;
+    
     const intervalId = setInterval(() => {
       setDisplayed(text.slice(0, i));
       if (onTyping) onTyping();
       i++;
+      
       if (i > text.length) {
         clearInterval(intervalId);
         setCompleted(true);
+        if (onComplete) onComplete();
       }
     }, speed);
+
     return () => clearInterval(intervalId);
-  }, [text, speed, onTyping]);
+  }, [text, speed, onTyping, onComplete]);
 
   return (
     <span className={className} style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>

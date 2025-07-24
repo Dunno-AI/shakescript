@@ -4,8 +4,9 @@ import { Story } from './Story';
 import { Library } from './Library/Library';
 import { ResumeStory } from './ResumeStory';
 import UserStats from './UserStats';
+import { RefinementRoute } from './RefinementRoute';
 
-export const Layout = () => {
+const Layout = () => {
   const location = useLocation();
   const path = location.pathname;
   const isMainDashboard = path === '/dashboard' || path === '/dashboard/';
@@ -25,8 +26,11 @@ export const Layout = () => {
           <Route path="/library" element={<Library />} />
           <Route path="/continue" element={<ResumeStory />} />
           <Route path="/userstats" element={<UserStats />} />
+          <Route path="/:storyId/refinement" element={<RefinementRoute />} />
         </Routes>
       </main>
     </div>
   );
 };
+
+export default Layout;

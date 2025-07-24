@@ -101,7 +101,7 @@ class StoryDB:
         return story_row
 
     def store_story_metadata(
-        self, metadata: Dict, num_episodes: int, auth_id: str
+        self, metadata: Dict, num_episodes: int, refinement_method: str, auth_id: str
     ) -> int:
         result = (
             self.client.table("stories")
@@ -111,7 +111,7 @@ class StoryDB:
                     "protagonist": json.dumps(metadata.get("Protagonist", [])),
                     "setting": json.dumps(
                         metadata.get("Setting", {})
-                    ),  # Corrected from "Settings"
+                    ),  
                     "key_events": json.dumps([]),
                     "timeline": json.dumps([]),
                     "special_instructions": metadata.get("Special Instructions", ""),
@@ -120,6 +120,8 @@ class StoryDB:
                     "num_episodes": num_episodes,
                     "current_episodes_content": json.dumps([]),
                     "auth_id": auth_id,
+                    "genre": metadata.get("Genre", "NULL"),
+                    "refinement_method": refinement_method
                 }
             )
             .execute()
@@ -175,6 +177,9 @@ class StoryDB:
         if not story.data:
             raise ValueError(f"Story with ID {story_id} not found")
 
+        self.client.table("characters").delete().eq("story_id", story_id).execute()
+        self.client.table("episodes").delete().eq("story_id", story_id).execute()
+        self.client.table("chunks").delete().eq("story_id", story_id).execute()
         self.client.table("stories").delete().eq("id", story_id).execute()
 
     def set_story_completed(self, story_id: int, completed: bool):

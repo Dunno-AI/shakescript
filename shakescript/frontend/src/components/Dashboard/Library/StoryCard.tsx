@@ -32,6 +32,7 @@ const StoryCard = ({
   const handleClick = async () => {
     if (story.story_id) {
       setIsLoading(true)
+      console.log("Clicked on:", story.story_id);
       try {
         const res = await authFetch(`${BASE_URL}api/v1/stories/${story.story_id}`);
         const response = await res.json();

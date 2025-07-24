@@ -56,7 +56,7 @@ def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
 
 
 def store_validated_episodes(
-    self, story_id: int, episodes: List[Dict[str, Any]], auth_id: str
+    self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int, auth_id: str
 ) -> None:
     """
     Store the validated episodes in the episodes table and update the story's current_episode.
@@ -97,9 +97,10 @@ def store_validated_episodes(
             print(f"Warning: No episode_content for episode {episode_number}")
 
     max_episode_num = max([ep.get("episode_number", 0) for ep in episodes], default=0)
+    is_completed = True if max_episode_num == total_episodes else False
     if max_episode_num > 0:
         self.client.table("stories").update(
-            {"current_episode": max_episode_num + 1}
+            {"current_episode": max_episode_num + 1, "is_completed": is_completed}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
         print(f"Updated story current_episode to {max_episode_num + 1}")
 
