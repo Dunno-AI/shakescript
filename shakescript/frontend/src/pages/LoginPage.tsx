@@ -14,7 +14,7 @@ const LoginPage = () => {
   }, [user, loading, navigate]);
 
   if (loading || user) {
-    return <div>Loading...</div>; // Or a loading spinner
+    return <div>Loading...</div>;
   }
 
   return (
