@@ -1,5 +1,3 @@
-# app/services/core_service/__init__.py
-
 from typing import Dict, List, Any
 from app.models.schemas import Feedback, StoryListItem
 from app.services.db_service import DBService
@@ -19,10 +17,6 @@ from supabase import Client
 
 class StoryService:
     def __init__(self, client: Client):
-        """
-        KEY CHANGE: The authenticated client from dependencies is received here
-        and passed down to every sub-service that is initialized.
-        """
         self.ai_service = AIService(client)
         self.db_service = DBService(client)
         self.embedding_service = EmbeddingService(client)
@@ -33,11 +27,12 @@ class StoryService:
         self,
         prompt: str,
         num_episodes: int,
+        refinement_method: str,
         hinglish: bool = False,
         auth_id: str = None,
     ) -> Dict[str, Any]:
         return await story_generator_core.create_story(
-            self, prompt, num_episodes, hinglish, auth_id
+            self, prompt, num_episodes, refinement_method, hinglish, auth_id
         )
 
     def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
@@ -62,9 +57,9 @@ class StoryService:
         return utils_core.update_story_summary(self, story_id, auth_id)
 
     def store_validated_episodes(
-        self, story_id: int, episodes: List[Dict[str, Any]], auth_id: str
+            self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int, auth_id: str
     ) -> None:
-        return utils_core.store_validated_episodes(self, story_id, episodes, auth_id)
+        return utils_core.store_validated_episodes(self, story_id, episodes, total_episodes, auth_id)
 
     def generate_and_refine_batch(
         self,

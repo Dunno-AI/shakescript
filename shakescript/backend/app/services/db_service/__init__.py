@@ -25,8 +25,8 @@ class DBService:
     def get_story_info(self, story_id: int, auth_id: str):
         return self.stories.get_story_info(story_id, auth_id)
 
-    def store_story_metadata(self, metadata, num_episodes, auth_id: str):
-        return self.stories.store_story_metadata(metadata, num_episodes, auth_id)
+    def store_story_metadata(self, metadata, num_episodes, refinement_method, auth_id: str):
+        return self.stories.store_story_metadata(metadata, num_episodes,refinement_method, auth_id)
 
     def update_story_current_episodes_content(self, story_id, episodes, auth_id: str):
         return self.stories.update_story_current_episodes_content(

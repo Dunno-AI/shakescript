@@ -19,7 +19,8 @@ export function useAuthFetch() {
     const token = session.access_token;
     const headers = {
       ...(options.headers ? options.headers : {}),
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     };
     return fetch(url, { ...options, headers });
   };

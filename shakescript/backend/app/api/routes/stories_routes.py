@@ -59,14 +59,13 @@ async def create_story(
     user: dict = Depends(get_current_user),
 ):
     prompt = parse_user_prompt(prompt)
-    # --- FIX ---
     auth_id = user.get("auth_id")
     if not auth_id:
         raise HTTPException(
             status_code=403, detail="Could not identify user from token."
         )
 
-    result = await service.create_story(prompt, num_episodes, hinglish, auth_id)
+    result = await service.create_story(prompt, num_episodes, refinement, hinglish, auth_id)
     if "error" in result:
         raise HTTPException(HTTP_400_BAD_REQUEST, detail=result["error"])
 
@@ -93,6 +92,7 @@ async def create_story(
             timeline=story_info["timeline"],
             batch_size=batch_size,
             refinement_method=refinement,
+            total_episodes=story_info["num_episodes"],
         ),
         "message": "Story created successfully",
     }
@@ -111,7 +111,6 @@ def get_story(
     """
     Retrieve detailed information about a story with a structured response for the authenticated user.
     """
-    # --- FIX ---
     auth_id = user.get("auth_id")
     if not auth_id:
         raise HTTPException(
@@ -138,6 +137,7 @@ def get_story(
             timeline=story_info["timeline"],
             batch_size=story_info.get("batch_size", 2),
             refinement_method=story_info.get("refinement_method", "AI"),
+            total_episodes=story_info.get("num_episodes", 0)
         ),
         "message": "Story retrieved successfully",
     }

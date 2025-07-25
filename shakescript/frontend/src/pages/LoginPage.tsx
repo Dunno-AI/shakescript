@@ -1,7 +1,22 @@
+import { useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { LoginButton } from '../components/Login/LoginButton';
-import { Link } from 'react-router-dom';
 
 const LoginPage = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || user) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] text-white">
         <Link to="/" className="flex-shrink-0 mb-8">
@@ -21,4 +36,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

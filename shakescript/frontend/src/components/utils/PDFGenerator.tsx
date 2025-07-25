@@ -1,21 +1,7 @@
+import { StoryDetails } from '@/types/story';
 import { jsPDF } from 'jspdf';
 
-interface Episode {
-  id: number;
-  number: number;
-  title: string;
-  content: string;
-  summary?: string;
-}
-
-interface Story {
-  story_id: number;
-  title: string;
-  summary: string;
-  episodes: Episode[];
-}
-
-export const generatePDF = (story: Story) => {
+export const generatePDF = (story: StoryDetails) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
   const margin = 20;
   const pageWidth = doc.internal.pageSize.width;
@@ -39,11 +25,11 @@ export const generatePDF = (story: Story) => {
   story.episodes.forEach((ep, idx) => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text(`Chapter ${ep.number}: ${ep.title}`, margin, margin + 10);
+    doc.text(`Chapter ${ep.episode_number}: ${ep.episode_title}`, margin, margin + 10);
 
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
-    const lines = doc.splitTextToSize(ep.content, contentWidth);
+    const lines = doc.splitTextToSize(ep.episode_content, contentWidth);
     let y = margin + 20;
     lines.forEach((line:string) => {
       if (y > pageHeight - margin) {
