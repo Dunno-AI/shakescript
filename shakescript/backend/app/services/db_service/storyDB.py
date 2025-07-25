@@ -2,6 +2,7 @@ from supabase import Client
 from typing import Dict, List, Any
 import json
 import logging
+from datetime import datetime, timezone
 
 
 # --- HELPER FUNCTION ---
@@ -181,3 +182,65 @@ class StoryDB:
         self.client.table("stories").update({"is_completed": completed}).eq(
             "id", story_id
         ).execute()
+
+    # ---------------USERS----------------
+
+    def get_user_profile(self, auth_id: str) -> Dict:
+        result = (
+            self.client.table("users")
+            .select("id, auth_id, name, email, avatar_url, is_premium, created_at")
+            .eq("auth_id", auth_id)
+            .limit(1)
+            .single()
+            .execute()
+        )
+        if not result.data:
+            return {"error": "User profile not found."}
+        return result.data
+
+    def get_user_stats(self, auth_id: str, created_at: datetime) -> Dict:
+        stories_res = (
+            self.client.table("stories")
+            .select("id, is_completed", count="exact")
+            .eq("auth_id", auth_id)
+            .execute()
+        )
+        episodes_res = (
+            self.client.table("episodes")
+            .select("id", count="exact")
+            .eq("auth_id", auth_id)
+            .execute()
+        )
+
+        total_stories = stories_res.count or 0
+        total_episodes = episodes_res.count or 0
+        completed_stories = (
+            sum(1 for story in stories_res.data if story["is_completed"])
+            if stories_res.data
+            else 0
+        )
+        in_progress_stories = total_stories - completed_stories
+
+        account_age_days = (datetime.now(timezone.utc) - created_at).days
+
+        return {
+            "total_stories": total_stories,
+            "total_episodes": total_episodes,
+            "episodes_day_count": 0,
+            "episodes_month_count": 0,
+            "completed_stories": completed_stories,
+            "in_progress_stories": in_progress_stories,
+            "account_age_days": account_age_days,
+            "last_active": datetime.now(timezone.utc),
+        }
+
+    def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
+        result = (
+            self.client.table("stories")
+            .select("id, title, summary, created_at")
+            .eq("auth_id", auth_id)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return result.data if result.data else []

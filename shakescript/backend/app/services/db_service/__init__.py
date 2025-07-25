@@ -4,6 +4,8 @@ from .storyDB import StoryDB
 from .episodesDB import EpisodesDB
 from .charactersDB import CharactersDB
 from supabase import Client
+from typing import Dict, List
+from datetime import datetime, timezone
 
 
 class DBService:
@@ -63,3 +65,12 @@ class DBService:
 
     def set_story_completed(self, story_id: int, completed: bool):
         self.stories.set_story_completed(story_id, completed)
+
+    def get_user_profile(self, auth_id: str) -> Dict:
+        return self.stories.get_user_profile(auth_id)
+
+    def get_user_stats(self, auth_id: str, created_at: datetime) -> Dict:
+        return self.stories.get_user_stats(auth_id, created_at)
+
+    def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
+        return self.stories.get_recent_stories(auth_id, limit)
