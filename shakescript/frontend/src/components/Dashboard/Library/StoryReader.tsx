@@ -3,27 +3,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { generatePDF } from "../../utils/PDFGenerator";
 import { X } from "lucide-react";
-import { StoryCache } from "@/types/story";
+import { StoryCache, StoryDetails } from "@/types/story";
 import { useAuthFetch } from '../../../lib/utils';
 import ConfirmModal from "../../utils/ConfirmModal";
 
-interface Episode {
-  id: number;
-  number: number;
-  title: string;
-  content: string;
-  summary?: string;
-}
-
-interface Story {
-  story_id: number;
-  title: string;
-  summary: string;
-  episodes: Episode[];
-}
-
 interface StoryReaderProps {
-  story: Story;
+  story: StoryDetails;
   onBack: () => void;
 }
 
@@ -116,12 +101,12 @@ const StoryReader = ({ story, onBack }: StoryReaderProps) => {
               className="p-6 bg-zinc-900/30 rounded-xl border border-zinc-800 backdrop-blur-sm"
             >
               <h2 className="text-xl font-semibold mb-4 text-zinc-100">
-                Episode {story.episodes[currentEpisode].number}:{" "}
-                {story.episodes[currentEpisode].title}
+                Episode {story.episodes[currentEpisode].episode_number}:{" "}
+                {story.episodes[currentEpisode].episode_title}
               </h2>
               <div className="prose prose-invert max-w-none">
                 <p className="text-zinc-400 leading-relaxed">
-                  {story.episodes[currentEpisode].content}
+                  {story.episodes[currentEpisode].episode_content}
                 </p>
               </div>
             </motion.div>
