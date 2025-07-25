@@ -1,5 +1,6 @@
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, APIRouter, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 
 from app.api.routes import (
     stories_routes,
@@ -8,11 +9,16 @@ from app.api.routes import (
     dashboard_routes,
 )
 
+# Define the security scheme for the Authorization header.
+# This tells FastAPI how to create the "Authorize" button in the docs.
+api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
+
 # Initialize the FastAPI application
 app = FastAPI(
     title="Shakescript API",
-    description="Backend services for the Shakescript application.",
+    description="API for generating and managing stories.",
     version="1.0.0",
+    dependencies=[Depends(api_key_header)],
 )
 
 # Configure CORS

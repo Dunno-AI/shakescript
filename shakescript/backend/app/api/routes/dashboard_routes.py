@@ -1,8 +1,10 @@
+# app/api/routes/dashboard_routes.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.dependencies import get_current_user, get_user_client
 from app.services.db_service import DBService
 from ...models.user_schema import UserDashboard, UserResponse, UserStats
-from datetime import datetime
+from datetime import datetime, timezone  # Make sure timezone is imported
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -32,10 +34,13 @@ def get_user_dashboard(
     if "error" in profile_data:
         raise HTTPException(status_code=404, detail=profile_data["error"])
 
+    # --- FIX IS HERE ---
     # We need the 'created_at' datetime object for stats calculation
     created_at_str = profile_data.get("created_at")
-    # Convert string to datetime object
-    created_at = datetime.fromisoformat(created_at_str)
+    # Convert string to a naive datetime object first
+    naive_created_at = datetime.fromisoformat(created_at_str)
+    # Then, make it timezone-aware by associating it with UTC
+    created_at = naive_created_at.replace(tzinfo=timezone.utc)
 
     # 2. Fetch User Stats
     stats_data = db_service.get_user_stats(auth_id, created_at)

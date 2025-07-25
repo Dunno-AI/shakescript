@@ -2,7 +2,7 @@ from supabase import Client
 from typing import Dict, List, Any
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 # --- HELPER FUNCTION ---
@@ -46,7 +46,6 @@ class StoryDB:
 
         story_row = story_result.data[0]
 
-        # --- FIX: Parse JSON strings into Python objects ---
         story_row["setting"] = _safe_json_loads(story_row.get("setting"), dict)
         story_row["protagonist"] = _safe_json_loads(story_row.get("protagonist"), list)
         story_row["story_outline"] = _safe_json_loads(
@@ -111,9 +110,7 @@ class StoryDB:
                 {
                     "title": metadata.get("Title", "Untitled Story"),
                     "protagonist": json.dumps(metadata.get("Protagonist", [])),
-                    "setting": json.dumps(
-                        metadata.get("Setting", {})
-                    ),  
+                    "setting": json.dumps(metadata.get("Setting", {})),
                     "key_events": json.dumps([]),
                     "timeline": json.dumps([]),
                     "special_instructions": metadata.get("Special Instructions", ""),
@@ -123,7 +120,7 @@ class StoryDB:
                     "current_episodes_content": json.dumps([]),
                     "auth_id": auth_id,
                     "genre": metadata.get("Genre", "NULL"),
-                    "refinement_method": refinement_method
+                    "refinement_method": refinement_method,
                 }
             )
             .execute()
@@ -189,6 +186,68 @@ class StoryDB:
             "id", story_id
         ).execute()
 
+    # ---------------RATE_LIMIT----------------
+    def check_and_update_episode_limits(self, auth_id: str) -> Dict[str, Any]:
+        """
+        Checks and updates daily/monthly episode limits for a user.
+        """
+        now = datetime.now(timezone.utc)
+
+        user_res = (
+            self.client.table("users")
+            .select("episodes_timestamps, episodes_month_count, month_start_date")
+            .eq("auth_id", auth_id)
+            .single()
+            .execute()
+        )
+        if not user_res.data:
+            return {"error": "User not found."}
+
+        user = user_res.data
+        timestamps = user.get("episodes_timestamps") or []
+        month_count = user.get("episodes_month_count") or 0
+        month_start_date_str = user.get("month_start_date")
+
+        if month_start_date_str:
+            month_start_date = datetime.fromisoformat(month_start_date_str)
+            if now.year > month_start_date.year or now.month > month_start_date.month:
+                month_count = 0
+                month_start_date_str = now.date().isoformat()
+        else:
+            month_start_date_str = now.date().isoformat()
+
+        if month_count >= 30:
+            return {"error": "Monthly episode limit (30) reached."}
+
+        one_day_ago = now - timedelta(days=1)
+        recent_timestamps = [
+            t for t in timestamps if datetime.fromisoformat(t) > one_day_ago
+        ]
+
+        if len(recent_timestamps) >= 15:
+            return {"error": "Daily episode limit (15 in 24 hours) reached."}
+
+        # 5. All checks passed, update the user's record
+        new_timestamps = recent_timestamps + [now.isoformat()]
+
+        update_res = (
+            self.client.table("users")
+            .update(
+                {
+                    "episodes_timestamps": new_timestamps,
+                    "episodes_month_count": month_count + 1,
+                    "month_start_date": month_start_date_str,
+                }
+            )
+            .eq("auth_id", auth_id)
+            .execute()
+        )
+
+        if not update_res.data:
+            return {"error": "Failed to update user limits."}
+
+        return {"status": "success"}
+
     # ---------------USERS----------------
 
     def get_user_profile(self, auth_id: str) -> Dict:
@@ -250,3 +309,5 @@ class StoryDB:
             .execute()
         )
         return result.data if result.data else []
+
+    #

@@ -22,8 +22,11 @@ def generate_multiple_episodes(
     auth_id: str = "",
 ) -> List[Dict[str, Any]]:
     """
-    Generate one or multiple episodes for a story.
+    Generate one or multiple episodes for a story,with rate limiting
     """
+    limit_check_result = self.db_service.check_and_update_episode_limits(auth_id)
+    if "error" in limit_check_result:
+        return [limit_check_result]
 
     story_data = self.db_service.get_story_info(story_id, auth_id)
     if "error" in story_data:

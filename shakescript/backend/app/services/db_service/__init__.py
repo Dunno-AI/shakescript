@@ -4,7 +4,7 @@ from .storyDB import StoryDB
 from .episodesDB import EpisodesDB
 from .charactersDB import CharactersDB
 from supabase import Client
-from typing import Dict, List
+from typing import Dict, List, Any
 from datetime import datetime, timezone
 
 
@@ -74,3 +74,9 @@ class DBService:
 
     def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
         return self.stories.get_recent_stories(auth_id, limit)
+
+    def check_and_update_episode_limits(self, auth_id: str) -> Dict[str, Any]:
+        """
+        Checks and updates user episode limits by calling the method in StoryDB.
+        """
+        return self.stories.check_and_update_episode_limits(auth_id)
