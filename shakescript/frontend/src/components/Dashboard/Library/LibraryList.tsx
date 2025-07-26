@@ -1,26 +1,19 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Loader2 } from "lucide-react";
 import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
-import { useAuthFetch } from '../../../lib/utils';
 import { useStoryContext } from "@/contexts/StoryListContext";
 import { Story, StoryDetails } from "@/types/story";
+import toast from "react-hot-toast"; // --- Import the toast function ---
 
 interface LibraryListProps {
   onSelectStory: (story: StoryDetails) => void;
-  Stories: Story[]
+  Stories: Story[];
 }
 
-const ClassicLoader = () => (
-  <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
-);
-
 const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
-  const {
-    deleteStory,
-    loading,
-  } = useStoryContext();
+  const { deleteStory, loading } = useStoryContext();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -30,13 +23,12 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
   const [allGenres, setAllGenres] = useState<string[]>([]);
 
   useEffect(() => {
-    // Generate genre list from current stories
     const genres = Array.from(
       new Set(
-        Stories
-          .map((s) => (typeof s.genre === "string" ? s.genre : ""))
-          .filter((g): g is string => !!g)
-      )
+        Stories.map((s) => (typeof s.genre === "string" ? s.genre : "")).filter(
+          (g): g is string => !!g,
+        ),
+      ),
     );
     setAllGenres(["All", ...genres]);
   }, [Stories]);
@@ -47,25 +39,27 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
   };
 
   const confirmDelete = async () => {
-    try {
-      if (deleteTarget !== null) {
-        setDeleting(true);
-        await deleteStory(deleteTarget); 
+    if (deleteTarget !== null) {
+      setDeleting(true);
+      try {
+        await deleteStory(deleteTarget);
+        // --- Show success notification ---
+        toast.success("Story deleted successfully!");
+      } catch (err) {
+        // --- Show error notification ---
+        toast.error("Failed to delete the story.");
+      } finally {
+        setShowConfirm(false);
+        setDeleteTarget(null);
+        setDeleting(false);
       }
-    } catch (err) {
-      alert("Failed to delete.");
-    } finally {
-      setShowConfirm(false);
-      setDeleteTarget(null);
-      setDeleting(false);
     }
   };
 
-  // Filter by search and genre
   const filtered = Stories.filter(
     (s) =>
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (genreFilter === "All" || s.genre === genreFilter)
+      (genreFilter === "All" || s.genre === genreFilter),
   );
 
   return (
@@ -74,11 +68,8 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
         open={showConfirm}
         onConfirm={confirmDelete}
         onCancel={() => setShowConfirm(false)}
-        message={
-          deleting
-            ? "Deleting..."
-            : "Are you sure you want to delete this story? This action cannot be undone."
-        }
+        message="Are you sure you want to delete this story? This action cannot be undone."
+        isDeleting={deleting}
       />
 
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -137,7 +128,7 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center space-y-3">
-          <ClassicLoader />
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
           <p className="text-xs text-zinc-500">Loading stories</p>
         </div>
       )}
@@ -146,4 +137,3 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
 };
 
 export default LibraryList;
-

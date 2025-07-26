@@ -8,65 +8,34 @@ import {
   Calendar,
   TrendingUp,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { getDashboardData, updateUserProfile } from "../../lib/api";
-import { UserDashboard } from "../../types/user_schema";
+import { useDashboard } from "../../contexts/DashboardContext";
+import { updateUserProfile } from "../../lib/api";
 import { DashboardCharts } from "./DashboardCharts";
+import { useAuth } from "../../contexts/AuthContext"; // 1. Import useAuth
 
 export default function UserStats() {
-  const { user } = useAuth();
-  const [dashboardData, setDashboardData] = useState<UserDashboard | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { dashboardData, loading, error } = useDashboard();
+  const { user: authUser } = useAuth(); // 2. Get the authenticated user object
 
   const [editMode, setEditMode] = useState(false);
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (user) {
-        try {
-          setLoading(true);
-          setError(null);
-          const data = await getDashboardData();
-          setDashboardData(data);
-          setName(data.user.name);
-          setAvatarUrl(
-            data.user.avatar_url ||
-            `https://i.pravatar.cc/100?u=${data.user.auth_id}`,
-          );
-        } catch (err: any) {
-          setError(err.message || "An unknown error occurred.");
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchData();
-  }, [user]);
+    if (dashboardData?.user && authUser) {
+      setName(dashboardData.user.name);
 
-  const handleSave = async () => {
-    if (!dashboardData) return;
-    try {
-      await updateUserProfile({ name, avatar_url: avatarUrl });
-      setDashboardData((prev) =>
-        prev
-          ? {
-            ...prev,
-            user: { ...prev.user, name, avatar_url: avatarUrl },
-          }
-          : null,
+      // 3. Use the reliable avatar URL from auth as a fallback
+      const providerAvatar = authUser.user_metadata.avatar_url;
+      setAvatarUrl(
+        dashboardData.user.avatar_url ||
+        providerAvatar ||
+        `https://i.pravatar.cc/100?u=${dashboardData.user.auth_id}`,
       );
-      setEditMode(false);
-    } catch (err) {
-      console.error("Failed to update profile:", err);
-      alert("Failed to save profile. Please try again.");
     }
-  };
+  }, [dashboardData, authUser]); // 4. Add authUser to the dependency array
 
+  // ... rest of the component remains the same
   if (loading) {
     return (
       <div className="w-full h-full min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -76,7 +45,7 @@ export default function UserStats() {
     );
   }
 
-  if (error) {
+  if (error || !dashboardData) {
     return (
       <div className="w-full h-full min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-red-400">
         <AlertTriangle className="w-12 h-12 mb-4" />
@@ -86,11 +55,20 @@ export default function UserStats() {
     );
   }
 
-  if (!user || !dashboardData) {
-    return <div className="p-8 text-zinc-400">No user data available.</div>;
-  }
-
   const { user: profile, stats, recent_stories } = dashboardData;
+
+  const handleSave = async () => {
+    if (!dashboardData) return;
+    try {
+      await updateUserProfile({ name, avatar_url: avatarUrl });
+      // NOTE: A more robust solution would be to call `refreshDashboard()` from the context
+      // to get the latest state from the server after an update.
+      setEditMode(false);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to save profile. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-white">

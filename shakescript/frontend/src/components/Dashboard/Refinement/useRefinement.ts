@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { StoryDetails, Episode } from "@/types/story";
 import { useAuthFetch } from "@/lib/utils";
+import toast from "react-hot-toast"; // Import toast
 
 interface RefinementHookProps {
   story: StoryDetails;
@@ -14,77 +15,44 @@ interface Feedback {
   feedback: string;
 }
 
-export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: RefinementHookProps) => {
+export const useRefinement = ({
+  story,
+  isHinglish,
+  onComplete,
+  initialBatch,
+}: RefinementHookProps) => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [status, setStatus] = useState<
     "loading" | "human-review" | "ai-ready" | "refining" | "complete"
   >("loading");
-  const [currentBatch, setCurrentBatch] = useState<number>(initialBatch || 1);
+  const [currentBatchEpisodes, setCurrentBatchEpisodes] = useState<Episode[]>(
+    [],
+  );
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [typingCompleted, setTypingCompleted] = useState<{
     [key: number]: boolean;
   }>({});
-  const [latestEpisode, setLatestEpisode] = useState<Episode | null>(null);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const episodesEndRef = useRef<HTMLDivElement | null>(null);
   const authFetch = useAuthFetch();
-
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const progress = Math.min(
     (episodes.length / story.total_episodes) * 100,
     100,
   );
+  const isStoryComplete = episodes.length >= story.total_episodes;
 
-  const findLatestEpisodeInBatch = (batchEpisodes: Episode[]) => {
-    return batchEpisodes.length > 0
-      ? batchEpisodes.reduce((latest, current) =>
-          current.episode_number > latest.episode_number ? current : latest,
-        )
-      : null;
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const handleScroll = () => {
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        const atBottom = scrollHeight - scrollTop <= clientHeight + 1;
-        setUserHasScrolled(!atBottom);
-      };
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, [scrollContainerRef.current]);
-
-
-  const scrollToBottom = () => {
-    if (episodesEndRef.current && !userHasScrolled) {
-      episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const manualScrollToBottom = () => {
-    if (episodesEndRef.current) {
-        episodesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        setUserHasScrolled(false);
-    }
-  };
-
-  const generateBatch = async () => {
+  const generateBatch = useCallback(async () => {
     setStatus("loading");
     setErrorMessage("");
     setTypingCompleted({});
-    setLatestEpisode(null);
 
     try {
       const response = await authFetch(
         `${BASE_URL}/api/v1/episodes/${story.story_id}/generate-batch`,
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify({
             batch_size: story.batch_size,
             hinglish: isHinglish,
@@ -93,70 +61,50 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
         },
       );
 
+      // Check for rate limit error before trying to parse JSON
+      if (response.status === 429) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Rate limit exceeded.");
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data.status === "success") {
-        const mappedEpisodes: Episode[] = data.episodes.map(
-          (ep: any) => ({
-            episode_id: ep.episode_id,
-            episode_number: ep.episode_number,
-            episode_title: ep.episode_title || `Episode ${ep.episode_number}`,
-            episode_content: ep.episode_content,
-            episode_summary: ep.episode_summary || "",
-          }),
-        );
-
-        if (story.refinement_method === "AI") {
-          setStatus("ai-ready");
-        } else {
-          setStatus("human-review");
-          const initialFeedback: { [key: number]: string } = {};
-          mappedEpisodes.forEach((ep: any) => {
-            initialFeedback[ep.episode_number] = "";
-          });
-          setFeedback(initialFeedback);
-        }
-        setLatestEpisode(findLatestEpisodeInBatch(mappedEpisodes));
+      if (data.episodes && data.episodes.length > 0) {
+        const newBatch: Episode[] = data.episodes;
+        setCurrentBatchEpisodes(newBatch);
+        if (story.refinement_method === "AI") setStatus("ai-ready");
+        else setStatus("human-review");
       } else {
-        if (
-          data.message &&
-          data.message.includes("All episodes generated")
-        ) {
-          setStatus("complete");
-          onComplete();
-        } else {
-          setErrorMessage(
-            data.message || "Failed to generate episodes",
-          );
-        }
+        setStatus("complete");
+        onComplete();
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to connect to the server: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      // --- FIX: Show a user-friendly toast notification for rate limit errors ---
+      toast.error(error.message || "An unexpected error occurred.");
+      setErrorMessage(error.message);
+      setStatus("human-review"); // Stop the loading spinner and show buttons again
     }
-  };
+  }, [
+    story.story_id,
+    story.batch_size,
+    story.refinement_method,
+    isHinglish,
+    authFetch,
+    onComplete,
+  ]);
 
   useEffect(() => {
-    const initialEpisodes: Episode[] = story.episodes.map((ep: any) => ({
-      episode_id: ep.id,
-      episode_number: ep.number,
-      episode_title: ep.title || `Episode ${ep.number}`,
-      episode_content: ep.content,
-      episode_summary: ep.summary || "",
-    }));
-    setEpisodes(initialEpisodes);
-
-    if (story.story_id) {
-        if (initialEpisodes.length === 0) {
-            generateBatch();
-        } else {
-            generateBatch();
-        }
+    setEpisodes(story.episodes);
+    if (story.story_id && story.episodes.length < story.total_episodes) {
+      generateBatch();
+    } else if (story.episodes.length >= story.total_episodes) {
+      setStatus("complete");
     }
-  }, [story.story_id]);
+  }, [story.story_id, story.episodes, story.total_episodes, generateBatch]);
 
   const handleFeedbackChange = (episodeNumber: number, value: string) => {
     setFeedback((prev) => ({ ...prev, [episodeNumber]: value }));
@@ -179,41 +127,21 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
           feedback: text,
         }));
 
-      if (feedbackToSubmit.length > 0) {
-        const response = await authFetch(
-          `${BASE_URL}/api/v1/episodes/${story.story_id}/refine-batch`,
-          {
-            method: 'POST',
-            body: JSON.stringify(feedbackToSubmit),
-          }
-        );
-        const data = await response.json();
+      const response = await authFetch(
+        `${BASE_URL}/api/v1/episodes/${story.story_id}/refine-batch`,
+        { method: "POST", body: JSON.stringify(feedbackToSubmit) },
+      );
+      const data = await response.json();
 
-        if (data.status === "pending" && data.episodes) {
-          const refinedEpisodes: Episode[] = data.episodes.map(
-            (ep: any) => ({
-              episode_id: ep.episode_id,
-              episode_number: ep.episode_number,
-              episode_title: ep.episode_title,
-              episode_content: ep.episode_content,
-              episode_summary: ep.episode_summary || "",
-            }),
-          );
-
-          setLatestEpisode(findLatestEpisodeInBatch(refinedEpisodes));
-          setTypingCompleted({});
-          setFeedback({});
-          setStatus("human-review");
-        }
-      } else {
+      if (data.episodes) {
+        const refinedEpisodes: Episode[] = data.episodes;
+        setCurrentBatchEpisodes(refinedEpisodes);
+        setTypingCompleted({});
+        setFeedback({});
         setStatus("human-review");
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to submit feedback: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      setErrorMessage(`Failed to submit feedback: ${error.message}.`);
       setStatus("human-review");
     } finally {
       setIsSubmitting(false);
@@ -227,36 +155,26 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
     try {
       const response = await authFetch(
         `${BASE_URL}/api/v1/episodes/${story.story_id}/validate-batch`,
-        { method: 'POST' }
+        { method: "POST" },
       );
       const data = await response.json();
 
       if (data.status === "success") {
-        if (latestEpisode) {
-          setEpisodes((prev) => [...prev, latestEpisode]);
-        }
-        
-        if (
-          data.message &&
-          data.message.includes("Story complete")
-        ) {
+        setEpisodes((prev) => [...prev, ...currentBatchEpisodes]);
+
+        if (data.message && data.message.includes("Story complete")) {
           setStatus("complete");
           onComplete();
         } else {
-          setCurrentBatch((prev) => prev + 1);
-          setTimeout(() => generateBatch(), 500); 
+          generateBatch();
         }
       } else {
-        setErrorMessage(
-          data.message || "Failed to validate episodes",
-        );
+        setErrorMessage(data.message || "Failed to validate episodes");
+        setStatus("human-review");
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to validate batch: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      setErrorMessage(`Failed to validate batch: ${error.message}.`);
+      setStatus("human-review");
     } finally {
       setIsSubmitting(false);
     }
@@ -264,22 +182,17 @@ export const useRefinement = ({ story, isHinglish, onComplete, initialBatch }: R
 
   return {
     status,
-    currentBatch,
     episodes,
-    latestEpisode,
+    currentBatchEpisodes,
     progress,
     errorMessage,
     isSubmitting,
     feedback,
     typingCompleted,
-    episodesEndRef,
-    scrollContainerRef,
-    userHasScrolled,
+    isStoryComplete,
     handleFeedbackChange,
     handleTypingComplete,
     submitFeedback,
     validateAndContinue,
-    scrollToBottom,
-    manualScrollToBottom,
   };
 };

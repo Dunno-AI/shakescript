@@ -1,15 +1,23 @@
 from typing import Dict, List, Any
+from fastapi import HTTPException
 import json
 
 
 async def create_story(
-    self, prompt: str, num_episodes: int, refinement_method: str, hinglish: bool = False, auth_id: str = ""
+    self,
+    prompt: str,
+    num_episodes: int,
+    refinement_method: str,
+    hinglish: bool = False,
+    auth_id: str = "",
 ) -> Dict[str, Any]:
     full_prompt = f"{prompt} number of episodes = {num_episodes}"
     metadata = self.ai_service.extract_metadata(full_prompt, num_episodes, hinglish)
     if "error" in metadata:
         return metadata
-    story_id = self.db_service.store_story_metadata(metadata, num_episodes, refinement_method, auth_id)
+    story_id = self.db_service.store_story_metadata(
+        metadata, num_episodes, refinement_method, auth_id
+    )
     return {"story_id": story_id, "title": metadata.get("Title", "Untitled Story")}
 
 
@@ -24,9 +32,10 @@ def generate_multiple_episodes(
     """
     Generate one or multiple episodes for a story,with rate limiting
     """
-    limit_check_result = self.db_service.check_and_update_episode_limits(auth_id)
-    if "error" in limit_check_result:
-        return [limit_check_result]
+    limit_check = self.db_service.check_and_update_episode_limits(auth_id)
+    if "error" in limit_check:
+        # This will stop execution and send a clear error to the frontend.
+        raise HTTPException(status_code=429, detail=limit_check["error"])
 
     story_data = self.db_service.get_story_info(story_id, auth_id)
     if "error" in story_data:
@@ -93,7 +102,7 @@ def generate_multiple_episodes(
                 episode_number,
                 episode_data["episode_content"],
                 character_names,
-                auth_id = auth_id
+                auth_id=auth_id,
             )
             print(f"Chunking completed for episode {episode_number}")
         else:

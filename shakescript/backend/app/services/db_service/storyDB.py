@@ -1,3 +1,5 @@
+# app/services/db_service/storyDB.py
+
 from supabase import Client
 from typing import Dict, List, Any
 import json
@@ -5,9 +7,8 @@ import logging
 from datetime import datetime, timezone, timedelta
 
 
-# --- HELPER FUNCTION ---
-# Safely parse JSON strings, returning a default type if the input is None, empty, or invalid.
 def _safe_json_loads(json_string: str, default_type: Any = None):
+    # ... (this helper function remains the same)
     if json_string is None:
         return default_type() if callable(default_type) else default_type
     try:
@@ -23,6 +24,7 @@ class StoryDB:
     def __init__(self, client: Client):
         self.client = client
 
+    # ... (all other methods like get_all_stories, get_story_info, etc. are correct) ...
     def get_all_stories(self, auth_id: str) -> List[Dict[str, Any]]:
         result = (
             self.client.table("stories")
@@ -32,7 +34,6 @@ class StoryDB:
         )
         return result.data if result.data else []
 
-    # --- UPDATED METHOD ---
     def get_story_info(self, story_id: int, auth_id: str) -> Dict:
         story_result = (
             self.client.table("stories")
@@ -157,7 +158,6 @@ class StoryDB:
 
     def get_refined_episodes(self, story_id: int, auth_id: str) -> List[Dict]:
         story_data = self.get_story_info(story_id, auth_id)
-        # It's already parsed now, so this will work correctly
         return story_data.get("current_episodes_content", [])
 
     def clear_current_episodes_content(self, story_id: int, auth_id: str):
@@ -186,11 +186,7 @@ class StoryDB:
             "id", story_id
         ).execute()
 
-    # ---------------RATE_LIMIT----------------
     def check_and_update_episode_limits(self, auth_id: str) -> Dict[str, Any]:
-        """
-        Checks and updates daily/monthly episode limits for a user.
-        """
         now = datetime.now(timezone.utc)
 
         user_res = (
@@ -209,7 +205,7 @@ class StoryDB:
         month_start_date_str = user.get("month_start_date")
 
         if month_start_date_str:
-            month_start_date = datetime.fromisoformat(month_start_date_str)
+            month_start_date = datetime.fromisoformat(month_start_date_str).date()
             if now.year > month_start_date.year or now.month > month_start_date.month:
                 month_count = 0
                 month_start_date_str = now.date().isoformat()
@@ -221,13 +217,14 @@ class StoryDB:
 
         one_day_ago = now - timedelta(days=1)
         recent_timestamps = [
-            t for t in timestamps if datetime.fromisoformat(t) > one_day_ago
+            t
+            for t in timestamps
+            if datetime.fromisoformat(t.replace("Z", "+00:00")) > one_day_ago
         ]
 
         if len(recent_timestamps) >= 15:
             return {"error": "Daily episode limit (15 in 24 hours) reached."}
 
-        # 5. All checks passed, update the user's record
         new_timestamps = recent_timestamps + [now.isoformat()]
 
         update_res = (
@@ -248,8 +245,6 @@ class StoryDB:
 
         return {"status": "success"}
 
-    # ---------------USERS----------------
-
     def get_user_profile(self, auth_id: str) -> Dict:
         result = (
             self.client.table("users")
@@ -264,50 +259,68 @@ class StoryDB:
         return result.data
 
     def get_user_stats(self, auth_id: str, created_at: datetime) -> Dict:
+        # Fetch stories and user data in parallel for efficiency
         stories_res = (
             self.client.table("stories")
-            .select("id, is_completed", count="exact")
+            .select("id, is_completed, genre", count="exact")
             .eq("auth_id", auth_id)
             .execute()
         )
-        episodes_res = (
-            self.client.table("episodes")
-            .select("id", count="exact")
+        user_res = (
+            self.client.table("users")
+            .select("episodes_timestamps, episodes_month_count")
             .eq("auth_id", auth_id)
+            .single()
             .execute()
         )
 
         total_stories = stories_res.count or 0
-        total_episodes = episodes_res.count or 0
+
+        # Calculate daily and monthly counts from the user's data
+        now = datetime.now(timezone.utc)
+        one_day_ago = now - timedelta(days=1)
+
+        timestamps = (
+            user_res.data.get("episodes_timestamps", []) if user_res.data else []
+        )
+        episodes_day_count = len(
+            [
+                t
+                for t in timestamps
+                if datetime.fromisoformat(t.replace("Z", "+00:00")) > one_day_ago
+            ]
+        )
+        episodes_month_count = (
+            user_res.data.get("episodes_month_count", 0) if user_res.data else 0
+        )
+
+        # Calculate other stats
         completed_stories = (
             sum(1 for story in stories_res.data if story["is_completed"])
             if stories_res.data
             else 0
         )
         in_progress_stories = total_stories - completed_stories
-
-        account_age_days = (datetime.now(timezone.utc) - created_at).days
+        account_age_days = (now - created_at).days
 
         return {
             "total_stories": total_stories,
-            "total_episodes": total_episodes,
-            "episodes_day_count": 0,
-            "episodes_month_count": 0,
+            "total_episodes": episodes_month_count,
+            "episodes_day_count": episodes_day_count,
+            "episodes_month_count": episodes_month_count,
             "completed_stories": completed_stories,
             "in_progress_stories": in_progress_stories,
             "account_age_days": account_age_days,
-            "last_active": datetime.now(timezone.utc),
+            "last_active": now,
         }
 
     def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
         result = (
             self.client.table("stories")
-            .select("id, title, summary, created_at")
+            .select("id, title, summary, genre, created_at")
             .eq("auth_id", auth_id)
             .order("created_at", desc=True)
             .limit(limit)
             .execute()
         )
         return result.data if result.data else []
-
-    #

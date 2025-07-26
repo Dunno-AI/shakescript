@@ -1,9 +1,13 @@
+// src/types/story.ts
+
 export interface Episode {
-  episode_id: number;
-  episode_number: number;
-  episode_title: string;
-  episode_content: string;
-  episode_summary: string;
+  id: number;
+  number: number;
+  title: string;
+  content: string;
+  summary: string;
+  emotional_state: string;
+  key_events: any[];
 }
 
 export interface StoryResponse {

@@ -34,21 +34,9 @@ def get_all_stories(
 
     stories_from_db = service.get_all_stories(auth_id)
 
-    # --- FIX: Manually construct the list of StoryListItem objects ---
-    # This ensures the data structure matches the Pydantic model perfectly.
-    stories_for_response = [
-        StoryListItem(
-            story_id=story.get("id"),
-            title=story.get("title"),
-            genre=story.get("genre"),
-            is_completed=story.get("is_completed"),
-        )
-        for story in stories_from_db
-    ]
-
     return (
-        {"status": "success", "stories": stories_for_response}
-        if stories_for_response
+        {"status": "success", "stories": stories_from_db, "message": "Stories found"}
+        if stories_from_db
         else {"status": "success", "stories": [], "message": "No stories found"}
     )
 
