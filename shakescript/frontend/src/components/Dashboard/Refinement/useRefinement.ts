@@ -40,7 +40,7 @@ export const useRefinement = ({
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const progress = Math.min(
-    (episodes.length / story.total_episodes) * 100,
+    ((episodes.length+1) / story.total_episodes) * 100,
     100,
   );
 

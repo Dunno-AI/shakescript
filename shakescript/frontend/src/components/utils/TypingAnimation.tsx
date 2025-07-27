@@ -22,7 +22,7 @@ const CursorSVG: React.FC = () => (
 // Store animation start times outside the component to persist across re-mounts
 const animationStore = new Map<string, { startTime: number }>();
 
-export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 20, className, onTyping }) => {
+export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 20, className, onTyping, onComplete }) => {
   // Set the start time only once for each unique text
   if (!animationStore.has(text)) {
     animationStore.set(text, { startTime: Date.now() });
@@ -64,6 +64,14 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({ text, speed = 
   }, [text, speed, onTyping, startTime]);
 
   const isCompleted = displayedText.length === text.length;
+
+  // --- FIX: Use an effect to call onComplete when isCompleted becomes true ---
+  useEffect(() => {
+    if (isCompleted && onComplete) {
+      onComplete();
+    }
+  }, [isCompleted, onComplete]);
+
 
   return (
     <span className={className} style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>

@@ -37,7 +37,7 @@ def refine_episode_batch(
     prev_episodes = []
     if prev_batch_end >= prev_batch_start:
         prev_episodes = self.db_service.get_episodes_by_range(
-            story_id, prev_batch_start, prev_batch_end
+            story_id, prev_batch_start, prev_batch_end, auth_id
         )
         prev_episodes = [
             {

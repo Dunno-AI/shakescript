@@ -53,7 +53,7 @@ export const RefinementHeader: React.FC<RefinementHeaderProps> = ({
         </div>
         <div className="flex justify-between text-sm text-zinc-400 mt-2">
           <span>
-            {episodesCount} of {totalEpisodes} episodes
+            {episodesCount+1} of {totalEpisodes} episodes generated
           </span>
           <span>{Math.round(progress)}%</span>
         </div>

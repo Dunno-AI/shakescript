@@ -97,6 +97,8 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
                 isSubmitting={isSubmitting}
                 onValidateAndContinue={validateAndContinue}
                 onSubmitFeedback={submitFeedback}
+                total_episodes={props.story.total_episodes}
+                latestEpisode={latestEpisode}
             />
         </div>
       )}
