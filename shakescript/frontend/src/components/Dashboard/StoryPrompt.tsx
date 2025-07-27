@@ -4,6 +4,7 @@ import { useAuthFetch } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom'; // Add this import
 import { useStoryContext } from '@/contexts/StoryListContext';
 import { StoryDetails } from '@/types/story';
+import { SpinLoading } from "respinner";
 
 interface StoryPromptProps {
   onClose: () => void;
@@ -212,7 +213,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
               </div>
               <div className="flex flex-col items-end w-full max-w-[140px]">
                 {isCreatingStory ? (
-                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500"></div>
+                  <SpinLoading fill="#777" borderRadius={4} count={12} />
                 ) : (
                   <button
                     type="submit"

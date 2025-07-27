@@ -3,12 +3,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { Story, StoryDetails, Episode } from "@/types/story";
 import { useAuthFetch } from '../../../lib/utils';
-
-const ClassicLoader = () => {
-  return (
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
-  );
-};
+import { SpinLoading } from "respinner";
 
 const StoryCard = ({
   story,
@@ -105,7 +100,7 @@ const StoryCard = ({
             <div className="absolute inset-3 border rounded-md border-zinc-800/50" />
             {isLoading ? (
               <div className="flex flex-col items-center justify-center space-y-3">
-                <ClassicLoader />
+                <SpinLoading fill="#777" borderRadius={4} count={12} />
                 <p className="text-xs text-zinc-500">Loading story</p>
               </div>
             ) : (

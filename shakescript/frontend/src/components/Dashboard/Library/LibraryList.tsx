@@ -5,7 +5,8 @@ import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
 import { useStoryContext } from "@/contexts/StoryListContext";
 import { Story, StoryDetails } from "@/types/story";
-import toast from "react-hot-toast"; // --- Import the toast function ---
+import toast from "react-hot-toast"; 
+import { SpinLoading } from "respinner";
 
 interface LibraryListProps {
   onSelectStory: (story: StoryDetails) => void;
@@ -128,7 +129,7 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          <SpinLoading fill="#777" borderRadius={4} count={12} />
           <p className="text-xs text-zinc-500">Loading stories</p>
         </div>
       )}

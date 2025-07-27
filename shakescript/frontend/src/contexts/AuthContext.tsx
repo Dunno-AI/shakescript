@@ -74,7 +74,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setSession(session);
             const signedInUser = session?.user ?? null;
             setUser(signedInUser);
-            if (signedInUser) fetchProfile(signedInUser);
+            if (signedInUser) {
+              fetchProfile(signedInUser);
+              if (!sessionStorage.getItem('loginToastShown')) {
+                toast.success("Successfully logged in!");
+                sessionStorage.setItem('loginToastShown', 'true');
+              }
+            }
             break;
           case "SIGNED_OUT":
             setSession(null);

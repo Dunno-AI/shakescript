@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { TypingAnimation } from "../../utils/TypingAnimation";
+import { SpinLoading } from "respinner";
 
 interface StatusDisplayProps {
   status: "loading" | "refining" | "complete";
@@ -9,14 +10,15 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status }) => {
   if (status === "loading") {
     return (
       <div className="relative flex flex-col items-center justify-center h-96">
-        <TypingAnimation
+        {/* <TypingAnimation
           text="Generating episodes..."
           speed={30}
           className="text-zinc-300 text-xl mb-8"
         />
         <div className="text-zinc-500 text-center">
           <p>This may take a few moments...</p>
-        </div>
+        </div> */}
+        <SpinLoading fill="#777" borderRadius={4} count={12} />
       </div>
     );
   }
