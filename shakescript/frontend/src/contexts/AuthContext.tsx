@@ -9,7 +9,8 @@ import React, {
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import { NavigateFunction } from "react-router-dom";
-import { UserProfile } from "@/types/user_schema"; 
+import { UserProfile } from "@/types/user_schema";
+import toast from "react-hot-toast";
 
 interface AuthContextType {
   session: Session | null;
@@ -102,9 +103,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(null);
       setUser(null);
       setProfile(null);
+      toast.success("Successfully logged out!");
       navigate("/");
     } catch (err) {
       console.error("Sign-out error:", err);
+      toast.error("Failed to log out.");
     }
   };
 

@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabaseClient";
+import toast from "react-hot-toast";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,10 +33,13 @@ export const Navbar: React.FC = () => {
   const handleSignOut = async () => await signOut(navigate);
 
   const handleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/` },
     });
+    if (error) {
+      toast.error(error.message);
+    }
   };
 
   const navItems = [

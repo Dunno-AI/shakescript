@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ const AuthCallbackPage = () => {
 
   useEffect(() => {
     if (session) {
+      console.log("Logged in")
+      toast.success('Successfully logged in!');
       navigate('/dashboard');
     }
   }, [session, navigate]);
@@ -21,4 +24,4 @@ const AuthCallbackPage = () => {
   );
 };
 
-export default AuthCallbackPage; 
+export default AuthCallbackPage;
