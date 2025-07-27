@@ -24,6 +24,6 @@ export interface UserStats {
 export interface UserDashboard {
     user: UserProfile;
     stats: UserStats;
-    recent_stories: any[]; // You can replace 'any' with a 'RecentStory' type if you have one
+    recent_stories: any[]; 
     premium_status: boolean;
 }

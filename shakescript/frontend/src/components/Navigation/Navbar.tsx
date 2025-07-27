@@ -11,7 +11,6 @@ export const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  // --- FIX: Get the detailed profile from the context ---
   const { session, profile, signOut } = useAuth();
   const smoothScroll = useSmoothScroll();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -113,7 +112,6 @@ export const Navbar: React.FC = () => {
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6 gap-4">
-              {/* --- FIX: Use the 'profile' object for avatar --- */}
               {session && profile ? (
                 <div className="relative" ref={dropdownRef}>
                   <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
