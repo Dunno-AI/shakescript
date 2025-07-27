@@ -3,7 +3,6 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Navigation/Footer";
 import { Navbar } from "./components/Navigation/Navbar";
 import LoginPage from "./pages/LoginPage";
-import AuthCallbackPage from "./pages/AuthCallbackPage";
 import FullScreenLoader from "./components/utils/FullScreenLoader";
 import { Toaster } from "react-hot-toast";
 
@@ -39,7 +38,6 @@ const AppLayout = () => {
           <Route path="/dashboard/*" element={<Layout />} />
           <Route path="/stats" element={<StatsDashboard />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
         </Routes>
       </Suspense>
 
