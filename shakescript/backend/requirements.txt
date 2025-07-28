@@ -10,3 +10,4 @@ llama-index-embeddings-huggingface
 python-dotenv
 openai
 pydantic-settings
+pydantic[email]
