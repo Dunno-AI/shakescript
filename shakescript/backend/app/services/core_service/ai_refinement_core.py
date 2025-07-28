@@ -15,10 +15,10 @@ def refine_batch_by_ai(
     attempt = 0
     validation_result = {}
 
-    # Get previous episodes for context (last 2 episodes before current batch)
+    # Fetch last 2 episodes before current batch if no previous episodes provided
     if not prev_episodes and current_episode > 1:
         prev_batch_end = current_episode - 1
-        prev_batch_start = max(1, prev_batch_end - 2)  # Get up to 2 previous episodes
+        prev_batch_start = max(1, prev_batch_end - 2)
         prev_episodes = self.db_service.get_episodes_by_range(
             story_id, prev_batch_start, prev_batch_end, auth_id
         )
@@ -31,6 +31,7 @@ def refine_batch_by_ai(
             for ep in prev_episodes
         ]
 
+    # Validate and refine batch up to max_attempts
     while attempt < max_attempts:
         validation_result = self.ai_service.validate_batch(
             story_id, episodes, prev_episodes, metadata, auth_id
@@ -51,14 +52,13 @@ def refine_batch_by_ai(
             )
         attempt += 1
 
+    # Proceed even if refinement failed after max attempts
     if attempt == max_attempts and validation_result.get("status") != "success":
-        print(
-            f"AI refinement warning: Failed to refine after {max_attempts} attempts, proceeding anyway"
-        )
+        print(f"AI refinement warning: Failed to refine after {max_attempts} attempts, proceeding anyway")
 
     self.store_validated_episodes(story_id, episodes, metadata["num_episodes"], auth_id)
 
-    # Update current_episode
+    # Update current episode number in story
     new_current_episode = current_episode + len(episodes)
     self.client.table("stories").update({"current_episode": new_current_episode}).eq(
         "id", story_id
@@ -66,10 +66,9 @@ def refine_batch_by_ai(
 
     self.clear_current_episodes_content(story_id, auth_id)
 
-    # Check if we need to process more batches
+    # Continue to next batch if more episodes remain
     if new_current_episode <= story_data["num_episodes"]:
         print(f"Moving to next batch starting at episode {new_current_episode}")
-        # Recursively process the next batch
         next_batch = self.generate_and_refine_batch(
             story_id, batch_size, hinglish, refinement_type, auth_id
         )

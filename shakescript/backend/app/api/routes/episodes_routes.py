@@ -1,4 +1,3 @@
-from app.services.core_service.human_refinement_core import refine_episode_batch
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from starlette.status import HTTP_404_NOT_FOUND
 from ...models.schemas import (
@@ -9,6 +8,7 @@ from ...models.schemas import (
 from app.api.dependencies import get_story_service, get_current_user
 from app.services.core_service import StoryService
 from typing import Union, List
+from fastapi import BackgroundTasks
 
 router = APIRouter(prefix="/episodes", tags=["episodes"])
 
@@ -26,7 +26,6 @@ async def generate_batch(
     service: StoryService = Depends(get_story_service),
     user: dict = Depends(get_current_user),
 ):
-    print("in generate_batch", refinement_type, batch_size)
     auth_id = user.get("auth_id")
     story_data = service.get_story_info(story_id, auth_id)
     if "error" in story_data:
@@ -59,12 +58,14 @@ async def generate_batch(
 )
 async def validate_batch(
     story_id: int,
+    background_tasks: BackgroundTasks,
     service: StoryService = Depends(get_story_service),
     user: dict = Depends(get_current_user),
 ):
     auth_id = user.get("auth_id")
-    return service.validate_episode_batch(story_id, auth_id)
+    return service.validate_episode_batch(story_id, auth_id, background_tasks)
 
+#refine_batch endpoint
 @router.post(
     "/{story_id}/refine-batch",
     response_model=Union[EpisodeBatchResponse, ErrorResponse],

@@ -26,6 +26,7 @@ export const EpisodeViewer: React.FC<EpisodeViewerProps> = ({
   scrollToBottom,
   episodesEndRef,
 }) => {
+  console.log(typingCompleted, refinementType)
   return (
     <div className="relative space-y-8 pb-24">
       {/* Instructions Banner */}

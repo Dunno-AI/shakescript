@@ -9,6 +9,9 @@ def generate_and_refine_batch(
     refinement_type: str,
     auth_id: str,
 ) -> List[Dict[str, Any]]:
+    """
+    Helper for Generate and Refine batch requests
+    """
     story_data = self.get_story_info(story_id, auth_id)
     current_episode = story_data.get("current_episode", 1)
     print(f"Starting to generate episode from {current_episode}")
@@ -17,7 +20,6 @@ def generate_and_refine_batch(
     remaining_episodes = story_data["num_episodes"] - current_episode + 1
     effective_batch_size = min(batch_size, remaining_episodes)
 
-    # Generate initial batch
     episodes = self.generate_multiple_episodes(
         story_id, current_episode, effective_batch_size, hinglish, auth_id
     )
@@ -34,8 +36,8 @@ def generate_and_refine_batch(
         return self.refine_batch_by_ai(
             story_id,
             episodes,
-            None,  # prev_episodes
-            None,  # metadata
+            None,  
+            None,  
             story_data,
             current_episode,
             batch_size,

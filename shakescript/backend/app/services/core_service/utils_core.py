@@ -1,20 +1,21 @@
 from typing import Dict, List, Any
 from app.models.schemas import StoryListItem
-
+from fastapi import BackgroundTasks
 
 def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
     return self.db_service.get_story_info(story_id, auth_id)
 
 
 def get_all_stories(self, auth_id: str) -> List[StoryListItem]:
+    stories_from_db = self.db_service.get_all_stories(auth_id)
     return [
         StoryListItem(
-            story_id=story["id"],
-            title=story["title"],
-            genre=story["genre"],
-            is_completed=story["is_completed"],
+            story_id=story.get("id"),
+            title=story.get("title"),
+            genre=story.get("genre"),
+            is_completed=story.get("is_completed"),
         )
-        for story in self.db_service.get_all_stories(auth_id)
+        for story in stories_from_db
     ]
 
 
@@ -56,28 +57,30 @@ def update_story_summary(self, story_id: int, auth_id: str) -> Dict[str, Any]:
 
 
 def store_validated_episodes(
-    self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int, auth_id: str
+    self,
+    story_id: int,
+    episodes: List[Dict[str, Any]],
+    total_episodes: int,
+    auth_id: str,
+    background_tasks: BackgroundTasks,
 ) -> None:
     """
-    Store the validated episodes in the episodes table and update the story's current_episode.
+    Store the validated episodes and update the story's progress.
     """
     if not episodes:
         print("No episodes to store")
         return
 
-    # Store each episode in the episodes table
     for episode in episodes:
         episode_number = episode.get("episode_number")
         if not episode_number:
-            print(f"Warning: Episode missing episode_number: {episode}")
+            print(f"Warning: Episode missing 'number' field: {episode}")
             continue
 
-        # Store episode in database
         episode_id = self.db_service.store_episode(
             story_id, episode, episode_number, auth_id
         )
 
-        # Process for embedding/chunking if needed
         character_names = (
             [char["Name"] for char in episode.get("characters_featured", [])]
             if "characters_featured" in episode
@@ -85,25 +88,26 @@ def store_validated_episodes(
         )
 
         if episode.get("episode_content"):
-            self.embedding_service._process_and_store_chunks(
+            background_tasks.add_task(
+                self.embedding_service._process_and_store_chunks,
                 story_id,
                 episode_id,
                 episode_number,
                 episode["episode_content"],
                 character_names,
-                auth_id
+                auth_id,
             )
             print(f"Chunking completed for validated episode {episode_number}")
         else:
-            print(f"Warning: No episode_content for episode {episode_number}")
+            print(f"Warning: No episode_content for episode {episode}")
 
     max_episode_num = max([ep.get("episode_number", 0) for ep in episodes], default=0)
-    is_completed = True if max_episode_num == total_episodes else False
+
+    is_completed = True if max_episode_num >= total_episodes else False
     if max_episode_num > 0:
         self.client.table("stories").update(
             {"current_episode": max_episode_num + 1, "is_completed": is_completed}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
-        print(f"Updated story current_episode to {max_episode_num + 1}")
+        print(f"Updated story current_episode to {max_episode_num + 1} and set is_completed to {is_completed}")
 
-    # Clear the current_episodes field after validation
     self.clear_current_episodes_content(story_id, auth_id)

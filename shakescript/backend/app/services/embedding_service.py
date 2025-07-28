@@ -10,18 +10,13 @@ from supabase import Client
 
 class EmbeddingService:
     def __init__(self, client: Client):
-        """
-        FIX: Initializes with the authenticated client passed from the parent service.
-        """
         self.embedding_model = HuggingFaceEmbedding(model_name=settings.EMBEDDING_MODEL)
-        # Use the passed-in authenticated client to initialize DBService
         self.db_service = DBService(client)
         self.splitter = SemanticSplitterNodeParser(
             buffer_size=1,
             breakpoint_percentile_threshold=95,
             embed_model=self.embedding_model,
         )
-        # Keep a direct reference to the authenticated client for its own use
         self.client = client
 
     def _process_and_store_chunks(
@@ -33,6 +28,9 @@ class EmbeddingService:
         characters: List[str],
         auth_id: str,
     ):
+        """
+        This function is used to divide the episodes into chunks and store it in the DB.
+        """
         doc = Document(text=content)
         nodes = self.splitter.get_nodes_from_documents([doc])
 
@@ -40,7 +38,6 @@ class EmbeddingService:
         for chunk_number, node in enumerate(nodes):
             chunk_text = node.text
             embedding = self.embedding_model.get_text_embedding(chunk_text)
-            # FIX: Pass auth_id down to the calculation method
             importance_score = self._calculate_importance_score(
                 story_id, chunk_text, characters, episode_number, auth_id
             )
@@ -54,8 +51,8 @@ class EmbeddingService:
                     "content": chunk_text,
                     "characters": json.dumps(
                         characters
-                    ),  # Keep as JSON string as per original
-                    "embedding": embedding,  # Pass as native list
+                    ),  
+                    "embedding": embedding,  
                     "importance_score": importance_score,
                     "auth_id": auth_id,
                 }
@@ -64,8 +61,6 @@ class EmbeddingService:
         if not chunk_data:
             return
 
-        # FIX: The .eq() call after .insert() is invalid.
-        # RLS is enforced because auth_id is part of the data being inserted.
         result = self.client.table("chunks").insert(chunk_data).execute()
 
         if not result.data:
@@ -79,8 +74,10 @@ class EmbeddingService:
         character_names: List[str] = [],
         auth_id: str = None,
     ) -> List[Dict]:
+        """
+        This funcntion uses semantic similarity to retrieve relevant chunks from the database
+        """
 
-        # FIX: Add a check for auth_id to fail early.
         if not auth_id:
             raise ValueError("auth_id is required to retrieve relevant chunks")
 
@@ -96,12 +93,11 @@ class EmbeddingService:
 
         chunks_result = query.order("importance_score", desc=True).limit(k).execute()
 
-        # Add foundational chunks
         story_info = self.db_service.get_story_info(story_id, auth_id)
         if "error" in story_info:
             return (
                 chunks_result.data or []
-            )  # Return only matched chunks if story info fails
+            )  
 
         midpoint = int(story_info.get("num_episodes", 1) * 0.5)
         if midpoint == 0:
@@ -138,15 +134,17 @@ class EmbeddingService:
         episode_number: int,
         auth_id: str,
     ) -> float:
+        """
+        Calculates the importance score of a chunk based on the presence of characters in it.
+        """
         score = 0
         for char in characters:
             if char.lower() in chunk.lower():
                 score += 1
 
-        # FIX: Pass auth_id to get_story_info as it's required for RLS.
         story_info = self.db_service.get_story_info(story_id, auth_id)
         if "error" in story_info:
-            return score  # Return base score if story isn't found
+            return score  
 
         num_episodes = story_info.get("num_episodes", 1)
         if num_episodes == 0:

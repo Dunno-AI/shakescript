@@ -1,46 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, LogIn, LogOut } from "lucide-react";
+import { Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabaseClient";
+import toast from "react-hot-toast";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, signOut } = useAuth();
+  const { session, profile, signOut } = useAuth();
   const smoothScroll = useSmoothScroll();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handleSignOut = async () => {
-    await signOut(navigate);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const handleSignOut = async () => await signOut(navigate);
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/` },
     });
-
-    if (error) console.error('Login error:', error.message);
+    if (error) {
+      toast.error(error.message);
+    }
   };
 
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/#start-building" },
-    { name: "Statistics", href: "/stats" }
+    { name: "Statistics", href: "/stats" },
+    ...(session
+      ? [
+        { name: "Dashboard", href: "/dashboard" },
+        { name: "Library", href: "/dashboard/library" },
+      ]
+      : []),
   ];
 
   return (
     <motion.nav
-      className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-lg border border-[#2a2a2a]"
+      className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-lg border-b border-zinc-800"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
@@ -50,15 +66,26 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/" className="flex items-center">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21.3333 4L14.3333 11L21.3333 18H14.3333L7.33334 11L14.3333 4H21.3333Z" fill="#3ECF8E" />
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21.3333 4L14.3333 11L21.3333 18H14.3333L7.33334 11L14.3333 4H21.3333Z"
+                    fill="#3ECF8E"
+                  />
                   <path
                     d="M7.33334 4L14.3333 11L7.33334 18H14.3333L21.3333 11L14.3333 4H7.33334Z"
                     fill="#3ECF8E"
                     fillOpacity="0.4"
                   />
                 </svg>
-                <span className="ml-2 text-white text-xl font-bold">ShakeScript</span>
+                <span className="ml-2 text-white text-xl font-bold">
+                  ShakeScript
+                </span>
               </Link>
             </div>
             <div className="hidden md:block">
@@ -67,23 +94,16 @@ export const Navbar: React.FC = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className="text-gray-300 hover:text-white px-5 py-2 rounded-md text-m font-medium"
-                    onClick={async e => {
-                      if (item.name === "About") {
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    onClick={(e) => {
+                      if (item.href.includes("/#")) {
                         e.preventDefault();
+                        const targetId = item.href.split("/#")[1];
                         if (location.pathname !== "/") {
                           navigate("/");
-                          setTimeout(() => smoothScroll("start-building"), 50);
+                          setTimeout(() => smoothScroll(targetId), 100);
                         } else {
-                          smoothScroll("start-building");
-                        }
-                      } else if (item.name === "Home") {
-                        e.preventDefault();
-                        if (location.pathname !== "/") {
-                          navigate("/");
-                          setTimeout(() => smoothScroll(), 50);
-                        } else {
-                          smoothScroll();
+                          smoothScroll(targetId);
                         }
                       }
                     }}
@@ -95,31 +115,48 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
           <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6 gap-2">
-              {session ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700"
-                  >
-                    Start your project
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 text-white hover:bg-zinc-800 flex items-center gap-2"
-                    style={{ marginLeft: '0.5rem' }}
-                  >
-                    <LogOut size={16} />
-                    Logout
+            <div className="ml-4 flex items-center md:ml-6 gap-4">
+              {session && profile ? (
+                <div className="relative" ref={dropdownRef}>
+                  <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                    <img
+                      src={
+                        profile.avatar_url ||
+                        `https://i.pravatar.cc/100?u=${profile.auth_id}`
+                      }
+                      alt="User Avatar"
+                      className="w-9 h-9 rounded-full border-2 border-zinc-700 hover:border-emerald-500 transition-colors"
+                    />
                   </button>
-                </>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-md shadow-lg py-1"
+                    >
+                      <Link
+                        to="/dashboard/userstats"
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                      >
+                        <User size={16} /> My Profile
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                      >
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={handleLogin}
                   className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
                 >
                   <LogIn size={16} />
-                  Login
+                  Login / Sign Up
                 </button>
               )}
             </div>
@@ -129,72 +166,60 @@ export const Navbar: React.FC = () => {
               onClick={toggleMenu}
               type="button"
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 focus:outline-none"
-              aria-controls="mobile-menu"
-              aria-expanded="false"
             >
-              <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
+                <X className="block h-6 w-6" />
               ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+                <Menu className="block h-6 w-6" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className={`${isMenuOpen ? "block" : "hidden"} md:hidden`} id="mobile-menu">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={async e => {
-                if (item.name === "About") {
-                  e.preventDefault();
-                  if (location.pathname !== "/") {
-                    navigate("/");
-                    setTimeout(() => smoothScroll("start-building"), 50);
-                  } else {
-                    smoothScroll("start-building");
-                  }
-                } else if (item.name === "Home") {
-                  e.preventDefault();
-                  if (location.pathname !== "/") {
-                    navigate("/");
-                    setTimeout(() => smoothScroll(), 50);
-                  } else {
-                    smoothScroll();
-                  }
-                }
-              }}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-        <div className="pt-4 pb-3 border-t border-gray-700">
-          <div className="flex items-center px-5">
-            {session ? (
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {navItems.map((item) => (
               <Link
-                to="/dashboard"
-                className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+                key={item.name}
+                to={item.href}
+                className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => toggleMenu()}
               >
-                Start your project
+                {item.name}
               </Link>
+            ))}
+          </div>
+          <div className="pt-4 pb-3 border-t border-gray-700">
+            {session ? (
+              <div className="px-5">
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    toggleMenu();
+                  }}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
-              <button
-                onClick={handleLogin}
-                className="ml-4 block px-3 py-2 rounded-md text-base font-medium bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                Login
-              </button>
+              <div className="px-5">
+                <button
+                  onClick={() => {
+                    handleLogin();
+                    toggleMenu();
+                  }}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                >
+                  Login / Sign Up
+                </button>
+              </div>
             )}
           </div>
         </div>
-      </div>
+      )}
     </motion.nav>
   );
 };

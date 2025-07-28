@@ -1,21 +1,19 @@
-# app/services/db_service/__init__.py
-
+from .usersDB import UsersDB
 from .storyDB import StoryDB
 from .episodesDB import EpisodesDB
 from .charactersDB import CharactersDB
 from supabase import Client
+from typing import Dict, List, Any
+from datetime import datetime 
 
 
 class DBService:
     def __init__(self, client: Client):
-        """
-        KEY CHANGE: Accepts an authenticated client and passes it down
-        to each specific database service.
-        """
-        self.client = client  # Store for direct access if needed
+        self.client = client  
         self.stories = StoryDB(client)
         self.episodes = EpisodesDB(client)
         self.characters = CharactersDB(client)
+        self.users = UsersDB(client)
 
     def get_all_stories(self, auth_id: str):
         return self.stories.get_all_stories(auth_id)
@@ -63,3 +61,15 @@ class DBService:
 
     def set_story_completed(self, story_id: int, completed: bool):
         self.stories.set_story_completed(story_id, completed)
+
+    def get_user_profile(self, auth_id: str) -> Dict:
+        return self.users.get_user_profile(auth_id)
+
+    def get_user_stats(self, auth_id: str, created_at: datetime) -> Dict:
+        return self.users.get_user_stats(auth_id, created_at)
+
+    def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
+        return self.stories.get_recent_stories(auth_id, limit)
+
+    def check_and_update_episode_limits(self, auth_id: str) -> Dict[str, Any]:
+        return self.users.check_and_update_episode_limits(auth_id)

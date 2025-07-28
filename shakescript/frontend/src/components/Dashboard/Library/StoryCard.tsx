@@ -1,14 +1,9 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { Story, StoryDetails } from "@/types/story";
+import { Story, StoryDetails, Episode } from "@/types/story";
 import { useAuthFetch } from '../../../lib/utils';
-
-const ClassicLoader = () => {
-  return (
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500" />
-  );
-};
+import { SpinLoading } from "respinner";
 
 const StoryCard = ({
   story,
@@ -31,7 +26,26 @@ const StoryCard = ({
         const res = await authFetch(`${BASE_URL}/api/v1/stories/${story.story_id}`);
         const response = await res.json();
         if (response && response.story) {
-          onSelectStory(response.story);
+          const episodes: Episode[] = response.story.episodes.map(
+            (ep: any) => ({
+              episode_id: ep.id,
+              episode_number: ep.number,
+              episode_title: ep.title,
+              episode_content: ep.content,
+              episode_summary: ep.summary || "",
+            }),
+          );
+          const story : StoryDetails = {
+            story_id: response.story.story_id,
+            title: response.story.title,
+            current_episode: response.story.current_episode,
+            batch_size: response.story.batch_size,
+            refinement_method: response.story.refinement_method,
+            summary: response.story.summary,
+            total_episodes: response.story.total_episodes,
+            episodes: episodes
+          }
+          onSelectStory(story);
         }
       } catch (error) {
         alert('Failed to load story for display.');
@@ -86,7 +100,7 @@ const StoryCard = ({
             <div className="absolute inset-3 border rounded-md border-zinc-800/50" />
             {isLoading ? (
               <div className="flex flex-col items-center justify-center space-y-3">
-                <ClassicLoader />
+                <SpinLoading fill="#777" borderRadius={4} count={12} />
                 <p className="text-xs text-zinc-500">Loading story</p>
               </div>
             ) : (

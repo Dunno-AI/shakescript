@@ -24,7 +24,6 @@ def get_user_client(authorization: str = Header(...)) -> tuple[Client, dict]:
     logging.info(f"Received token: {token[:20]}...")
 
     try:
-        # Method 1: Direct API call to validate token
         verify_url = f"{settings.SUPABASE_URL}/auth/v1/user"
         headers = {
             "Authorization": f"Bearer {token}",
@@ -50,7 +49,6 @@ def get_user_client(authorization: str = Header(...)) -> tuple[Client, dict]:
         # Create authenticated client
         user_client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
-        # Set the authorization header for postgrest requests
         user_client.postgrest.auth(token)
 
         return user_client, user_data
@@ -87,10 +85,9 @@ def get_current_user(auth_data: tuple = Depends(get_user_client)) -> dict:
     return {"auth_id": user_data.get("id"), "email": user_data.get("email")}
 
 
-# Alternative simpler approach if the above doesn't work
 def get_user_client_simple(authorization: str = Header(...)) -> Client:
     """
-    Simple approach: Just create authenticated client without validation.
+    Just create authenticated client without validation.
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(

@@ -1,5 +1,6 @@
 import React from "react";
 import { Loader2, Play, PenLine } from "lucide-react";
+import { Episode } from "@/types/story";
 
 interface ActionButtonsProps {
   status: "human-review" | "ai-ready";
@@ -7,6 +8,8 @@ interface ActionButtonsProps {
   isSubmitting: boolean;
   onValidateAndContinue: () => void;
   onSubmitFeedback: () => void;
+  latestEpisode: Episode | null;
+  total_episodes: number;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -15,6 +18,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   isSubmitting,
   onValidateAndContinue,
   onSubmitFeedback,
+  latestEpisode, total_episodes
 }) => {
   return (
     <>
@@ -30,7 +34,9 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             ) : (
               <Play className="w-4 h-4" />
             )}
-            <span>Generate Next Episode</span>
+            {latestEpisode?.episode_number === total_episodes ? (
+            <span>Complete Story</span>) : (<span>Generate Next Episode</span>
+            )}
           </button>
           <button
             onClick={onSubmitFeedback}
@@ -42,7 +48,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             ) : (
               <PenLine className="w-4 h-4" />
             )}
-            <span>Submit & Refine</span>
+            <span>Refine Episode</span>
           </button>
         </>
       )}

@@ -20,7 +20,7 @@ class StoryService:
         self.ai_service = AIService(client)
         self.db_service = DBService(client)
         self.embedding_service = EmbeddingService(client)
-        self.client = client  # Store client for direct use if needed
+        self.client = client  
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(
@@ -57,9 +57,9 @@ class StoryService:
         return utils_core.update_story_summary(self, story_id, auth_id)
 
     def store_validated_episodes(
-            self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int, auth_id: str
+            self, story_id: int, episodes: List[Dict[str, Any]], total_episodes: int, auth_id: str, background_tasks
     ) -> None:
-        return utils_core.store_validated_episodes(self, story_id, episodes, total_episodes, auth_id)
+        return utils_core.store_validated_episodes(self, story_id, episodes, total_episodes, auth_id, background_tasks)
 
     def generate_and_refine_batch(
         self,
@@ -96,8 +96,8 @@ class StoryService:
             self, story_id, feedback, auth_id
         )
 
-    def validate_episode_batch(self, story_id: int, auth_id: str):
-        return human_refinement_core.validate_episode_batch(self, story_id, auth_id)
+    def validate_episode_batch(self, story_id: int, auth_id: str, background_tasks):
+        return human_refinement_core.validate_episode_batch(self, story_id, auth_id, background_tasks)
 
     def refine_batch_by_ai(
         self,

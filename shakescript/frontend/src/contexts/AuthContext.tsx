@@ -4,16 +4,22 @@ import React, {
   useEffect,
   useContext,
   ReactNode,
+  useCallback,
+  useRef,
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import { NavigateFunction } from "react-router-dom";
+import { UserProfile } from "@/types/user_schema";
+import toast from "react-hot-toast";
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  profile: UserProfile | null;
   loading: boolean;
   signOut: (navigate: NavigateFunction) => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,33 +29,87 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const toastShownRef = useRef(false);
+
+  const fetchProfile = useCallback(async (currentUser: User) => {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", currentUser.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user profile:", error.message);
+      setProfile(null);
+    } else {
+      setProfile(data);
+    }
+  }, []);
+
+  const fetchSessionAndProfile = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error("Error fetching session:", error.message);
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+    } else {
+      setSession(data.session);
+      const currentUser = data.session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) await fetchProfile(currentUser);
+      else setProfile(null);
+    }
+
+    setLoading(false);
+  }, [fetchProfile]);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error.message);
-      } else {
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-      }
-      setLoading(false);
-    };
-
-    fetchSession();
+    fetchSessionAndProfile();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-      },
+      (event, session) => {
+        switch (event) {
+          case "SIGNED_IN":
+            if (!toastShownRef.current) {
+                toast.success("Successfully logged in!");
+                toastShownRef.current = true;
+            }
+            setSession(session);
+            const signedInUser = session?.user ?? null;
+            setUser(signedInUser);
+            if (signedInUser) {
+              fetchProfile(signedInUser);
+              if (!sessionStorage.getItem('loginToastShown')) {
+                toast.success("Successfully logged in!");
+                sessionStorage.setItem('loginToastShown', 'true');
+              }
+            }
+            break;
+          case "SIGNED_OUT":
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            toastShownRef.current = false;
+            break;
+          case "TOKEN_REFRESHED":
+            setSession(session);
+            if (session?.user) setUser(session.user);
+            break;
+          default:
+            break;
+        }
+      }
     );
 
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchSessionAndProfile, fetchProfile]);
 
   const signOut = async (navigate: NavigateFunction) => {
     try {
@@ -57,13 +117,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       localStorage.clear();
       setSession(null);
       setUser(null);
-      navigate('/'); // Redirect to home page
+      setProfile(null);
+      toast.success("Successfully logged out!");
+      navigate("/");
     } catch (err) {
       console.error("Sign-out error:", err);
+      toast.error("Failed to log out.");
     }
   };
 
-  const value = { session, user, loading, signOut };
+  const value = {
+    session,
+    user,
+    profile,
+    loading,
+    signOut,
+    refreshAuth: fetchSessionAndProfile,
+  };
 
   return (
     <AuthContext.Provider value={value}>
