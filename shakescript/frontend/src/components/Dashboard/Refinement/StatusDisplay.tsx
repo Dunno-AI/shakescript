@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { TypingAnimation } from "../../utils/TypingAnimation";
 import { SpinLoading } from "respinner";
 
@@ -10,12 +10,13 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status }) => {
   if (status === "loading") {
     return (
       <div className="relative flex flex-col items-center justify-center h-96">
-        {/* <TypingAnimation
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-8" />
+        <TypingAnimation
           text="Generating episodes..."
           speed={30}
-          className="text-zinc-300 text-xl mb-8"
+          className="text-zinc-300 text-xl"
         />
-        <div className="text-zinc-500 text-center">
+        <div className="text-zinc-500 text-center mt-2">
           <p>This may take a few moments...</p>
         </div> */}
         <SpinLoading fill="#777" borderRadius={4} count={12} />
@@ -26,12 +27,13 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status }) => {
   if (status === "refining") {
     return (
       <div className="relative flex flex-col items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-8" />
         <TypingAnimation
           text="Refining episodes based on your feedback..."
           speed={30}
-          className="text-zinc-300 text-xl mb-8"
+          className="text-zinc-300 text-xl"
         />
-        <div className="text-zinc-500 text-center">
+        <div className="text-zinc-500 text-center mt-2">
           <p>Please wait while we improve the episodes...</p>
         </div>
       </div>
