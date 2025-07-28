@@ -26,7 +26,7 @@ export const RefinementHeader: React.FC<RefinementHeaderProps> = ({
       case "refining":
         return "Refining Episodes...";
       default:
-        return `Generating Episode: ${currentBatch} of ${storyTitle}`;
+        return `Generating Episode ${currentBatch} : ${storyTitle}`;
     }
   };
 
