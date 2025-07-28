@@ -84,7 +84,7 @@ export const StartBuildingSection: React.FC<StartBuildingSectionProps> = ({
           <img
             src={DashboardImg}
             alt="Landing page preview"
-            className="aspect-[1919/908] h-auto w-full object-cover"
+            className="aspect-[1919/908] h-auto w-full"
             loading="lazy"
           />
         </div>
