@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 from app.models.schemas import StoryListItem
-
+from fastapi import BackgroundTasks
 
 def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
     return self.db_service.get_story_info(story_id, auth_id)
@@ -64,6 +64,7 @@ def store_validated_episodes(
     episodes: List[Dict[str, Any]],
     total_episodes: int,
     auth_id: str,
+    background_tasks: BackgroundTasks,
 ) -> None:
     """
     Store the validated episodes and update the story's progress.
@@ -74,7 +75,7 @@ def store_validated_episodes(
 
     for episode in episodes:
         # --- FIX: Use the correct key 'number' instead of 'episode_number' ---
-        episode_number = episode.get("number")
+        episode_number = episode.get("episode_number")
         if not episode_number:
             print(f"Warning: Episode missing 'number' field: {episode}")
             continue
@@ -89,18 +90,19 @@ def store_validated_episodes(
             else []
         )
 
-        if episode.get("content"):
-            self.embedding_service._process_and_store_chunks(
+        if episode.get("episode_content"):
+            background_tasks.add_task(
+                self.embedding_service._process_and_store_chunks,
                 story_id,
                 episode_id,
                 episode_number,
-                episode["content"],
+                episode["episode_content"],
                 character_names,
                 auth_id,
             )
             print(f"Chunking completed for validated episode {episode_number}")
         else:
-            print(f"Warning: No episode_content for episode {episode_number}")
+            print(f"Warning: No episode_content for episode {episode}")
 
     # --- FIX: Use the correct key 'number' to find the max episode ---
     max_episode_num = max([ep.get("number", 0) for ep in episodes], default=0)

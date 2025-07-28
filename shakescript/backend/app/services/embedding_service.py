@@ -35,6 +35,7 @@ class EmbeddingService:
     ):
         doc = Document(text=content)
         nodes = self.splitter.get_nodes_from_documents([doc])
+        print("generating chunks")
 
         chunk_data = []
         for chunk_number, node in enumerate(nodes):

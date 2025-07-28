@@ -92,22 +92,6 @@ def generate_multiple_episodes(
             story_id, episode_data, episode_number, auth_id
         )
 
-        if episode_data.get("episode_content"):
-            character_names = [
-                char["Name"] for char in episode_data.get("characters_featured", [])
-            ]
-            self.embedding_service._process_and_store_chunks(
-                story_id,
-                episode_id,
-                episode_number,
-                episode_data["episode_content"],
-                character_names,
-                auth_id=auth_id,
-            )
-            print(f"Chunking completed for episode {episode_number}")
-        else:
-            print(f"Warning: No episode_content for episode {episode_number}")
-
         episode_result = {
             "episode_id": episode_id,
             "episode_number": episode_number,

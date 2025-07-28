@@ -70,7 +70,8 @@ def refine_episode_batch(
 def validate_episode_batch(
     self,
     story_id: int,
-    auth_id: str
+    auth_id: str,
+    background_tasks
 ) -> Dict:
     story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
@@ -83,8 +84,7 @@ def validate_episode_batch(
         )
 
     total_episodes = story_data["num_episodes"]
-    print(total_episodes)
-    self.store_validated_episodes(story_id, current_episodes_content, total_episodes, auth_id)
+    self.store_validated_episodes(story_id, current_episodes_content, total_episodes, auth_id, background_tasks)
 
     max_episode = max([ep.get("episode_number", 0) for ep in current_episodes_content], default=0)
     next_episode = max_episode + 1

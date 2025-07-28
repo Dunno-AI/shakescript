@@ -12,7 +12,6 @@ class EpisodesDB:
         KEY CHANGE: Accept the authenticated client.
         """
         self.client = client
-        # KEY CHANGE: Pass the client down to the next service.
         self.CharactersDB = CharactersDB(client)
 
     def store_episode(
