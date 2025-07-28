@@ -1,5 +1,3 @@
-# app/services/db_service/episodesDB.py
-
 from supabase import Client
 from app.services.db_service.charactersDB import CharactersDB
 from typing import Dict, List, Any
@@ -8,15 +6,13 @@ import json
 
 class EpisodesDB:
     def __init__(self, client: Client):
-        """
-        KEY CHANGE: Accept the authenticated client.
-        """
         self.client = client
         self.CharactersDB = CharactersDB(client)
 
     def store_episode(
         self, story_id: int, episode_data: Dict, current_episode: int, auth_id: str
     ) -> int:
+        """Insert or update an episode, update characters & story metadata"""
         episode_result = (
             self.client.table("episodes")
             .upsert(
@@ -42,10 +38,12 @@ class EpisodesDB:
             raise Exception(f"Failed to store episode {current_episode}")
         episode_id = episode_result.data[0]["id"]
 
+        # Update characters related to this episode
         self.CharactersDB.update_character_state(
             story_id, episode_data.get("characters_featured", []), auth_id
         )
 
+        # Update story-level settings, events, and timeline
         story_data_res = (
             self.client.table("stories")
             .select("key_events, setting, timeline")
@@ -92,6 +90,7 @@ class EpisodesDB:
     def get_previous_episodes(
         self, story_id: int, current_episode: int, auth_id: str, limit: int = 3
     ) -> List[Dict]:
+        """Fetch up to `limit` episodes before the given episode"""
         result = (
             self.client.table("episodes")
             .select("*")
@@ -116,6 +115,7 @@ class EpisodesDB:
     def get_episodes_by_range(
         self, story_id: int, start_episode: int, end_episode: int, auth_id: str
     ) -> List[Dict[str, Any]]:
+        """Fetch episodes between start and end episode numbers"""
         try:
             result = (
                 self.client.table("episodes")
@@ -133,6 +133,7 @@ class EpisodesDB:
             return []
 
     def get_all_episodes(self, story_id: int, auth_id: str) -> List[Dict[str, Any]]:
+        """Fetch all episodes for a story in ascending order"""
         try:
             result = (
                 self.client.table("episodes")

@@ -1,5 +1,3 @@
-# app/services/ai_service/episode_generatorAI.py
-
 import json
 from typing import Dict, List, Any
 from app.services.ai_service.utilsAI import AIUtils
@@ -9,10 +7,6 @@ from app.services.ai_service.prompts import AIPrompts
 
 class AIGeneration:
     def __init__(self, model, embedding_service: EmbeddingService):
-        """
-        KEY CHANGE: This class no longer creates its own EmbeddingService.
-        It receives a pre-initialized, authenticated one from the AIService.
-        """
         self.model = model
         self.embedding_service = embedding_service
         self.utils = AIUtils()
@@ -29,6 +23,9 @@ class AIGeneration:
         hinglish: bool = False,
         auth_id: str = None,
     ) -> Dict[str, Any]:
+        """
+        This function is responsible for generating a particular episode and its details using AI. 
+        """
         settings_data = (
             "\n".join(
                 f"{place}: {description}"
@@ -45,7 +42,6 @@ class AIGeneration:
             or "First Episode"
         )
 
-        # KEY CHANGE: Pass the auth_id to the embedding service call
         chunks_text = (
             "\n\n".join(
                 f"RELEVANT CONTEXT: {chunk['content']}"

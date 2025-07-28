@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Optional
 from datetime import datetime
 
 
@@ -8,7 +8,7 @@ class UserBase(BaseModel):
     name: str
 
 class UserCreate(BaseModel):
-    auth_id: str  # Third-party auth ID
+    auth_id: str  
     email: EmailStr
     name: str
     avatar_url: Optional[str] = None

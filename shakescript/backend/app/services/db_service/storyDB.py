@@ -1,5 +1,3 @@
-# app/services/db_service/storyDB.py
-
 from supabase import Client
 from typing import Dict, List, Any
 import json
@@ -8,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 
 def _safe_json_loads(json_string: str, default_type: Any = None):
-    # ... (this helper function remains the same)
+    """Safe JSON loader to avoid crashes on invalid or null strings"""
     if json_string is None:
         return default_type() if callable(default_type) else default_type
     try:
@@ -24,8 +22,8 @@ class StoryDB:
     def __init__(self, client: Client):
         self.client = client
 
-    # ... (all other methods like get_all_stories, get_story_info, etc. are correct) ...
     def get_all_stories(self, auth_id: str) -> List[Dict[str, Any]]:
+        """Fetch all stories for a user (minimal fields for listing)"""
         result = (
             self.client.table("stories")
             .select("id, title, genre, is_completed")
@@ -35,6 +33,7 @@ class StoryDB:
         return result.data if result.data else []
 
     def get_story_info(self, story_id: int, auth_id: str) -> Dict:
+        """Fetch complete story info including episodes + characters"""
         story_result = (
             self.client.table("stories")
             .select("*")
@@ -47,17 +46,13 @@ class StoryDB:
 
         story_row = story_result.data[0]
 
+        # Parse JSON fields safely
         story_row["setting"] = _safe_json_loads(story_row.get("setting"), dict)
         story_row["protagonist"] = _safe_json_loads(story_row.get("protagonist"), list)
-        story_row["story_outline"] = _safe_json_loads(
-            story_row.get("story_outline"), list
-        )
+        story_row["story_outline"] = _safe_json_loads(story_row.get("story_outline"), list)
         story_row["timeline"] = _safe_json_loads(story_row.get("timeline"), list)
         story_row["key_events"] = _safe_json_loads(story_row.get("key_events"), list)
-        story_row["current_episodes_content"] = _safe_json_loads(
-            story_row.get("current_episodes_content"), list
-        )
-        story_row["refinement_method"] = story_row["refinement_method"]
+        story_row["current_episodes_content"] = _safe_json_loads(story_row.get("current_episodes_content"), list)
 
         episodes_result = (
             self.client.table("episodes")
@@ -105,6 +100,7 @@ class StoryDB:
     def store_story_metadata(
         self, metadata: Dict, num_episodes: int, refinement_method: str, auth_id: str
     ) -> int:
+        """Insert a new story + bulk insert all characters"""
         result = (
             self.client.table("stories")
             .insert(
@@ -152,20 +148,24 @@ class StoryDB:
     def update_story_current_episodes_content(
         self, story_id: int, episodes: List[Dict], auth_id: str
     ):
+        """Update current episodes buffer for story refinement"""
         self.client.table("stories").update(
             {"current_episodes_content": json.dumps(episodes)}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
 
     def get_refined_episodes(self, story_id: int, auth_id: str) -> List[Dict]:
+        """Return the current episodes buffer (refinement stage)"""
         story_data = self.get_story_info(story_id, auth_id)
         return story_data.get("current_episodes_content", [])
 
     def clear_current_episodes_content(self, story_id: int, auth_id: str):
+        """Clear current episodes buffer after validation"""
         self.client.table("stories").update(
             {"current_episodes_content": json.dumps([])}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
 
     def delete_story(self, story_id: int, auth_id: str) -> None:
+        """Delete story + related characters, episodes, and chunks (bulk delete)"""
         story = (
             self.client.table("stories")
             .select("id")
@@ -176,145 +176,16 @@ class StoryDB:
         if not story.data:
             raise ValueError(f"Story with ID {story_id} not found")
 
-        self.client.table("characters").delete().eq("story_id", story_id).execute()
-        self.client.table("episodes").delete().eq("story_id", story_id).execute()
-        self.client.table("chunks").delete().eq("story_id", story_id).execute()
         self.client.table("stories").delete().eq("id", story_id).execute()
 
     def set_story_completed(self, story_id: int, completed: bool):
+        """Mark a story as completed"""
         self.client.table("stories").update({"is_completed": completed}).eq(
             "id", story_id
         ).execute()
 
-    def check_and_update_episode_limits(self, auth_id: str) -> Dict[str, Any]:
-        now = datetime.now(timezone.utc)
-
-        user_res = (
-            self.client.table("users")
-            .select("episodes_timestamps, episodes_month_count, month_start_date")
-            .eq("auth_id", auth_id)
-            .single()
-            .execute()
-        )
-        if not user_res.data:
-            return {"error": "User not found."}
-
-        user = user_res.data
-        timestamps = user.get("episodes_timestamps") or []
-        month_count = user.get("episodes_month_count") or 0
-        month_start_date_str = user.get("month_start_date")
-
-        if month_start_date_str:
-            month_start_date = datetime.fromisoformat(month_start_date_str).date()
-            if now.year > month_start_date.year or now.month > month_start_date.month:
-                month_count = 0
-                month_start_date_str = now.date().isoformat()
-        else:
-            month_start_date_str = now.date().isoformat()
-
-        if month_count >= 30:
-            return {"error": "Monthly episode limit (30) reached."}
-
-        one_day_ago = now - timedelta(days=1)
-        recent_timestamps = [
-            t
-            for t in timestamps
-            if datetime.fromisoformat(t.replace("Z", "+00:00")) > one_day_ago
-        ]
-
-        if len(recent_timestamps) >= 15:
-            return {"error": "Daily episode limit (15 in 24 hours) reached."}
-
-        new_timestamps = recent_timestamps + [now.isoformat()]
-
-        update_res = (
-            self.client.table("users")
-            .update(
-                {
-                    "episodes_timestamps": new_timestamps,
-                    "episodes_month_count": month_count + 1,
-                    "month_start_date": month_start_date_str,
-                }
-            )
-            .eq("auth_id", auth_id)
-            .execute()
-        )
-
-        if not update_res.data:
-            return {"error": "Failed to update user limits."}
-
-        return {"status": "success"}
-
-    def get_user_profile(self, auth_id: str) -> Dict:
-        result = (
-            self.client.table("users")
-            .select("id, auth_id, name, email, avatar_url, is_premium, created_at")
-            .eq("auth_id", auth_id)
-            .limit(1)
-            .single()
-            .execute()
-        )
-        if not result.data:
-            return {"error": "User profile not found."}
-        return result.data
-
-    def get_user_stats(self, auth_id: str, created_at: datetime) -> Dict:
-        # Fetch stories and user data in parallel for efficiency
-        stories_res = (
-            self.client.table("stories")
-            .select("id, is_completed, genre", count="exact")
-            .eq("auth_id", auth_id)
-            .execute()
-        )
-        user_res = (
-            self.client.table("users")
-            .select("episodes_timestamps, episodes_month_count")
-            .eq("auth_id", auth_id)
-            .single()
-            .execute()
-        )
-
-        total_stories = stories_res.count or 0
-
-        # Calculate daily and monthly counts from the user's data
-        now = datetime.now(timezone.utc)
-        one_day_ago = now - timedelta(days=1)
-
-        timestamps = (
-            user_res.data.get("episodes_timestamps", []) if user_res.data else []
-        )
-        episodes_day_count = len(
-            [
-                t
-                for t in timestamps
-                if datetime.fromisoformat(t.replace("Z", "+00:00")) > one_day_ago
-            ]
-        )
-        episodes_month_count = (
-            user_res.data.get("episodes_month_count", 0) if user_res.data else 0
-        )
-
-        # Calculate other stats
-        completed_stories = (
-            sum(1 for story in stories_res.data if story["is_completed"])
-            if stories_res.data
-            else 0
-        )
-        in_progress_stories = total_stories - completed_stories
-        account_age_days = (now - created_at).days
-
-        return {
-            "total_stories": total_stories,
-            "total_episodes": episodes_month_count,
-            "episodes_day_count": episodes_day_count,
-            "episodes_month_count": episodes_month_count,
-            "completed_stories": completed_stories,
-            "in_progress_stories": in_progress_stories,
-            "account_age_days": account_age_days,
-            "last_active": now,
-        }
-
     def get_recent_stories(self, auth_id: str, limit: int = 5) -> List[Dict]:
+        """Fetch recent stories for dashboard"""
         result = (
             self.client.table("stories")
             .select("id, title, summary, genre, created_at")

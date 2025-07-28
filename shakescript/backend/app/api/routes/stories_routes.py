@@ -4,7 +4,6 @@ from ...models.schemas import (
     StoryListResponse,
     StoryResponse,
     ErrorResponse,
-    StoryListItem,  # Import StoryListItem
 )
 from app.services.core_service import StoryService
 from app.api.dependencies import get_story_service, get_current_user
@@ -12,7 +11,6 @@ from typing import Annotated, Union, Dict, Any, List
 from app.utils import parse_user_prompt
 
 router = APIRouter(prefix="/stories", tags=["stories"])
-
 
 @router.get(
     "/all",
@@ -40,8 +38,6 @@ def get_all_stories(
         else {"status": "success", "stories": [], "message": "No stories found"}
     )
 
-
-# ... (the rest of your stories_routes.py file remains the same) ...
 @router.post(
     "/",
     response_model=Union[Dict[str, Any], ErrorResponse],

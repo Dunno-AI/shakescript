@@ -1,5 +1,3 @@
-# app/services/db_service/charactersDB.py
-
 from supabase import Client
 from typing import Dict, List
 import json
@@ -7,9 +5,6 @@ import json
 
 class CharactersDB:
     def __init__(self, client: Client):
-        """
-        KEY CHANGE: Accept the authenticated client.
-        """
         self.client = client
 
     def update_character_state(

@@ -11,3 +11,4 @@ python-dotenv
 openai
 pydantic-settings
 accelerate
+pydantic[email]

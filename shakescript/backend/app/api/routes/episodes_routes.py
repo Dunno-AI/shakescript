@@ -65,6 +65,7 @@ async def validate_batch(
     auth_id = user.get("auth_id")
     return service.validate_episode_batch(story_id, auth_id, background_tasks)
 
+#refine_batch endpoint
 @router.post(
     "/{story_id}/refine-batch",
     response_model=Union[EpisodeBatchResponse, ErrorResponse],

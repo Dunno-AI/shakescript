@@ -20,7 +20,7 @@ class StoryService:
         self.ai_service = AIService(client)
         self.db_service = DBService(client)
         self.embedding_service = EmbeddingService(client)
-        self.client = client  # Store client for direct use if needed
+        self.client = client  
         self.DEFAULT_BATCH_SIZE = 2
 
     async def create_story(

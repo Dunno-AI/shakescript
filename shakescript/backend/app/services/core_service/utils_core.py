@@ -7,7 +7,6 @@ def get_story_info(self, story_id: int, auth_id: str) -> Dict[str, Any]:
 
 
 def get_all_stories(self, auth_id: str) -> List[StoryListItem]:
-    # This was already corrected to handle the Pydantic model conversion
     stories_from_db = self.db_service.get_all_stories(auth_id)
     return [
         StoryListItem(
@@ -23,7 +22,6 @@ def get_all_stories(self, auth_id: str) -> List[StoryListItem]:
 def _update_story_memory(
     self, story_id: int, episode_data: Dict, story_memory: Dict, auth_id: str
 ):
-    # This function appears correct as-is
     if story_id not in story_memory:
         story_memory[story_id] = {
             "characters": {},
@@ -74,7 +72,6 @@ def store_validated_episodes(
         return
 
     for episode in episodes:
-        # --- FIX: Use the correct key 'number' instead of 'episode_number' ---
         episode_number = episode.get("episode_number")
         if not episode_number:
             print(f"Warning: Episode missing 'number' field: {episode}")
@@ -104,14 +101,13 @@ def store_validated_episodes(
         else:
             print(f"Warning: No episode_content for episode {episode}")
 
-    # --- FIX: Use the correct key 'number' to find the max episode ---
-    max_episode_num = max([ep.get("number", 0) for ep in episodes], default=0)
+    max_episode_num = max([ep.get("episode_number", 0) for ep in episodes], default=0)
 
     is_completed = True if max_episode_num >= total_episodes else False
     if max_episode_num > 0:
         self.client.table("stories").update(
             {"current_episode": max_episode_num + 1, "is_completed": is_completed}
         ).eq("id", story_id).eq("auth_id", auth_id).execute()
-        print(f"Updated story current_episode to {max_episode_num + 1}")
+        print(f"Updated story current_episode to {max_episode_num + 1} and set is_completed to {is_completed}")
 
     self.clear_current_episodes_content(story_id, auth_id)

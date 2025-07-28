@@ -9,6 +9,9 @@ def refine_episode_batch(
     feedback: List[Feedback],
     auth_id: str
 ) -> Dict:
+    """
+    Logic for refining the episode batch
+    """
     story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])
@@ -73,6 +76,9 @@ def validate_episode_batch(
     auth_id: str,
     background_tasks
 ) -> Dict:
+    """
+    Logic for validating the episode batch
+    """
     story_data = self.get_story_info(story_id, auth_id)
     if "error" in story_data:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=story_data["error"])

@@ -38,7 +38,7 @@ class AIPrompts:
         {json.dumps(self.utils.story_phases, indent=2)}
         </INSTRUCTIONS>
 
-        Format as JSON:
+        Strictly strict to this JSON template and DONT USE MARKDOWN FORMATTING:
         {json.dumps(metadata_template, indent=2)}
         """
 
@@ -111,7 +111,7 @@ class AIPrompts:
         {key_events_summary}
         </Key_Events>
 
-        - Output STRICTLY a valid JSON object with NO additional text:
+        - Output STRICTLY a valid JSON object with NO additional text and DONT USE MARKDOWN FORMATTING:
         {{
           "episode_title": "A descriptive, Pronounceable Title",
           "episode_content": "An immersive episode with compelling storytelling and varied style."
@@ -138,7 +138,7 @@ class AIPrompts:
         Character Snapshot: {char_snapshot}
         Relevant Context: {chunks_text}
 
-        - Output STRICTLY a valid JSON object with NO additional text:
+        - Output STRICTLY a valid JSON object with NO additional text and DONT USE MARKDOWN FORMATTING:
         {{
           "episode_summary": "string",
           "episode_emotional_state": "string",

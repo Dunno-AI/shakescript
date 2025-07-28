@@ -11,6 +11,9 @@ async def create_story(
     hinglish: bool = False,
     auth_id: str = "",
 ) -> Dict[str, Any]:
+    """
+    Logic for extracting metadata from the user prompt.
+    """
     full_prompt = f"{prompt} number of episodes = {num_episodes}"
     metadata = self.ai_service.extract_metadata(full_prompt, num_episodes, hinglish)
     if "error" in metadata:
@@ -34,7 +37,6 @@ def generate_multiple_episodes(
     """
     limit_check = self.db_service.check_and_update_episode_limits(auth_id)
     if "error" in limit_check:
-        # This will stop execution and send a clear error to the frontend.
         raise HTTPException(status_code=429, detail=limit_check["error"])
 
     story_data = self.db_service.get_story_info(story_id, auth_id)

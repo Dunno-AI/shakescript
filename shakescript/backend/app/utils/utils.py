@@ -8,14 +8,10 @@ def clean_json_text(text: str) -> str:
     Preprocess raw text to make it more JSON-friendly before parsing.
     Removes code blocks, fixes single quotes, and handles trailing commas.
     """
-    # Remove markdown code blocks (e.g., ```json ... ```)
     text = re.sub(r"```(?:json)?\s*\n(.*?)\n```", r"\1", text, flags=re.DOTALL)
-    # Replace single quotes with double quotes for valid JSON
     text = text.replace("'", '"')
-    # Remove trailing commas before closing brackets/braces
     text = re.sub(r",\s*}", "}", text)
     text = re.sub(r",\s*]", "]", text)
-    # Strip leading/trailing whitespace
     text = text.strip()
     return text
 
@@ -68,18 +64,14 @@ def parse_user_prompt(raw_prompt: str) -> str:
     """
     raw_prompt = raw_prompt.strip()
 
-    # Remove Markdown headers (e.g., "### Title")
     raw_prompt = re.sub(r"#+\s*", "", raw_prompt)
 
-    # Remove Markdown bold (**bold**) and italics (_italics_)
     raw_prompt = re.sub(r"\*\*(.*?)\*\*", r"\1", raw_prompt)  # Bold
     raw_prompt = re.sub(r"_(.*?)_", r"\1", raw_prompt)  # Italics
 
-    # Replace Markdown bullet points (🔹, -, *, etc.) with simple line breaks
     raw_prompt = re.sub(r"🔹\s*", "- ", raw_prompt)
     raw_prompt = re.sub(r"[-*]\s*", "- ", raw_prompt)
 
-    # Normalize multiple spaces and newlines
     raw_prompt = re.sub(r"\s*\n\s*", "\n", raw_prompt).strip()
 
     return raw_prompt
