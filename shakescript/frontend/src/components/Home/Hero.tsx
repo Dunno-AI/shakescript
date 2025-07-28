@@ -80,7 +80,7 @@ export const HeroSection: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          Start your project with AI-powered story generation, seamless project management, instant editing, creative customization, cloud storage, and easy sharing on ShakeScript.
+          Start your project with AI-powered story generation, seamless project management, instant editing, creative customization on ShakeScript.
         </motion.p>
 
         <motion.div

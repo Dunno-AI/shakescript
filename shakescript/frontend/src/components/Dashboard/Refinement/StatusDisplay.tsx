@@ -18,7 +18,7 @@ export const StatusDisplay: React.FC<StatusDisplayProps> = ({ status }) => {
         />
         <div className="text-zinc-500 text-center mt-2">
           <p>This may take a few moments...</p>
-        </div> */}
+        </div>
         <SpinLoading fill="#777" borderRadius={4} count={12} />
       </div>
     );

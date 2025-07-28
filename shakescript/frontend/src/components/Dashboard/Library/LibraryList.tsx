@@ -5,7 +5,7 @@ import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
 import { useStoryContext } from "@/contexts/StoryListContext";
 import { Story, StoryDetails } from "@/types/story";
-import toast from "react-hot-toast"; 
+import toast from "react-hot-toast";
 import { SpinLoading } from "respinner";
 
 interface LibraryListProps {
@@ -109,7 +109,7 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
         </div>
       </div>
 
-      {!loading ? (
+      {!loading ? (filtered.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 place-items-center">
           <AnimatePresence>
             {filtered.map((story) => (
@@ -128,6 +128,11 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
           </AnimatePresence>
         </div>
       ) : (
+        <div className="text-center py-20 bg-zinc-900/50 rounded-lg border border-dashed border-zinc-700">
+          <h2 className="text-xl font-semibold text-zinc-300">No Stories</h2>
+          <p className="text-zinc-500 mt-2">Create some stories to see the list here.</p>
+        </div>
+      )) : (
         <div className="flex flex-col items-center justify-center space-y-3">
           <SpinLoading fill="#777" borderRadius={4} count={12} />
           <p className="text-xs text-zinc-500">Loading stories</p>
