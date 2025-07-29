@@ -5,7 +5,6 @@ import React, {
   useContext,
   ReactNode,
   useCallback,
-  useRef,
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
@@ -31,7 +30,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const toastShownRef = useRef(false);
 
   const fetchProfile = useCallback(async (currentUser: User) => {
     const { data, error } = await supabase
@@ -75,10 +73,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       (event, session) => {
         switch (event) {
           case "SIGNED_IN":
-            if (!toastShownRef.current) {
-                toast.success("Successfully logged in!");
-                toastShownRef.current = true;
-            }
             setSession(session);
             const signedInUser = session?.user ?? null;
             setUser(signedInUser);
@@ -94,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             setSession(null);
             setUser(null);
             setProfile(null);
-            toastShownRef.current = false;
+            sessionStorage.removeItem('loginToastShown');
             break;
           case "TOKEN_REFRESHED":
             setSession(session);
@@ -115,6 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await supabase.auth.signOut();
       localStorage.clear();
+      sessionStorage.removeItem('loginToastShown');
       setSession(null);
       setUser(null);
       setProfile(null);

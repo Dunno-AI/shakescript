@@ -190,7 +190,7 @@ export const Sidebar = () => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="font-medium whitespace-nowrap"
+                    className="font-medium truncate"
                   >
                     {user.user_metadata.full_name}
                   </motion.span>

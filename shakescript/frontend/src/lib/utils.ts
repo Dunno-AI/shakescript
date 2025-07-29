@@ -13,7 +13,7 @@ export function useAuthFetch() {
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     if (!session) {
-      navigate('/login');
+      navigate('/');
       throw new Error('Not authenticated');
     }
     const token = session.access_token;

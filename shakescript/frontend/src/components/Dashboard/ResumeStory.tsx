@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { SpinLoading } from 'respinner';
 import { useNavigate } from 'react-router-dom';
 import LibraryList from './Library/LibraryList';
 import { useStoryContext } from '@/contexts/StoryListContext';
@@ -16,7 +17,7 @@ export const ResumeStory: React.FC = () => {
             navigate(`/dashboard/${story.story_id}/refinement`, {
                 state: {
                     story: { ...story, total_episodes: story.total_episodes },
-                    isHinglish: false, // This should be based on your story properties
+                    isHinglish: false, 
                     initialBatch,
                 }
             });
@@ -28,8 +29,9 @@ export const ResumeStory: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+            <div className="flex flex-col items-center justify-center h-full space-y-3">
+                <SpinLoading fill="#777" borderRadius={4} count={12} />
+                <p className="text-xs text-zinc-500">Loading stories</p>
             </div>
         );
     }
@@ -47,7 +49,7 @@ export const ResumeStory: React.FC = () => {
             <h1 className="text-3xl font-bold text-zinc-100 mb-8">Continue Your Stories</h1>
 
             {incompleteStories.length > 0 ? (
-            <LibraryList Stories={incompleteStories} onSelectStory={setToRefinement} />
+                <LibraryList Stories={incompleteStories} onSelectStory={setToRefinement} />
             ) : (
                 <div className="text-center py-20 bg-zinc-900/50 rounded-lg border border-dashed border-zinc-700">
                     <h2 className="text-xl font-semibold text-zinc-300">No Incomplete Stories</h2>

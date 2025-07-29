@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { Story } from "@/types/story";
 import { useAuthFetch } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 const CACHE_DURATION = 6 * 60 * 1000;
 
@@ -72,8 +73,10 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       setCompletedStories((prev) => prev.filter((s) => s.story_id !== storyId));
       setIncompleteStories((prev) => prev.filter((s) => s.story_id !== storyId));
+      toast.success("Story deleted successfully!");
     } catch (err) {
       console.error("Failed to delete story", err);
+      toast.error("Failed to delete the story.");
       throw err;
     }
   };

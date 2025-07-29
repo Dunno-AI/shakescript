@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
-  Pencil,
   Loader2,
   AlertTriangle,
   Sparkles,
@@ -9,33 +8,13 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useDashboard } from "../../contexts/DashboardContext";
-import { updateUserProfile } from "../../lib/api";
 import { DashboardCharts } from "./DashboardCharts";
-import { useAuth } from "../../contexts/AuthContext"; // 1. Import useAuth
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function UserStats() {
   const { dashboardData, loading, error } = useDashboard();
-  const { user: authUser } = useAuth(); // 2. Get the authenticated user object
+  const { user: authUser } = useAuth();
 
-  const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-
-  useEffect(() => {
-    if (dashboardData?.user && authUser) {
-      setName(dashboardData.user.name);
-
-      // 3. Use the reliable avatar URL from auth as a fallback
-      const providerAvatar = authUser.user_metadata.avatar_url;
-      setAvatarUrl(
-        dashboardData.user.avatar_url ||
-        providerAvatar ||
-        `https://i.pravatar.cc/100?u=${dashboardData.user.auth_id}`,
-      );
-    }
-  }, [dashboardData, authUser]); // 4. Add authUser to the dependency array
-
-  // ... rest of the component remains the same
   if (loading) {
     return (
       <div className="w-full h-full min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -57,18 +36,10 @@ export default function UserStats() {
 
   const { user: profile, stats, recent_stories } = dashboardData;
 
-  const handleSave = async () => {
-    if (!dashboardData) return;
-    try {
-      await updateUserProfile({ name, avatar_url: avatarUrl });
-      // NOTE: A more robust solution would be to call `refreshDashboard()` from the context
-      // to get the latest state from the server after an update.
-      setEditMode(false);
-    } catch (err) {
-      console.error("Failed to update profile:", err);
-      alert("Failed to save profile. Please try again.");
-    }
-  };
+  const avatarUrl =
+    profile.avatar_url ||
+    authUser?.user_metadata.avatar_url ||
+    `https://i.pravatar.cc/100?u=${profile.auth_id}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-white">
@@ -93,59 +64,28 @@ export default function UserStats() {
               </div>
 
               <div className="flex-1">
-                {editMode ? (
-                  <div className="space-y-4">
-                    <input
-                      className="bg-zinc-800/80 text-white rounded-xl px-4 py-3 w-full border border-zinc-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Your name"
-                    />
-                    <input
-                      className="bg-zinc-800/80 text-white rounded-xl px-4 py-3 w-full border border-zinc-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="Avatar URL"
-                    />
-                    <button
-                      className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl text-white font-medium hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25"
-                      onClick={handleSave}
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 mb-3">
-                      <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-                        {name}
-                      </h1>
-                      <button
-                        onClick={() => setEditMode(true)}
-                        className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all duration-300"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                      {profile.is_premium && (
-                        <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-full font-medium shadow-lg">
-                          ✨ Premium
-                        </span>
+                <div className="flex items-center gap-3 mb-3">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+                    {profile.name}
+                  </h1>
+                </div>
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  {profile.is_premium && (
+                    <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-full font-medium shadow-lg">
+                      ✨ Premium
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Joined{" "}
+                      {new Date(profile.created_at).toLocaleDateString(
+                        "en-US",
+                        { month: "long", day: "numeric", year: "numeric" },
                       )}
-                      <div className="flex items-center gap-2 text-zinc-400">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Joined{" "}
-                          {new Date(profile.created_at).toLocaleDateString(
-                            "en-US",
-                            { month: "long", day: "numeric", year: "numeric" },
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                )}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
