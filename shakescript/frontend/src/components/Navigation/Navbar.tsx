@@ -4,8 +4,6 @@ import { Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
 import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabaseClient";
-import toast from "react-hot-toast";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,20 +30,10 @@ export const Navbar: React.FC = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleSignOut = async () => await signOut(navigate);
 
-  const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) {
-      toast.error(error.message);
-    }
-  };
-
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/#start-building" },
-    { name: "Statistics", href: "/stats" },
+    { name: "Statistics", href: "/stats", mobileOnly: false },
     ...(session
       ? [
         { name: "Dashboard", href: "/dashboard" },
@@ -94,7 +82,7 @@ export const Navbar: React.FC = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    className={`text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium ${item.name === "Statistics" ? "hidden md:block" : ""}`}
                     onClick={(e) => {
                       if (item.href.includes("/#")) {
                         e.preventDefault();
@@ -151,13 +139,15 @@ export const Navbar: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={handleLogin}
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
-                >
-                  <LogIn size={16} />
-                  Login / Sign Up
-                </button>
+                location.pathname !== "/login" && (
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
+                  >
+                    <LogIn size={16} />
+                    Login
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -180,16 +170,18 @@ export const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                onClick={() => toggleMenu()}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navItems
+              .filter((item) => item.name !== "Statistics")
+              .map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => toggleMenu()}
+                >
+                  {item.name}
+                </Link>
+              ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-700">
             {session ? (
@@ -205,17 +197,19 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="px-5">
-                <button
-                  onClick={() => {
-                    handleLogin();
-                    toggleMenu();
-                  }}
-                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
-                >
-                  Login / Sign Up
-                </button>
-              </div>
+              location.pathname !== "/login" && (
+                <div className="px-5">
+                  <button
+                    onClick={() => {
+                      navigate("/login");
+                      toggleMenu();
+                    }}
+                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                  >
+                    Login
+                  </button>
+                </div>
+              )
             )}
           </div>
         </div>
