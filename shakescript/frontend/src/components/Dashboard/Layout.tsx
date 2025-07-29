@@ -7,13 +7,12 @@ import { ResumeStory } from './ResumeStory';
 import UserStats from './UserStats';
 import { RefinementRoute } from './RefinementRoute';
 import { useAuth } from '../../contexts/AuthContext';
-import { StoryPrompt } from './StoryPrompt'; // Import the modal
+import { StoryPrompt } from './StoryPrompt'; 
 import { DashboardProvider } from '../../contexts/DashboardContext';
 
 export const Layout = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  // --- FIX: Manage modal state at the top level ---
   const [showStoryPrompt, setShowStoryPrompt] = useState(false);
 
   useEffect(() => {
@@ -23,7 +22,6 @@ export const Layout = () => {
   }, [user, loading, navigate]);
 
   if (loading || !user) {
-    // You can replace this with a more sophisticated loading skeleton
     return <div className="flex h-screen w-full items-center justify-center bg-black">Loading Dashboard...</div>;
   }
 

@@ -12,7 +12,8 @@ export const HeroSection: React.FC = () => {
   const handleStartProject = () => {
     if (session) {
       navigate("/dashboard");
-    } else {
+    } 
+    else{
       navigate("/login");
     }
   };

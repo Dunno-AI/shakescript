@@ -38,7 +38,7 @@ const ScrollbarStyles = () => {
 
 export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   const [prompt, setPrompt] = useState("");
-  const [episodes, setEpisodes] = useState(5);
+  const [episodes, setEpisodes] = useState(10);
   const [refineMethod, setRefineMethod] = useState<'human' | 'ai'>('human');
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -114,7 +114,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
   };
 
   const decrementEpisodes = () => {
-    setEpisodes((prev) => Math.max(prev - 1, 1));
+    setEpisodes((prev) => Math.max(prev - 1, 10));
   };
 
   return (
@@ -158,8 +158,8 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
                     <input
                       type="number"
                       value={episodes}
-                      onChange={(e) => setEpisodes(Number.parseInt(e.target.value) || 1)}
-                      min="1"
+                      onChange={(e) => setEpisodes(Number.parseInt(e.target.value) || 10)}
+                      min="10"
                       max="50"
                       className="w-36 h-8 px-2 py-1 bg-zinc-800 text-zinc-100 rounded-md border border-zinc-700 focus:outline-none focus:border-zinc-600 text-sm appearance-none"
                       disabled={isCreatingStory}
@@ -177,7 +177,7 @@ export const StoryPrompt: React.FC<StoryPromptProps> = ({ onClose }) => {
                         type="button"
                         onClick={decrementEpisodes}
                         className="flex-1 flex items-center justify-center px-1 bg-zinc-800 border-l border-t border-zinc-700 rounded-br-md hover:bg-zinc-700"
-                        disabled={isCreatingStory || episodes <= 1}
+                        disabled={isCreatingStory || episodes <= 10}
                       >
                         <ChevronDown size={12} className="text-zinc-400" />
                       </button>

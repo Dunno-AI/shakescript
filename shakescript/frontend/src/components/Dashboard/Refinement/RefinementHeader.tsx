@@ -14,7 +14,6 @@ export const RefinementHeader: React.FC<RefinementHeaderProps> = ({
   status,
   currentBatch,
   progress,
-  episodesCount,
   totalEpisodes,
   storyTitle,
   onBack,
@@ -53,7 +52,7 @@ export const RefinementHeader: React.FC<RefinementHeaderProps> = ({
         </div>
         <div className="flex justify-between text-sm text-zinc-400 mt-2">
           <span>
-            {episodesCount+1} of {totalEpisodes} episodes generated
+            {currentBatch} of {totalEpisodes} episodes generating
           </span>
           <span>{Math.round(progress)}%</span>
         </div>

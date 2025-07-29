@@ -39,16 +39,13 @@ export const useRefinement = ({
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-  const progress = Math.min(
-    ((episodes.length+1) / story.total_episodes) * 100,
-    100,
-  );
+  const progress = Math.min((currentBatch / story.total_episodes) * 100, 100);
 
   const findLatestEpisodeInBatch = (batchEpisodes: Episode[]) => {
     return batchEpisodes.length > 0
       ? batchEpisodes.reduce((latest, current) =>
-        current.episode_number > latest.episode_number ? current : latest,
-      )
+          current.episode_number > latest.episode_number ? current : latest,
+        )
       : null;
   };
 
@@ -129,7 +126,8 @@ export const useRefinement = ({
       }
     } catch (error: any) {
       setErrorMessage(
-        `Failed to connect to the server: ${error.response?.data?.detail || error.message || "Unknown error"
+        `Failed to connect to the server: ${
+          error.response?.data?.detail || error.message || "Unknown error"
         }. Please try again.`,
       );
     }
@@ -137,20 +135,30 @@ export const useRefinement = ({
 
   useEffect(() => {
     const initialEpisodes: Episode[] = story.episodes.map((ep: any) => ({
-      episode_id: ep.id,
-      episode_number: ep.number,
-      episode_title: ep.title || `Episode ${ep.number}`,
-      episode_content: ep.content,
-      episode_summary: ep.summary || "",
+      episode_id: ep.episode_id,
+      episode_number: ep.episode_number,
+      episode_title: ep.episode_title || `Episode ${ep.episode_number}`,
+      episode_content: ep.episode_content,
+      episode_summary: ep.episode_summary || "",
     }));
     setEpisodes(initialEpisodes);
 
     if (story.story_id) {
       if (initialEpisodes.length === 0) {
         generateBatch();
-      } else {
-        generateBatch();
+      } else if (story.refinement_method === "AI") {
+        setStatus("ai-ready");
+      } else if (story.refinement_method === "HUMAN") {
+        setStatus("human-review");
+        const latest = findLatestEpisodeInBatch(initialEpisodes);
+        setLatestEpisode(latest);
+        setEpisodes(
+          initialEpisodes.filter(
+            (episode) => episode.episode_number !== latest?.episode_number,
+          ),
+        );
       }
+      setCurrentBatch(initialEpisodes.length);
     }
   }, [story.story_id]);
 
@@ -204,7 +212,8 @@ export const useRefinement = ({
       }
     } catch (error: any) {
       setErrorMessage(
-        `Failed to submit feedback: ${error.response?.data?.detail || error.message || "Unknown error"
+        `Failed to submit feedback: ${
+          error.response?.data?.detail || error.message || "Unknown error"
         }. Please try again.`,
       );
       setStatus("human-review");
@@ -226,7 +235,12 @@ export const useRefinement = ({
 
       if (data.status === "success") {
         if (latestEpisode) {
-          setEpisodes((prev) => [...prev, latestEpisode]);
+          setEpisodes((prev) => {
+            const exists = prev.some(
+              (ep) => ep.episode_number === latestEpisode.episode_number,
+            );
+            return exists ? prev : [...prev, latestEpisode];
+          });
         }
 
         if (data.message && data.message.includes("Story complete")) {
@@ -241,7 +255,8 @@ export const useRefinement = ({
       }
     } catch (error: any) {
       setErrorMessage(
-        `Failed to validate batch: ${error.response?.data?.detail || error.message || "Unknown error"
+        `Failed to validate batch: ${
+          error.response?.data?.detail || error.message || "Unknown error"
         }. Please try again.`,
       );
     } finally {

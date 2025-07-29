@@ -5,7 +5,6 @@ import StoryCard from "./StoryCard";
 import ConfirmModal from "../../utils/ConfirmModal";
 import { useStoryContext } from "@/contexts/StoryListContext";
 import { Story, StoryDetails } from "@/types/story";
-import toast from "react-hot-toast";
 import { SpinLoading } from "respinner";
 
 interface LibraryListProps {
@@ -44,11 +43,7 @@ const LibraryList = ({ onSelectStory, Stories }: LibraryListProps) => {
       setDeleting(true);
       try {
         await deleteStory(deleteTarget);
-        // --- Show success notification ---
-        toast.success("Story deleted successfully!");
       } catch (err) {
-        // --- Show error notification ---
-        toast.error("Failed to delete the story.");
       } finally {
         setShowConfirm(false);
         setDeleteTarget(null);

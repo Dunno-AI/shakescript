@@ -133,6 +133,7 @@ def get_story(
         refinement_method=story_info.get("refinement_method", "AI"),
         total_episodes=story_info.get("num_episodes"),
     )
+    print(story_info.get("episodes"))
 
     return {
         "status": "success",
