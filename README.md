@@ -1,5 +1,13 @@
 # 🎭 ShakeScript - An AI-Based Story Creation Platform
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.13-blue.svg" alt="Python Version">
+  <img src="https://img.shields.io/badge/Framework-FastAPI-green.svg" alt="Framework">
+  <img src="https://img.shields.io/badge/Frontend-React-blue.svg" alt="Frontend">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+  <a href="https://github.com/RaviThakur1002/shakescript/stargazers"><img src="https://img.shields.io/github/stars/RaviThakur1002/shakescript" alt="Stars Badge"/></a>
+</p>
+
 <p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/Intro.png" alt="ShakeScript Introduction" width="700"/> </p>
 
 ShakeScript is a cutting-edge, AI-powered storytelling system designed to generate immersive, multi-episode narratives with rich characters, evolving plots, and long-term memory. By blending the strengths of **GPT-4o** and **Google Gemini**, it overcomes traditional limitations in AI storytelling, such as token constraints and narrative inconsistencies.
@@ -71,11 +79,6 @@ Traditional AI-generated stories often struggle with:
 
 ### 3️⃣ Validation & Refinement (via Gemini)
 
-#### AI Validation (`validation.py`)
-
--   Checks for timeline alignment, character consistency (location and motivation), and coherence in dialogue and tone.
--   Refines the story up to three times if inconsistencies are found.
-
 #### Human Feedback (`episodes.py`)
 
 -   Users can refine episodes via the `/refine-batch` endpoint.
@@ -125,13 +128,24 @@ Traditional AI-generated stories often struggle with:
 
 ## 🛠️ Tech Stack
 
-| Category | Technologies |
-|---|---|
-| **AI & NLP** | GPT-4o, Google Gemini, Hugging Face Embeddings |
-| **Backend** | FastAPI, Pydantic, Asyncio |
-| **Database** | Supabase (PostgreSQL) |
-| **Embeddings & Retrieval**| LlamaIndex (`SemanticSplitterNodeParser`), Supabase Vector DB |
-| **Language** | Python 3.13 with type hints |
+<p align="center">
+  <strong>AI & NLP</strong><br>
+  <img src="https://img.shields.io/badge/GPT--4o-000000?style=for-the-badge&logo=openai&logoColor=white" alt="GPT-4o">
+  <img src="https://img.shields.io/badge/Google%20Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini">
+  <img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="Hugging Face">
+</p>
+<p align="center">
+  <strong>Backend</strong><br>
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white" alt="Pydantic">
+  <img src="https://img.shields.io/badge/Asyncio-8A2BE2?style=for-the-badge&logo=python&logoColor=white" alt="Asyncio">
+</p>
+<p align="center">
+  <strong>Database & Embeddings</strong><br>
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/LlamaIndex-6B45BC?style=for-the-badge" alt="LlamaIndex">
+</p>
 
 ---
 
@@ -186,3 +200,9 @@ ShakeScript redefines AI-powered storytelling by:
 -   Seamlessly blending LLMs, embeddings, and human input.
 
 > 🎉 Let the stories unfold — with ShakeScript, your narrative has no limits.
+
+---
+
+<p align="center">
+  Made with ❤️ by the ShakeScript AI Team
+</p>
