@@ -168,11 +168,9 @@ Traditional AI-generated stories often struggle with:
 
 | Feature | Description |
 |---|---|
-| 🎮 **Interactive Storylines**| Allow users to influence the story's direction. |
 | 🎧 **TTS Narration** | Add audio playback with Text-to-Speech. |
 | 🧠 **Custom AI Models** | Fine-tune LLMs for specific genres or styles. |
-| 📱 **Frontend UI** | A responsive, real-time React/Next.js interface. |
-| 🔍 **Smart Retrieval** | Advanced hybrid/cosine similarity for chunk searching. |
+
 
 ---
 
