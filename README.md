@@ -111,7 +111,6 @@ Traditional AI-generated stories often struggle with:
 -   **Endpoints**:
     -   `/stories` – Create a new story.
     -   `/generate-batch` – Generate a batch of episodes.
-    -   `/validate-batch` – Perform AI validation.
     -   `/refine-batch` – Handle human feedback and refinement.
 -   Uses Pydantic models for structured data (`schemas.py`).
 
@@ -154,7 +153,7 @@ Traditional AI-generated stories often struggle with:
 -   🏆 **Multi-Episode Consistency** – Maintains coherent and evolving narratives.
 -   💡 **Token Limit Workaround** – Smart retrieval with embeddings.
 -   👤 **Character Evolution** – Tracks character traits, arcs, and relationships.
--   🔁 **AI + Human Refinement** – Combines LLM polish with user feedback.
+-   🔁 **Human Refinement** – Combines LLM polish with user feedback.
 -   🌍 **Hinglish Support** – Culturally tuned storytelling.
 
 ---
