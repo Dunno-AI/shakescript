@@ -23,20 +23,15 @@ from typing import Dict, List, Any, Optional
 
 class AIService:
     def __init__(self, client: Client):
-        """
-        KEY CHANGE: Accepts the authenticated Supabase client and passes
-        it to services like EmbeddingService that need it.
-        """
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel("gemini-2.0-flash")
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-        # KEY CHANGE: Pass the client to EmbeddingService during initialization
         self.embedding_service = EmbeddingService(client)
         self.generation = AIGeneration(self.model, self.embedding_service)
         self.utils = AIUtils()
         self.prompts = AIPrompts()
-        self.client = client  # Store client for any potential direct use
+        self.client = client
 
     def call_llm(
         self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
