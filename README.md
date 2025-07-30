@@ -39,7 +39,7 @@ Traditional AI-generated stories often struggle with:
 -   Maintains narrative continuity using metadata and embeddings.
 -   Supports **Hinglish** storytelling.
 -   Offers both AI-driven and human-in-the-loop episode refinement.
--   Utilizes a robust database and semantic embeddings for memory.
+-   Utilizes a robust database and Gemini-based semantic embeddings for memory.
 
 ---
 
@@ -66,32 +66,18 @@ Traditional AI-generated stories often struggle with:
 #### Subsequent Episodes
 
 -   Retrieves up to three past episodes for context.
--   Embeddings fetch relevant content chunks to ensure long-form continuity.
+-   Gemini-generated embeddings fetch relevant story chunks to ensure long-form continuity.
 -   Ensures character consistency, thematic alignment, and narrative progression.
 
 #### Storage
 
 -   Saves episode content, titles, summaries, and emotional states in the `episodes` table.
 -   Splits episodes into semantic chunks using `SemanticSplitterNodeParser`.
--   Vectorizes and stores these chunks in the `chunks` table.
+-   Vectorizes and stores these chunks in the `chunks` table using Gemini Embeddings.
 
 ---
 
-### 3️⃣ Validation & Refinement (via Gemini)
-
-#### Human Feedback (`episodes.py`)
-
--   Users can refine episodes via the `/refine-batch` endpoint.
--   Gemini regenerates content while preserving the story's core elements.
-
-#### Batch Processing (`refinement.py`)
-
--   The default batch size is two episodes.
--   The intermediate state is stored in `current_episodes_content`.
-
----
-
-### 4️⃣ Memory Management
+### 3️⃣ Memory Management
 
 #### Supabase (`db_service.py`)
 
@@ -99,12 +85,12 @@ Traditional AI-generated stories often struggle with:
 
 #### Embedding Service (`embedding_service.py`)
 
--   Uses Hugging Face embeddings to vectorize story chunks.
+-   Uses **Google Gemini Embeddings** (`models/embedding-001`) to vectorize story chunks.
 -   Scores relevance based on the characters involved and episode order, enabling memory-aware story generation.
 
 ---
 
-### 5️⃣ API & Frontend Integration
+### 4️⃣ API & Frontend Integration
 
 #### FastAPI Backend
 
@@ -131,7 +117,7 @@ Traditional AI-generated stories often struggle with:
   <strong>AI & NLP</strong><br>
   <img src="https://img.shields.io/badge/GPT--4o-000000?style=for-the-badge&logo=openai&logoColor=white" alt="GPT-4o">
   <img src="https://img.shields.io/badge/Google%20Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini">
-  <img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="Hugging Face">
+  <img src="https://img.shields.io/badge/Gemini%20Embedding-34A853?style=for-the-badge&logo=google&logoColor=white" alt="Gemini Embedding">
 </p>
 <p align="center">
   <strong>Backend</strong><br>
@@ -151,7 +137,7 @@ Traditional AI-generated stories often struggle with:
 ## 🎯 Key Achievements
 
 -   🏆 **Multi-Episode Consistency** – Maintains coherent and evolving narratives.
--   💡 **Token Limit Workaround** – Smart retrieval with embeddings.
+-   💡 **Token Limit Workaround** – Smart retrieval using **Gemini Embeddings**.
 -   👤 **Character Evolution** – Tracks character traits, arcs, and relationships.
 -   🔁 **Human Refinement** – Combines LLM polish with user feedback.
 -   🌍 **Hinglish Support** – Culturally tuned storytelling.
