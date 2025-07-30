@@ -1,21 +1,32 @@
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+# app/services/embedding_service.py
+
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import Document
 from app.core.config import settings
 from app.services.db_service import DBService
+from supabase import Client
 from typing import List, Dict
 import json
-from supabase import Client
+
+from llama_index.embeddings.gemini import GeminiEmbedding
 
 
 class EmbeddingService:
     def __init__(self, client: Client):
-        self.embedding_model = HuggingFaceEmbedding(model_name=settings.EMBEDDING_MODEL)
+        """
+        FIX: Switched from a local HuggingFace model to the cloud-based GeminiEmbedding model.
+        This is much more efficient for a server environment.
+        """
+        self.embedding_model = GeminiEmbedding(
+            model_name="models/embedding-001",
+            api_key=settings.GEMINI_API_KEY,
+        )
+
         self.db_service = DBService(client)
         self.splitter = SemanticSplitterNodeParser(
+            embed_model=self.embedding_model,
             buffer_size=1,
             breakpoint_percentile_threshold=95,
-            embed_model=self.embedding_model,
         )
         self.client = client
 
@@ -28,18 +39,18 @@ class EmbeddingService:
         characters: List[str],
         auth_id: str,
     ):
-        """
-        This function is used to divide the episodes into chunks and store it in the DB.
-        """
         doc = Document(text=content)
-        nodes = self.splitter.get_nodes_from_documents([doc])
+        # Pass the embedding model to the splitter at runtime
+        nodes = self.splitter.get_nodes_from_documents(
+            [doc], embed_model=self.embedding_model
+        )
 
         chunk_data = []
         for chunk_number, node in enumerate(nodes):
-            chunk_text = node.text
-            embedding = self.embedding_model.get_text_embedding(chunk_text)
+            content = node.text
+            embedding = self.embedding_model.get_text_embedding(content)
             importance_score = self._calculate_importance_score(
-                story_id, chunk_text, characters, episode_number, auth_id
+                story_id, content, characters, episode_number, auth_id
             )
 
             chunk_data.append(
@@ -48,11 +59,9 @@ class EmbeddingService:
                     "episode_id": episode_id,
                     "episode_number": episode_number,
                     "chunk_number": chunk_number,
-                    "content": chunk_text,
-                    "characters": json.dumps(
-                        characters
-                    ),  
-                    "embedding": embedding,  
+                    "content": content,
+                    "characters": characters,
+                    "embedding": embedding,
                     "importance_score": importance_score,
                     "auth_id": auth_id,
                 }
@@ -70,45 +79,38 @@ class EmbeddingService:
         self,
         story_id: int,
         current_episode_info: str,
+        auth_id: str,
         k: int = 5,
-        character_names: List[str] = [],
-        auth_id: str = None,
     ) -> List[Dict]:
-        """
-        This funcntion uses semantic similarity to retrieve relevant chunks from the database
-        """
+        query_embedding = self.embedding_model.get_text_embedding(current_episode_info)
 
-        if not auth_id:
-            raise ValueError("auth_id is required to retrieve relevant chunks")
-
-        query = (
-            self.client.table("chunks")
-            .select("id, episode_number, chunk_number, content, importance_score")
-            .eq("story_id", story_id)
-            .eq("auth_id", auth_id)
-        )
-
-        if character_names:
-            query = query.contains("characters", json.dumps(character_names))
-
-        chunks_result = query.order("importance_score", desc=True).limit(k).execute()
-
-        story_info = self.db_service.get_story_info(story_id, auth_id)
-        if "error" in story_info:
-            return (
-                chunks_result.data or []
-            )  
-
-        midpoint = int(story_info.get("num_episodes", 1) * 0.5)
-        if midpoint == 0:
-            midpoint = 1
+        chunks_result = self.client.rpc(
+            "match_chunks",
+            {
+                "p_story_id": story_id,
+                "p_auth_id": auth_id,
+                "p_query_embedding": query_embedding,
+                "p_k": k,
+            },
+        ).execute()
 
         foundational_chunks = (
             self.client.table("chunks")
             .select("id, episode_number, chunk_number, content, importance_score")
             .eq("story_id", story_id)
             .eq("auth_id", auth_id)
-            .in_("episode_number", [1, midpoint])
+            .in_(
+                "episode_number",
+                [
+                    1,
+                    int(
+                        self.db_service.get_story_info(story_id, auth_id)[
+                            "num_episodes"
+                        ]
+                        * 0.5
+                    ),
+                ],
+            )
             .limit(2)
             .execute()
         )
@@ -119,10 +121,12 @@ class EmbeddingService:
                 "id": chunk["id"],
                 "episode_number": chunk["episode_number"],
                 "chunk_number": chunk["chunk_number"],
-                "content": chunk["content"],
+                "content": chunk.get("content") or chunk.get("content"),
             }
             for chunk in sorted(
-                chunks, key=lambda x: (x.get("importance_score", 0)), reverse=True
+                chunks,
+                key=lambda x: (x.get("importance_score", 0), x.get("similarity", 0)),
+                reverse=True,
             )[:k]
         ]
 
@@ -134,9 +138,6 @@ class EmbeddingService:
         episode_number: int,
         auth_id: str,
     ) -> float:
-        """
-        Calculates the importance score of a chunk based on the presence of characters in it.
-        """
         score = 0
         for char in characters:
             if char.lower() in chunk.lower():
@@ -144,7 +145,7 @@ class EmbeddingService:
 
         story_info = self.db_service.get_story_info(story_id, auth_id)
         if "error" in story_info:
-            return score  
+            return score
 
         num_episodes = story_info.get("num_episodes", 1)
         if num_episodes == 0:
@@ -152,5 +153,4 @@ class EmbeddingService:
 
         if episode_number == 1 or episode_number == int(num_episodes * 0.5):
             score += 2
-
         return score
