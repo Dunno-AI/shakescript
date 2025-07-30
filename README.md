@@ -1,5 +1,6 @@
-
 # 🎭 ShakeScript - An AI-Based Story Creation Platform
+
+<p align="center"> <img src="https://raw.githubusercontent.com/RaviThakur1002/shakescript/main/charts_and_pipeline/Intro.png" alt="ShakeScript Introduction" width="700"/> </p>
 
 ShakeScript is a cutting-edge, AI-powered storytelling system designed to generate immersive, multi-episode narratives with rich characters, evolving plots, and long-term memory. By blending the strengths of **GPT-4o** and **Google Gemini**, it overcomes traditional limitations in AI storytelling, such as token constraints and narrative inconsistencies.
 
