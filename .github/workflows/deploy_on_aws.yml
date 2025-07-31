@@ -1,0 +1,57 @@
+name: Deploy to AWS Fargate
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build, Push to ECR & Deploy to Fargate
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and Push Docker Image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfile .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update ECS Service
+      id: ecs-update
+      env:
+        CLUSTER: ${{ secrets.ECS_CLUSTER }}
+        SERVICE: ${{ secrets.ECS_SERVICE }}
+      run: |
+        aws ecs update-service \
+          --cluster $CLUSTER \
+          --service $SERVICE \
+          --force-new-deployment
+
+    - name: Wait for ECS Service to stabilize
+      env:
+        CLUSTER: ${{ secrets.ECS_CLUSTER }}
+        SERVICE: ${{ secrets.ECS_SERVICE }}
+      run: |
+        echo "Waiting for service to stabilize..."
+        aws ecs wait services-stable \
+          --cluster $CLUSTER \
+          --services $SERVICE
+        echo "Service is stable and deployment completed successfully."

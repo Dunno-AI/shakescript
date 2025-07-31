@@ -1,4 +1,3 @@
-# app/api/dependencies.py
 import logging
 import requests
 from fastapi import Depends, Header, HTTPException, status

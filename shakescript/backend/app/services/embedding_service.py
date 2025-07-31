@@ -1,27 +1,18 @@
-# app/services/embedding_service.py
-
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import Document
 from app.core.config import settings
 from app.services.db_service import DBService
 from supabase import Client
 from typing import List, Dict
-import json
-
 from llama_index.embeddings.gemini import GeminiEmbedding
 
 
 class EmbeddingService:
     def __init__(self, client: Client):
-        """
-        FIX: Switched from a local HuggingFace model to the cloud-based GeminiEmbedding model.
-        This is much more efficient for a server environment.
-        """
         self.embedding_model = GeminiEmbedding(
             model_name="models/embedding-001",
             api_key=settings.GEMINI_API_KEY,
         )
-
         self.db_service = DBService(client)
         self.splitter = SemanticSplitterNodeParser(
             embed_model=self.embedding_model,
@@ -29,6 +20,7 @@ class EmbeddingService:
             breakpoint_percentile_threshold=95,
         )
         self.client = client
+        # self.embedding_model = HuggingFaceEmbedding(model_name=settings.EMBEDDING_MODEL)
 
     def _process_and_store_chunks(
         self,
@@ -39,8 +31,10 @@ class EmbeddingService:
         characters: List[str],
         auth_id: str,
     ):
+        """
+        This function is used to divide the episodes into chunks and store it in the DB.
+        """
         doc = Document(text=content)
-        # Pass the embedding model to the splitter at runtime
         nodes = self.splitter.get_nodes_from_documents(
             [doc], embed_model=self.embedding_model
         )

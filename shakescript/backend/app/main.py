@@ -10,7 +10,6 @@ from app.api.routes import (
 )
 
 # Define the security scheme for the Authorization header.
-# This tells FastAPI how to create the "Authorize" button in the docs.
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
 # Initialize the FastAPI application

@@ -1,5 +1,3 @@
-# app/services/ai_service/__init__.py
-
 import google.generativeai as genai
 from openai import OpenAI
 from app.core.config import settings
@@ -26,7 +24,6 @@ class AIService:
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel("gemini-2.0-flash")
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
         self.embedding_service = EmbeddingService(client)
         self.generation = AIGeneration(self.model, self.embedding_service)
         self.utils = AIUtils()
@@ -61,7 +58,7 @@ class AIService:
         story_id: int,
         prev_episodes: List = [],
         hinglish: bool = False,
-        auth_id: str = None,  # Added auth_id
+        auth_id: str = None, 
     ) -> Dict:
         return self.generation.generate_episode_helper(
             num_episodes,

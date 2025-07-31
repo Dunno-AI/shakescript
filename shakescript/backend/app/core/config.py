@@ -11,12 +11,7 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
-
-    # --- UPDATED: Settings for Gemini Embedding Model ---
-    # The Gemini 'embedding-001' model has a dimension of 768.
     VECTOR_DIMENSION: int = 768
-
-    # Chunking parameters (can be tuned as needed)
     CHUNK_SIZE: int = 500
     OVERLAP: int = 100
 
