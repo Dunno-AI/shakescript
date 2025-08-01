@@ -39,7 +39,7 @@ export const useSmartScroll = () => {
             clearTimeout(scrollTimeout);
             container.removeEventListener('scroll', handleScroll);
         };
-    }, []); // Empty dependency array ensures this runs only once
+    }, []); 
 
     // Callback for the typing animation to trigger auto-scroll
     const onTyping = useCallback(() => {

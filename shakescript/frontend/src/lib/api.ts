@@ -1,6 +1,5 @@
-import { supabase } from "./supabaseClient"; // Make sure you have a Supabase client export
+import { supabase } from "./supabaseClient"; 
 
-// We then append the API path to it.
 const API_BASE_URL = `${import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000"}/api/v1`;
 
 /**
@@ -20,7 +19,6 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
         throw new Error("User not authenticated");
     }
 
-    // The final URL will now be correct, e.g., http://127.0.0.1:8000/api/v1/dashboard/
     const response = await fetch(`${API_BASE_URL}${url}`, {
         ...options,
         headers: {
@@ -44,7 +42,6 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
  * Fetches the complete dashboard data for the authenticated user.
  */
 export const getDashboardData = () => {
-    // This will now correctly call /api/v1/dashboard/
     return authFetch("/dashboard/");
 };
 
