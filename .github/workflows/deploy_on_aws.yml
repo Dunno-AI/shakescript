@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "shakescript/backend/**"
+      - ".github/workflows/deploy_on_aws.yml" 
 
 jobs:
   deploy:
