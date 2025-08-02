@@ -60,7 +60,6 @@ Traditional AI-generated stories often struggle with:
 ### 2️⃣ Episode Generation (via GPT-4o)
 
 #### Initial Episode
-
 -   Uses structured metadata to generate an episode that aligns with the story's outline (e.g., Exposition).
 
 #### Subsequent Episodes
