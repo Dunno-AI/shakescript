@@ -24,7 +24,7 @@ export const useRefinement = ({
   const [status, setStatus] = useState<
     "loading" | "human-review" | "ai-ready" | "refining" | "complete"
   >("loading");
-  const [currentBatch, setCurrentBatch] = useState<number>(initialBatch || 1);
+  const [currentBatch, setCurrentBatch] = useState<number>(1);
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

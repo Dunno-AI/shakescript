@@ -82,24 +82,25 @@ export const Refinement: React.FC<RefinementProps> = (props) => {
 
       {isReviewing && latestEpisode && (
         <div className="bg-[#111111] border-t border-zinc-800 p-6 sticky bottom-0 flex justify-end items-center gap-4">
-            {userHasScrolled && (
-                <button
-                    onClick={manualScrollToBottom}
-                    title="Scroll to bottom"
-                    className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 flex items-center justify-center"
-                >
-                    <ChevronDown className="w-5 h-5" />
-                </button>
-            )}
-            <ActionButtons
-                status={status}
-                refinementType={props.story.refinement_method}
-                isSubmitting={isSubmitting}
-                onValidateAndContinue={validateAndContinue}
-                onSubmitFeedback={submitFeedback}
-                total_episodes={props.story.total_episodes}
-                latestEpisode={latestEpisode}
-            />
+          {userHasScrolled && (
+            <button
+              onClick={manualScrollToBottom}
+              title="Scroll to bottom"
+              className="px-4 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 flex items-center justify-center"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          )}
+          <ActionButtons
+            status={status}
+            refinementType={props.story.refinement_method}
+            isSubmitting={isSubmitting}
+            onValidateAndContinue={validateAndContinue}
+            onSubmitFeedback={submitFeedback}
+            total_episodes={props.story.total_episodes}
+            latestEpisode={latestEpisode}
+            typingCompleted={typingCompleted}
+          />
         </div>
       )}
     </div>
