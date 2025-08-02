@@ -24,7 +24,7 @@ export const useRefinement = ({
   const [status, setStatus] = useState<
     "loading" | "human-review" | "ai-ready" | "refining" | "complete"
   >("loading");
-  const [currentBatch, setCurrentBatch] = useState<number>(1);
+  const [currentBatch, setCurrentBatch] = useState<number>(initialBatch || 1);
   const [feedback, setFeedback] = useState<{ [key: number]: string }>({});
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -48,6 +48,24 @@ export const useRefinement = ({
         )
       : null;
   };
+
+  const handleApiError = (error: any) => {
+    if (
+      error.response?.status === 429 ||
+      error.response?.data?.detail?.includes("episode limit")
+    ) {
+      setErrorMessage(
+        "You have reached the maximum episode generation limit. Please try again later.",
+      );
+    } else {
+      setErrorMessage(
+        `An unexpected error occurred: ${
+          error.response?.data?.detail || error.message || "Unknown error"
+        }. Please try again.`,
+      );
+    }
+  };
+
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -96,6 +114,13 @@ export const useRefinement = ({
 
       const data = await response.json();
 
+      if (response.status === 429 || data.detail?.includes("episode limit")) {
+        setErrorMessage(
+          "You have reached the maximum episode generation limit. Please try again later.",
+        );
+        return;
+      }
+
       if (data.status === "success") {
         const mappedEpisodes: Episode[] = data.episodes.map((ep: any) => ({
           episode_id: ep.episode_id,
@@ -125,11 +150,7 @@ export const useRefinement = ({
         }
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to connect to the server: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      handleApiError(error);
     }
   };
 
@@ -193,6 +214,14 @@ export const useRefinement = ({
         );
         const data = await response.json();
 
+        if (response.status === 429 || data.detail?.includes("episode limit")) {
+          setErrorMessage(
+            "You have reached the maximum episode generation limit. Please try again later.",
+          );
+          setStatus("human-review");
+          return;
+        }
+
         if (data.status === "pending" && data.episodes) {
           const refinedEpisodes: Episode[] = data.episodes.map((ep: any) => ({
             episode_id: ep.episode_id,
@@ -211,11 +240,7 @@ export const useRefinement = ({
         setStatus("human-review");
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to submit feedback: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      handleApiError(error);
       setStatus("human-review");
     } finally {
       setIsSubmitting(false);
@@ -232,6 +257,13 @@ export const useRefinement = ({
         { method: "POST" },
       );
       const data = await response.json();
+
+      if (response.status === 429 || data.detail?.includes("episode limit")) {
+        setErrorMessage(
+          "You have reached the maximum episode generation limit. Please try again later.",
+        );
+        return;
+      }
 
       if (data.status === "success") {
         if (latestEpisode) {
@@ -254,11 +286,7 @@ export const useRefinement = ({
         setErrorMessage(data.message || "Failed to validate episodes");
       }
     } catch (error: any) {
-      setErrorMessage(
-        `Failed to validate batch: ${
-          error.response?.data?.detail || error.message || "Unknown error"
-        }. Please try again.`,
-      );
+      handleApiError(error);
     } finally {
       setIsSubmitting(false);
     }
