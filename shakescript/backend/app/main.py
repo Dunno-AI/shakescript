@@ -19,23 +19,13 @@ app = FastAPI(
     dependencies=[Depends(api_key_header)],
 )
 
-# Configure CORS 
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://shakescriptai.tech", "http://localhost:5173"],  
+    allow_origins=["https://shakescriptai.tech", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers",
-    ],
+    allow_headers=["*"],
     expose_headers=["*"],
 )
 
@@ -44,6 +34,7 @@ app.include_router(auth_routes.router, prefix="/api/v1", tags=["authentication"]
 app.include_router(stories_routes.router, prefix="/api/v1", tags=["stories"])
 app.include_router(episodes_routes.router, prefix="/api/v1", tags=["episodes"])
 app.include_router(dashboard_routes.router, prefix="/api/v1", tags=["dashboard"])
+
 
 @app.get("/", tags=["Root"])
 def read_root():
